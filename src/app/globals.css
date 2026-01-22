@@ -322,10 +322,40 @@ body {
 
 .gadget_banner_slider {
   /* height: 520px; */
-  background-size: cover !important;
+  background-size: contain !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
   border-radius: 0px;
+  width: 100%;
+  max-width: 100%;
+  height: auto !important;
+  object-fit: contain !important;
+  display: block;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Override style.css fixed height on mobile */
+@media only screen and (max-width: 767px) {
+  .gadget_banner_slider {
+    height: auto !important;
+    margin: 0 !important;
+    background-size: contain !important;
+  }
+}
+
+/* Hero slider section - no extra spacing */
+.hero-slider-section {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Hero slide images - responsive */
+.hero-slide-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
 }
 
 /* Hero slider wrapper - centered and constrained width */
@@ -377,18 +407,51 @@ body {
 
 .add_banner_item {
   height: 320px;
-  background-size: cover !important;
+  background-size: contain !important;
   background-position: center !important;
+  background-repeat: no-repeat !important;
   border-radius: 8px;
   position: relative;
   overflow: hidden;
   margin-bottom: 30px;
 }
 
+/* Mobile: smaller height for side-by-side banners */
+@media (max-width: 767px) {
+  .add_banner_item {
+    height: 180px;
+    background-size: contain !important;
+  }
+}
+
 .add_banner_item_text {
   position: absolute;
   bottom: -10px;
   left: 20px;
+}
+
+/* Tablet/Mobile: fix buttons in category banners */
+@media (max-width: 991px) {
+  .add_banner_item_text .common_btn {
+    padding: 10px 18px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    flex-direction: row;
+  }
+  
+  .add_banner_item_text .common_btn i {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .add_banner_item_text .common_btn {
+    padding: 8px 14px;
+    font-size: 11px;
+  }
 }
 
 .mt_55 {

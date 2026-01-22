@@ -96,9 +96,12 @@ export default function Home() {
         alt="Slider Banner 1"
         style={{
           width: "100%",
+          height: "auto",
+          display: "block",
+          objectFit: "contain",
         }}
       />
-      <section className="mt_0" style={{ width: "100vw", position: "relative" }}>
+      <section className="hero-slider-section" style={{ width: "100%", position: "relative", marginTop: 0, paddingTop: 0 }}>
         <div style={{ width: "100%", position: "relative", border: "none", outline: "none" }}>
           <Swiper
             modules={[Autoplay, Pagination, Navigation, EffectFade]}
@@ -122,41 +125,23 @@ export default function Home() {
           >
             <SwiperSlide>
               <img
-                className="gadget_banner_slider"
+                className="hero-slide-img"
                 src="/assets/images/slider/wholesiibanner1.jpg"
                 alt="Slider Banner 1"
-                style={{
-                  width: "100%",
-                  height: "600px",
-                  objectFit: "cover",
-                  display: "block",
-                }}
               />
             </SwiperSlide>
             <SwiperSlide>
               <img
-                className="gadget_banner_slider"
+                className="hero-slide-img"
                 src="/assets/images/slider/wholesiibanner2.jpg"
                 alt="Slider Banner 2"
-                style={{
-                  width: "100%",
-                  height: "600px",
-                  objectFit: "cover",
-                  display: "block",
-                }}
               />
             </SwiperSlide>
             <SwiperSlide>
               <img
-                className="gadget_banner_slider"
+                className="hero-slide-img"
                 src="/assets/images/slider/wholesiibanner3.jpg"
                 alt="Slider Banner 3"
-                style={{
-                  width: "100%",
-                  height: "600px",
-                  objectFit: "cover",
-                  display: "block",
-                }}
               />
             </SwiperSlide>
           </Swiper>
@@ -172,7 +157,7 @@ export default function Home() {
         <div className="container">
           <div className="row">
             {categories.slice(0, 2).map((category, index) => (
-              <div key={category._id} className="col-lg-6 col-md-6 col-12 wow fadeInUp" style={{ marginBottom: "0px" }} data-wow-delay={`${index * 0.2}s`}>
+              <div key={category._id} className="col-lg-6 col-md-6 col-6 wow fadeInUp" style={{ marginBottom: "0px" }} data-wow-delay={`${index * 0.2}s`}>
                 <div
                   className="add_banner_item"
                   style={{

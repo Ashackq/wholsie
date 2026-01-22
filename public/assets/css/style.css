@@ -13332,11 +13332,11 @@ footer {
     .gadget_banner_slider {
         background-position: center !important;
         background-repeat: no-repeat !important;
-        background-size: cover !important;
-        height: 250px !important;
+        background-size: contain !important;
+        height: auto !important;
         padding: 0px 0px;
         border-radius: 0;
-        margin: 25px 12px 0px 50px;
+        margin: 0;
     }
 
     .gadget_banner div {
