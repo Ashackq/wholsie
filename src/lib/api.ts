@@ -231,7 +231,13 @@ export async function register(data: {
 }
 
 export async function logout(): Promise<ApiResponse<{ message: string }>> {
-    return apiCall<ApiResponse<{ message: string }>>("/auth/logout", { method: "POST" });
+    return apiCall<ApiResponse<{ message: string }>>("/auth/logout", { 
+        method: "POST",
+        cache: "no-store",
+        headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate"
+        }
+    });
 }
 
 export async function getCurrentUser(): Promise<ApiResponse<User>> {
