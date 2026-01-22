@@ -3,12 +3,12 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
-        "dev:frontend": "cd wholesii && npm run dev",
-        "dev:backend": "cd wholesii/server && npm run dev",
-        "install:all": "npm install && cd wholesii && npm install && cd server && npm install",
-        "build:frontend": "cd wholesii && npm run build",
-        "build:backend": "cd wholesii/server && npm run build"
+        "dev:all": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+        "dev": "next dev",
+        "dev:backend": "cd server && npm run dev",
+        "install:all": "npm install && cd server && npm install",
+        "build:frontend": "next build",
+        "build:backend": "cd server && npm run build"
     },
     "dependencies": {
         "@headlessui/react": "^2.2.9",

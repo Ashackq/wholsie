@@ -51,7 +51,20 @@ async function bootstrap() {
     app.use("/api/auth/login", authLimiter);
     app.use("/api/auth/register", authLimiter);
 
-    app.use(cors({ origin: env.CLIENT_ORIGIN, credentials: true }));
+    const allowedOrigins = new Set([
+        env.CLIENT_ORIGIN,
+        "https://wholsie.vercel.app",
+        "https://wholesiii.com",
+    ]);
+
+    app.use(cors({
+        origin: (origin, callback) => {
+            if (!origin) return callback(null, true); // Allow non-browser requests
+            if (allowedOrigins.has(origin)) return callback(null, true);
+            callback(new Error("Not allowed by CORS"));
+        },
+        credentials: true,
+    }));
     app.use(express.json({ limit: "10mb" }));
     app.use(express.urlencoded({ extended: true, limit: "10mb" }));
     app.use(cookieParser());

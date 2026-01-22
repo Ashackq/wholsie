@@ -10,7 +10,7 @@ export default function Header() {
     const [showCategories, setShowCategories] = useState(false);
     const [categories, setCategories] = useState<Array<{ _id: string; name: string; slug?: string }>>([]);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+    const API = process.env.NEXT_PUBLIC_API_URL;
     const router = useRouter();
 
     const handleLogout = async () => {

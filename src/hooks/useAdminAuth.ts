@@ -8,7 +8,7 @@ export function useAdminAuth() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
-    const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+    const API = process.env.NEXT_PUBLIC_API_URL;
 
     useEffect(() => {
         async function checkAdmin() {
