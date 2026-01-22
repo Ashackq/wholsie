@@ -16,7 +16,7 @@ export default function Footer() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/categories`;
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/api/categories`;
         const response = await fetch(url);
         const data = await response.json();
         setCategories(data.data || []);

@@ -9,7 +9,7 @@ const envSchema = z.object({
     RAZORPAY_KEY_ID: z.string().optional(),
     RAZORPAY_KEY_SECRET: z.string().optional(),
     RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
-    CLIENT_ORIGIN: z.string().url().default("http://localhost:3000"),
+    CLIENT_ORIGIN: z.string().default("http://localhost:3000"),
     // SMS Integration
     SMS_API_KEY: z.string().optional(),
     SMS_SENDER_ID: z.string().optional(),
