@@ -2030,3 +2030,37 @@ body {
     min-width: 600px;
   }
 }
+
+/* Checkout Page Grid */
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+
+.checkout-shipping {
+  order: 1;
+}
+
+.checkout-summary {
+  order: 2;
+}
+
+@media (max-width: 768px) {
+  .checkout-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .checkout-shipping {
+    order: 1;
+  }
+  
+  .checkout-summary {
+    order: 2;
+  }
+  
+  .checkout-summary .cart_page_summary {
+    position: static !important;
+  }
+}

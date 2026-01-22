@@ -498,15 +498,13 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                     onClick={() => setActiveTab('info')}
                                                     style={{
                                                         padding: '10px 20px',
-                                                        borderTop: 'none',
-                                                        borderRight: 'none',
-                                                        borderBottom: activeTab === 'info' ? '3px solid #007bff' : '1px solid #ddd',
-                                                        borderLeft: 'none',
-                                                        backgroundColor: activeTab === 'info' ? '#f8f9fa' : 'transparent',
-                                                        color: activeTab === 'info' ? '#007bff' : '#666',
+                                                        border: 'none',
+                                                        borderBottom: activeTab === 'info' ? '3px solid #F05F22' : '3px solid transparent',
+                                                        backgroundColor: 'transparent',
+                                                        color: activeTab === 'info' ? '#F05F22' : '#666',
                                                         cursor: 'pointer',
-                                                        fontWeight: activeTab === 'info' ? 'bold' : 'normal',
-                                                        fontSize: '14px'
+                                                        fontWeight: activeTab === 'info' ? '600' : 'normal',
+                                                        fontSize: '15px'
                                                     }}
                                                 >
                                                     Additional Information
@@ -518,15 +516,13 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                     onClick={() => setActiveTab('reviews')}
                                                     style={{
                                                         padding: '10px 20px',
-                                                        borderTop: 'none',
-                                                        borderRight: 'none',
-                                                        borderBottom: activeTab === 'reviews' ? '3px solid #007bff' : '1px solid #ddd',
-                                                        borderLeft: 'none',
-                                                        backgroundColor: activeTab === 'reviews' ? '#f8f9fa' : 'transparent',
-                                                        color: activeTab === 'reviews' ? '#007bff' : '#666',
+                                                        border: 'none',
+                                                        borderBottom: activeTab === 'reviews' ? '3px solid #F05F22' : '3px solid transparent',
+                                                        backgroundColor: 'transparent',
+                                                        color: activeTab === 'reviews' ? '#F05F22' : '#666',
                                                         cursor: 'pointer',
-                                                        fontWeight: activeTab === 'reviews' ? 'bold' : 'normal',
-                                                        fontSize: '14px'
+                                                        fontWeight: activeTab === 'reviews' ? '600' : 'normal',
+                                                        fontSize: '15px'
                                                     }}
                                                 >
                                                     Reviews ({totalReviews})

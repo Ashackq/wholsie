@@ -839,9 +839,9 @@ export default function CheckoutPage() {
             <section className="checkout_page">
                 <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
                     <form onSubmit={handleSubmit}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '30px' }}>
+                        <div className="checkout-grid">
                             {/* Left Column - Shipping and Order Info */}
-                            <div style={{ gridColumn: 'span 8' }}>
+                            <div className="checkout-shipping">
                                 {/* Shipping Information */}
                                 <div className="checkout_header">
                                     <h3>Shipping Information</h3>
@@ -919,7 +919,7 @@ export default function CheckoutPage() {
                             </div>
 
                             {/* Right Column - Order Summary */}
-                            <div style={{ gridColumn: 'span 4' }}>
+                            <div className="checkout-summary">
                                 <div className="cart_page_summary" style={{ position: 'sticky', top: '20px' }}>
                                     <h3>Product summary</h3>
 
@@ -1056,43 +1056,41 @@ export default function CheckoutPage() {
 
                         {/* Bottom Section - Payment Method and Place Order Button */}
                         <div style={{ marginTop: '40px', padding: '30px', background: '#f6f6f6', borderRadius: '12px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '30px', alignItems: 'flex-start' }}>
-                                <div style={{ gridColumn: 'span 12', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '20px', alignItems: 'center' }}>
-                                    <div style={{ gridColumn: 'span 12', background: '#fff', borderRadius: '10px', padding: '18px 20px', border: '1px solid #e9e9e9' }}>
-                                        <h3 style={{ fontSize: '20px', fontWeight: 600, margin: '0 0 12px 0' }}>Payment Method</h3>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '15px', margin: 0 }}>
-                                            <input
-                                                className="form-check-input"
-                                                type="radio"
-                                                name="payment_method"
-                                                value="1"
-                                                checked={paymentMethod === "1"}
-                                                onChange={(e) => setPaymentMethod(e.target.value)}
-                                                style={{ margin: 0 }}
-                                            />
-                                            <span>Direct Bank Transfer</span>
-                                        </label>
-                                    </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                <div style={{ background: '#fff', borderRadius: '10px', padding: '18px 20px', border: '1px solid #e9e9e9' }}>
+                                    <h3 style={{ fontSize: '20px', fontWeight: 600, margin: '0 0 12px 0' }}>Payment Method</h3>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '15px', margin: 0 }}>
+                                        <input
+                                            className="form-check-input"
+                                            type="radio"
+                                            name="payment_method"
+                                            value="1"
+                                            checked={paymentMethod === "1"}
+                                            onChange={(e) => setPaymentMethod(e.target.value)}
+                                            style={{ margin: 0 }}
+                                        />
+                                        <span>Direct Bank Transfer</span>
+                                    </label>
+                                </div>
 
-                                    {error && (
-                                        <div style={{ gridColumn: 'span 12', margin: 0, padding: '12px 14px', background: '#ffe0e0', border: '1px solid #ff9999', color: '#cc0000', borderRadius: '8px', fontSize: '14px' }}>
-                                            {error}
-                                        </div>
-                                    )}
-
-                                    <div style={{ gridColumn: 'span 12', display: 'flex', justifyContent: 'center' }}>
-                                        <button
-                                            type="submit"
-                                            disabled={loading || !cart.items.length}
-                                            className="common_btn"
-                                            style={{ width: '100%', maxWidth: '400px', display: 'flex' }}
-                                        >
-                                            {loading ? "Processing..." : "Place order"}
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" style={{ width: '18px', height: '18px', transform: 'rotate(-45deg)' }}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
-                                            </svg>
-                                        </button>
+                                {error && (
+                                    <div style={{ margin: 0, padding: '12px 14px', background: '#ffe0e0', border: '1px solid #ff9999', color: '#cc0000', borderRadius: '8px', fontSize: '14px' }}>
+                                        {error}
                                     </div>
+                                )}
+
+                                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                    <button
+                                        type="submit"
+                                        disabled={loading || !cart.items.length}
+                                        className="common_btn"
+                                        style={{ width: '100%', maxWidth: '400px', display: 'flex' }}
+                                    >
+                                        {loading ? "Processing..." : "Place order"}
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" style={{ width: '18px', height: '18px', transform: 'rotate(-45deg)' }}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
                         </div>
