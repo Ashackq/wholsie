@@ -19,7 +19,10 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/dashboard`;
+        const API_URL =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+        const url = `${API_URL}/admin/dashboard`;
+        console.log(url);
         const res = await fetch(url, {
           credentials: "include",
         });

@@ -24,102 +24,105 @@ import supportRouter from "./routes/support.js";
 import searchRouter from "./routes/search.js";
 
 async function bootstrap() {
-    await connectToDatabase();
-    await verifyEmailConnection();
+  await connectToDatabase();
+  await verifyEmailConnection();
 
-    const app = express();
+  const app = express();
 
-    // Trust proxy headers when behind a reverse proxy (nginx, load balancer, etc.)
-    // Set to 1 to trust only the first proxy hop (most common setup)
-    app.set('trust proxy', 1);
+  // Trust proxy headers when behind a reverse proxy (nginx, load balancer, etc.)
+  // Set to 1 to trust only the first proxy hop (most common setup)
+  app.set("trust proxy", 1);
 
-    app.use(helmet());
+  app.use(helmet());
 
-    // Rate limiting - prevent brute force and DDoS attacks
-    const limiter = rateLimit({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 100, // Limit each IP to 100 requests per windowMs
-        message: "Too many requests from this IP, please try again later.",
-        standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-        legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    });
+  // Rate limiting - prevent brute force and DDoS attacks
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again later.",
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  });
 
-    // Apply rate limiter to all API routes
-    app.use("/api", limiter);
+  // Apply rate limiter to all API routes
+  app.use("/api", limiter);
 
-    // Stricter rate limiting for auth endpoints
-    const authLimiter = rateLimit({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 10, // Limit each IP to 10 requests per windowMs
-        message: "Too many authentication attempts, please try again later.",
-    });
-    app.use("/api/auth/login", authLimiter);
-    app.use("/api/auth/register", authLimiter);
+  // Stricter rate limiting for auth endpoints
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limit each IP to 10 requests per windowMs
+    message: "Too many authentication attempts, please try again later.",
+  });
+  app.use("/api/auth/login", authLimiter);
+  app.use("/api/auth/register", authLimiter);
 
-    const allowedOrigins = new Set([
-        env.CLIENT_ORIGIN,
-        "https://wholsie.vercel.app",
-        "https://wholesiii.com",
-    ]);
+  const originsFromEnv = env.CLIENT_ORIGIN.split(",").map((o) => o.trim());
+  const allowedOrigins = new Set([
+    ...originsFromEnv,
+    "https://wholsie.vercel.app",
+    "https://wholesiii.com",
+  ]);
 
-    app.use(cors({
-        origin: (origin, callback) => {
-            if (!origin) return callback(null, true); // Allow non-browser requests
-            if (allowedOrigins.has(origin)) return callback(null, true);
-            callback(new Error("Not allowed by CORS"));
-        },
-        credentials: true,
-    }));
-    app.use(express.json({ limit: "10mb" }));
-    app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-    app.use(cookieParser());
-    app.use(morgan("tiny"));
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true); // Allow non-browser requests
+        if (allowedOrigins.has(origin)) return callback(null, true);
+        callback(new Error("Not allowed by CORS"));
+      },
+      credentials: true,
+    }),
+  );
+  app.use(express.json({ limit: "10mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+  app.use(cookieParser());
+  app.use(morgan("tiny"));
 
-    // Attach decoded user (if any) for downstream auth guards
-    app.use(verifyToken);
+  // Attach decoded user (if any) for downstream auth guards
+  app.use(verifyToken);
 
-    // Health check endpoint (no auth required)
-    app.get('/health', (req, res) => {
-        res.json({ status: 'ok' });
-    });
+  // Health check endpoint (no auth required)
+  app.get("/health", (req, res) => {
+    res.json({ status: "ok" });
+  });
 
-    // API routes - Core public/user routes
-    app.use('/api', apiRouter);
-    app.use('/api', authRouter);
-    app.use('/api', paymentRouter);
+  // API routes - Core public/user routes
+  app.use("/api", apiRouter);
+  app.use("/api", authRouter);
+  app.use("/api", paymentRouter);
 
-    // Feature-specific routes
-    app.use('/api/delhivery', delhiveryRouter);
-    app.use('/api/variants', variantsRouter);
-    app.use('/api/favorites', favoritesRouter);
-    app.use('/api/reviews', reviewsRouter);
-    app.use('/api/wallet', walletRouter);
-    app.use('/api/notifications', notificationsRouter);
-    app.use('/api/coupons', couponsRouter);
-    app.use('/api/support', supportRouter);
-    app.use('/api/search', searchRouter);
+  // Feature-specific routes
+  app.use("/api/delhivery", delhiveryRouter);
+  app.use("/api/variants", variantsRouter);
+  app.use("/api/favorites", favoritesRouter);
+  app.use("/api/reviews", reviewsRouter);
+  app.use("/api/wallet", walletRouter);
+  app.use("/api/notifications", notificationsRouter);
+  app.use("/api/coupons", couponsRouter);
+  app.use("/api/support", supportRouter);
+  app.use("/api/search", searchRouter);
 
-    // Admin routes
-    app.use('/api/admin', adminRouter);
+  // Admin routes
+  app.use("/api/admin", adminRouter);
 
-    // 404 handler
-    app.use((req, res) => {
-        res.status(404).json({ error: 'Route not found' });
-    });
+  // 404 handler
+  app.use((req, res) => {
+    res.status(404).json({ error: "Route not found" });
+  });
 
-    // Error handler
-    app.use(errorHandler);
+  // Error handler
+  app.use(errorHandler);
 
-    // Start server
-    const PORT = env.PORT || 5000;
-    app.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT}`);
-        console.log(`📍 Environment: ${env.NODE_ENV}`);
-    });
+  // Start server
+  const PORT = env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📍 Environment: ${env.NODE_ENV}`);
+  });
 }
 
 bootstrap().catch((err) => {
-    // eslint-disable-next-line no-console
-    console.error("Failed to start server", err);
-    process.exit(1);
+  // eslint-disable-next-line no-console
+  console.error("Failed to start server", err);
+  process.exit(1);
 });
