@@ -442,41 +442,17 @@ export default function Home() {
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
                               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                                 {product.isRecentLaunch && (
-                                  <span style={{
-                                    background: "#0f172a",
-                                    color: "#fff",
-                                    borderRadius: "999px",
-                                    padding: "4px 10px",
-                                    fontSize: "12px",
-                                    letterSpacing: "0.4px",
-                                    textTransform: "uppercase",
-                                  }}>
+                                  <span className="product-badge product-badge-launch">
                                     New Launch
                                   </span>
                                 )}
                                 {product.isCombo && (
-                                  <span style={{
-                                    background: "#0ea5e9",
-                                    color: "#fff",
-                                    borderRadius: "999px",
-                                    padding: "4px 10px",
-                                    fontSize: "12px",
-                                    letterSpacing: "0.4px",
-                                    textTransform: "uppercase",
-                                  }}>
+                                  <span className="product-badge product-badge-combo">
                                     Combo
                                   </span>
                                 )}
                                 {hasDiscount && (
-                                  <span style={{
-                                    background: "#f97316",
-                                    color: "#fff",
-                                    borderRadius: "999px",
-                                    padding: "4px 10px",
-                                    fontSize: "12px",
-                                    letterSpacing: "0.4px",
-                                    textTransform: "uppercase",
-                                  }}>
+                                  <span className="product-badge product-badge-discount">
                                     {discountPercent}% Off
                                   </span>
                                 )}

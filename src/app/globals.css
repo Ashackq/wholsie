@@ -2045,6 +2045,37 @@ body {
   order: 2;
 }
 
+/* Product badge pills */
+.product-badge {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #fff;
+  font-weight: 500;
+}
+
+.product-badge-launch {
+  background: #0f172a;
+}
+
+.product-badge-combo {
+  background: #0ea5e9;
+}
+
+.product-badge-discount {
+  background: #f97316;
+}
+
+@media (max-width: 576px) {
+  .product-badge {
+    padding: 2px 6px;
+    font-size: 9px;
+    letter-spacing: 0.2px;
+  }
+}
+
 @media (max-width: 768px) {
   .checkout-grid {
     grid-template-columns: 1fr;
