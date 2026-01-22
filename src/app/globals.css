@@ -2221,6 +2221,11 @@ body {
   .product-rating {
     font-size: 12px !important;
   }
+  
+  /* Remove top padding from add banner on mobile */
+  .add_banner.pt_55 {
+    padding-top: 0 !important;
+  }
 }
 
 /* Slider wrapper responsive margin */
