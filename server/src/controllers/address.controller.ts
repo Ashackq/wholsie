@@ -27,7 +27,26 @@ export async function getAddresses(req: Request, res: Response, next: NextFuncti
 export async function addAddress(req: Request, res: Response, next: NextFunction) {
     try {
         const userId = req.userId!;
-        const { address, address2, city, state, pincode, landmark, latitude, longitude, isDefault } = req.body;
+        // Handle field mapping: street -> address, postalCode -> pincode
+        const { 
+            name, phone, // Added from payload but might not be in schema yet?
+            address, street, 
+            addressLine2, address2,
+            city, 
+            state, 
+            pincode, postalCode, 
+            landmark, 
+            latitude, 
+            longitude, 
+            isDefault 
+        } = req.body;
+
+        const streetAddress = address || street;
+        const zipCode = pincode || postalCode;
+
+        if (!streetAddress || !zipCode) {
+             return res.status(400).json({ error: "Address (street) and Pincode (postalCode) are required" });
+        }
 
         // If setting as default, unset others
         if (isDefault) {
@@ -39,11 +58,11 @@ export async function addAddress(req: Request, res: Response, next: NextFunction
 
         const newAddress = new Address({
             userId,
-            address,
-            address2,
+            address: streetAddress,
+            address2: address2 || addressLine2 || "",
             city,
             state,
-            pincode,
+            pincode: zipCode,
             landmark,
             latitude,
             longitude,
