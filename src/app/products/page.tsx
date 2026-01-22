@@ -168,10 +168,11 @@ function ProductsContent() {
     // Price range options
     const priceRanges = [
         { value: "", label: "All Prices" },
-        { value: "0-500", label: "Under ₹500" },
+        { value: "0-100", label: "Under ₹100" },
+        { value: "100-200", label: "₹100 - ₹200" },
+        { value: "200-500", label: "₹200 - ₹500" },
         { value: "500-1000", label: "₹500 - ₹1000" },
-        { value: "1000-2000", label: "₹1000 - ₹2000" },
-        { value: "2000-", label: "Above ₹2000" },
+        { value: "1000-", label: "Above ₹1000" },
     ];
 
     // Filter sidebar content (reused in desktop and modal)
@@ -474,9 +475,19 @@ function ProductsContent() {
                                 <div className="row">
                                     {products.length > 0 ? (
                                         [...products]
+                                            // Filter by price range
+                                            .filter((product) => {
+                                                if (!priceRange) return true;
+                                                const productPrice = product.discountPrice ?? product.discountedPrice ?? product.salePrice ?? product.price ?? 0;
+                                                const [minStr, maxStr] = priceRange.split("-");
+                                                const min = minStr ? parseFloat(minStr) : 0;
+                                                const max = maxStr ? parseFloat(maxStr) : Infinity;
+                                                return productPrice >= min && productPrice <= max;
+                                            })
+                                            // Sort products
                                             .sort((a, b) => {
-                                                const priceA = (a.discountPrice ?? a.discountedPrice ?? a.price);
-                                                const priceB = (b.discountPrice ?? b.discountedPrice ?? b.price);
+                                                const priceA = (a.discountPrice ?? a.discountedPrice ?? a.salePrice ?? a.price ?? 0);
+                                                const priceB = (b.discountPrice ?? b.discountedPrice ?? b.salePrice ?? b.price ?? 0);
                                                 if (sort === "price-asc") return priceA - priceB;
                                                 if (sort === "price-desc") return priceB - priceA;
                                                 if (sort === "newest") return (b as any)._id.localeCompare((a as any)._id);
@@ -493,7 +504,7 @@ function ProductsContent() {
                                                 return (
                                                     <div
                                                         key={product._id}
-                                                        className="col-lg-4 col-md-6 col-sm-6 col-12"
+                                                        className="col-lg-4 col-md-6 col-sm-6 col-6"
                                                         style={{ marginBottom: "30px" }}
                                                     >
                                                         <div
