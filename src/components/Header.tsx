@@ -273,45 +273,37 @@ export default function Header() {
                         </form>
 
                         <div className="mobile_menu_item_area">
-                            <ul className="nav nav-pills" id="pills-tab" role="tablist">
-                                <li className="nav-item" role="presentation">
-                                    <button className="nav-link active" id="pills-home-tab" type="button">
-                                        Categories
-                                    </button>
+                            <div className="mb-2 fw-semibold">Categories</div>
+                            <ul className="main_mobile_menu">
+                                {categories.length === 0 && (
+                                    <li><a href="#">No categories</a></li>
+                                )}
+                                {categories.map((cat) => (
+                                    <li key={`m-${cat._id}`}>
+                                        <a href={`/products?category=${cat.slug}`}>
+                                            {cat.name}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <div className="mt-4 mb-2 fw-semibold">Menu</div>
+                            <ul className="main_mobile_menu">
+                                <li>
+                                    <a className="" href="/">home </a>
                                 </li>
-                                <li className="nav-item" role="presentation">
-                                    <button className="nav-link" id="pills-profile-tab" type="button">
-                                        menu
+                                <li><a href="/about">About us</a></li>
+                                <li><a href="/contact">Contact Us</a></li>
+                                <li>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="btn btn-link p-0"
+                                        style={{ color: '#d00', background: 'none', border: 'none' }}
+                                    >
+                                        <b>Logout</b>
                                     </button>
                                 </li>
                             </ul>
-
-                            <div className="tab-content" id="pills-tabContent">
-                                <div className="tab-pane fade show active" id="pills-home" role="tabpanel" tabIndex={0}>
-                                    <ul className="main_mobile_menu">
-                                        {categories.length === 0 && (
-                                            <li><a href="#">No categories</a></li>
-                                        )}
-                                        {categories.map((cat) => (
-                                            <li key={`m-${cat._id}`}>
-                                                <a href={`/products?category=${cat.slug}`}>
-                                                    {cat.name}
-                                                </a>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                                <div className="tab-pane fade" id="pills-profile" role="tabpanel" tabIndex={0}>
-                                    <ul className="main_mobile_menu">
-                                        <li>
-                                            <a className="" href="/">home </a>
-                                        </li>
-                                        <li><a href="/about">About us</a></li>
-                                        <li><a href="/contact">Contact Us</a></li>
-                                        <li><button onClick={handleLogout} className="btn btn-link p-0" style={{ color: '#d00', background: 'none', border: 'none' }}><b>Logout</b></button></li>
-                                    </ul>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>

@@ -45,11 +45,6 @@ export default function OrdersPage() {
     const cacheUser = (u: User | null) => {
         if (!u) return;
         setUser(u);
-        try {
-            localStorage.setItem("user", JSON.stringify(u));
-        } catch (err) {
-            console.error("Failed to cache user in localStorage", err);
-        }
     };
 
     useEffect(() => {

@@ -50,12 +50,8 @@ export default function AddressesPage() {
     const cacheUser = (u: User | null) => {
         if (!u) return;
         setUser(u);
-        try {
-            localStorage.setItem("user", JSON.stringify(u));
-        } catch (err) {
-            console.error("Failed to cache user in localStorage", err);
-        }
     };
+
 
     useEffect(() => {
         async function loadData() {
@@ -346,80 +342,80 @@ export default function AddressesPage() {
 
                                 {/* Addresses List - Hide when editing */}
                                 {!showForm && (
-                                <div className="row">
-                                    {addresses.length > 0 ? (
-                                        addresses.map((address) => (
-                                            <div key={address._id} className="col-md-6 mb-4">
-                                                <div className="address-card" style={{ position: "relative", padding: "20px", background: "#f8f9fa", borderRadius: "10px", border: address.isDefault ? "2px solid #F05F22" : "1px solid #eee" }}>
-                                                    {address.isDefault && (
-                                                        <span style={{ position: "absolute", top: "12px", right: "12px", background: "#F05F22", color: "#fff", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: 500 }}>
-                                                            Default
-                                                        </span>
-                                                    )}
-                                                    {address.name && <h5 style={{ marginBottom: "10px", fontWeight: 600, color: "#333" }}>{address.name}</h5>}
-                                                    <p style={{ marginBottom: "6px", fontWeight: 500, color: "#333" }}>
-                                                        <i className="fa-solid fa-location-dot" style={{ marginRight: "8px", color: "#F05F22" }}></i>
-                                                        {address.address}
-                                                    </p>
-                                                    {address.address2 && (
-                                                        <p style={{ marginBottom: "6px", color: "#666", paddingLeft: "22px" }}>{address.address2}</p>
-                                                    )}
-                                                    {address.landmark && (
-                                                        <p style={{ marginBottom: "6px", color: "#888", paddingLeft: "22px", fontSize: "14px" }}>
-                                                            Landmark: {address.landmark}
+                                    <div className="row">
+                                        {addresses.length > 0 ? (
+                                            addresses.map((address) => (
+                                                <div key={address._id} className="col-md-6 mb-4">
+                                                    <div className="address-card" style={{ position: "relative", padding: "20px", background: "#f8f9fa", borderRadius: "10px", border: address.isDefault ? "2px solid #F05F22" : "1px solid #eee" }}>
+                                                        {address.isDefault && (
+                                                            <span style={{ position: "absolute", top: "12px", right: "12px", background: "#F05F22", color: "#fff", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: 500 }}>
+                                                                Default
+                                                            </span>
+                                                        )}
+                                                        {address.name && <h5 style={{ marginBottom: "10px", fontWeight: 600, color: "#333" }}>{address.name}</h5>}
+                                                        <p style={{ marginBottom: "6px", fontWeight: 500, color: "#333" }}>
+                                                            <i className="fa-solid fa-location-dot" style={{ marginRight: "8px", color: "#F05F22" }}></i>
+                                                            {address.address}
                                                         </p>
-                                                    )}
-                                                    <p style={{ marginBottom: "6px", color: "#666", paddingLeft: "22px" }}>
-                                                        {address.city}, {address.state} - {address.pincode}
-                                                    </p>
-                                                    {address.phone && (
-                                                        <p style={{ marginBottom: "15px", color: "#666", paddingLeft: "22px" }}>
-                                                            <i className="fa-solid fa-phone" style={{ marginRight: "6px" }}></i> {address.phone}
+                                                        {address.address2 && (
+                                                            <p style={{ marginBottom: "6px", color: "#666", paddingLeft: "22px" }}>{address.address2}</p>
+                                                        )}
+                                                        {address.landmark && (
+                                                            <p style={{ marginBottom: "6px", color: "#888", paddingLeft: "22px", fontSize: "14px" }}>
+                                                                Landmark: {address.landmark}
+                                                            </p>
+                                                        )}
+                                                        <p style={{ marginBottom: "6px", color: "#666", paddingLeft: "22px" }}>
+                                                            {address.city}, {address.state} - {address.pincode}
                                                         </p>
-                                                    )}
-                                                    <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", marginTop: "15px", paddingTop: "15px", borderTop: "1px solid #eee" }}>
-                                                        <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", margin: 0 }}>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={address.isDefault}
-                                                                onChange={() => handleSetDefault(address)}
-                                                                className="form-check-input"
-                                                                style={{ margin: 0 }}
-                                                            />
-                                                            <span style={{ fontSize: "14px", color: "#666" }}>Set Default</span>
-                                                        </label>
-                                                        <button
-                                                            onClick={() => handleEditAddress(address)}
-                                                            className="common_btn"
-                                                            style={{ padding: "8px 16px", fontSize: "14px" }}
-                                                        >
-                                                            <i className="fa-solid fa-pen" style={{ marginRight: "6px" }}></i> Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteAddress(address._id)}
-                                                            className="common_btn"
-                                                            style={{ padding: "8px 16px", fontSize: "14px", background: "#dc3545" }}
-                                                        >
-                                                            <i className="fa-solid fa-trash" style={{ marginRight: "6px" }}></i> Delete
-                                                        </button>
+                                                        {address.phone && (
+                                                            <p style={{ marginBottom: "15px", color: "#666", paddingLeft: "22px" }}>
+                                                                <i className="fa-solid fa-phone" style={{ marginRight: "6px" }}></i> {address.phone}
+                                                            </p>
+                                                        )}
+                                                        <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", marginTop: "15px", paddingTop: "15px", borderTop: "1px solid #eee" }}>
+                                                            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", margin: 0 }}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={address.isDefault}
+                                                                    onChange={() => handleSetDefault(address)}
+                                                                    className="form-check-input"
+                                                                    style={{ margin: 0 }}
+                                                                />
+                                                                <span style={{ fontSize: "14px", color: "#666" }}>Set Default</span>
+                                                            </label>
+                                                            <button
+                                                                onClick={() => handleEditAddress(address)}
+                                                                className="common_btn"
+                                                                style={{ padding: "8px 16px", fontSize: "14px" }}
+                                                            >
+                                                                <i className="fa-solid fa-pen" style={{ marginRight: "6px" }}></i> Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteAddress(address._id)}
+                                                                className="common_btn"
+                                                                style={{ padding: "8px 16px", fontSize: "14px", background: "#dc3545" }}
+                                                            >
+                                                                <i className="fa-solid fa-trash" style={{ marginRight: "6px" }}></i> Delete
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
+                                            ))
+                                        ) : (
+                                            <div className="col-12">
+                                                <div style={{ padding: "60px 20px", textAlign: "center", background: "#f8f9fa", borderRadius: "8px" }}>
+                                                    <i className="fa-solid fa-map-pin" style={{ fontSize: "48px", color: "#ccc", marginBottom: "15px" }}></i>
+                                                    <p style={{ color: "#666", marginBottom: "15px" }}>
+                                                        No addresses yet
+                                                    </p>
+                                                    <button onClick={() => setShowForm(true)} className="common_btn">
+                                                        Add Your First Address
+                                                    </button>
+                                                </div>
                                             </div>
-                                        ))
-                                    ) : (
-                                        <div className="col-12">
-                                            <div style={{ padding: "60px 20px", textAlign: "center", background: "#f8f9fa", borderRadius: "8px" }}>
-                                                <i className="fa-solid fa-map-pin" style={{ fontSize: "48px", color: "#ccc", marginBottom: "15px" }}></i>
-                                                <p style={{ color: "#666", marginBottom: "15px" }}>
-                                                    No addresses yet
-                                                </p>
-                                                <button onClick={() => setShowForm(true)} className="common_btn">
-                                                    Add Your First Address
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         </div>

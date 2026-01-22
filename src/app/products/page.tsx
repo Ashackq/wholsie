@@ -4,7 +4,6 @@ import { useEffect, useState, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { useProductCache } from "@/context/ProductCacheContext";
 import { calculateDiscountPercent } from "@/lib/product-utils";
 
 interface Product {
@@ -45,7 +44,6 @@ function ProductsContent() {
     const [totalCount, setTotalCount] = useState(0);
     const [allProductsCount, setAllProductsCount] = useState(0);
     const [activeCategory, setActiveCategory] = useState("");
-    const { upsertProducts } = useProductCache();
 
     // Update active category when URL changes
     useEffect(() => {
@@ -102,9 +100,6 @@ function ProductsContent() {
             .then((data) => {
                 const newProducts = data.data || [];
                 const total = data.pagination?.total || newProducts.length;
-
-                // Cache the batch for reuse (e.g., cart/detail pages)
-                upsertProducts(newProducts as any);
 
                 if (reset) {
                     setProducts(newProducts);

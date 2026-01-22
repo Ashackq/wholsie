@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { getCart, createOrder, createPaymentOrder, updateCartItem, removeFromCart } from "@/lib/api";
 import AddressModals from "@/components/AddressModals";
-import { useProductCache } from "@/context/ProductCacheContext";
 import { resolveProductImage } from "@/lib/product-utils";
 
 declare global {
@@ -66,15 +65,9 @@ export default function CheckoutPage() {
     const [packagingCharges, setPackagingCharges] = useState(0);
     const [platformFee, setPlatformFee] = useState(0);
 
-    const { getProduct, upsertProduct } = useProductCache();
     const cacheUser = (u: any) => {
         if (!u) return;
         setUser(u);
-        try {
-            localStorage.setItem("user", JSON.stringify(u));
-        } catch (err) {
-            console.error("Failed to cache user in localStorage", err);
-        }
     };
 
     const formatCurrency = (amount: number) => `₹${amount.toFixed(2)}`;
@@ -187,17 +180,14 @@ export default function CheckoutPage() {
     const attachProductDetails = useCallback((payload: any) => {
         const items = (payload?.items ?? []).map((item: CartItem) => {
             const productId = (item.productId?._id || item.productId || item._id)?.toString?.() ?? "";
-            const cached = productId ? getProduct(productId) : undefined;
             const mergedProduct = {
-                ...(cached || {}),
                 ...(item as any).product || {},
-                _id: productId || (cached as any)?._id,
+                _id: productId,
             };
-            if (mergedProduct?._id) upsertProduct(mergedProduct as any);
             return { ...item, productId, product: mergedProduct } as CartItem;
         });
         return { ...(payload || {}), items };
-    }, [getProduct, upsertProduct]);
+    }, []);
 
     const loadCheckoutData = async () => {
         try {

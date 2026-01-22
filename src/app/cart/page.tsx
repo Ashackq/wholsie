@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getCart, removeFromCart, updateCartItem, getProduct as getProductDetail } from "@/lib/api";
-import { useProductCache } from "@/context/ProductCacheContext";
 import { resolveProductImage, resolveProductPrice } from "@/lib/product-utils";
 
 type CartProduct = {
@@ -52,25 +51,24 @@ type CartResponse = {
 const formatCurrency = (amount: number) => `₹${amount.toFixed(2)}`;
 
 // Merge duplicate items by productId + variantIndex
-// Use cached products for complete data
-const groupCartItems = (items: CartItem[], getProduct: (id?: string | null) => any): GroupedItem[] => {
+// Use fetched products for complete data
+const groupCartItems = (items: CartItem[], fullProducts: Record<string, CartProduct>): GroupedItem[] => {
     const map = new Map<string, GroupedItem>();
     for (const item of items) {
         const key = `${item.productId}:${item.variantIndex ?? -1}`;
 
-        // Get cached product for complete details
-        const cachedProduct = getProduct(item.productId);
-        const fullProduct = cachedProduct || item.product;
+        // Get fetched product for complete details
+        const fullProduct = fullProducts[item.productId] || item.product;
 
-        // Use price from cached product if available
+        // Use price from fetched product if available
         const unitPrice = fullProduct ? resolveProductPrice(fullProduct) : (item.price || 0);
 
         const existing = map.get(key);
         if (existing) {
             existing.quantity += item.quantity;
             existing.mergedIds.push(item._id);
-            // Prefer cached product over API data
-            existing.product = cachedProduct || existing.product || item.product;
+            // Prefer fetched product over API data
+            existing.product = fullProducts[item.productId] || existing.product || item.product;
             existing.name = existing.name || item.name || fullProduct?.name;
             // If unit price was 0 and we found a non-zero, update
             if (!existing.unitPrice && unitPrice) existing.unitPrice = unitPrice;
@@ -97,7 +95,6 @@ export default function CartPage() {
     const [error, setError] = useState<string>("");
     const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
     const [fullProducts, setFullProducts] = useState<Record<string, CartProduct>>({});
-    const { getProduct, upsertProduct } = useProductCache();
 
     const handleProceedToCheckout = () => {
         const userString = localStorage.getItem("user");
@@ -130,26 +127,17 @@ export default function CartPage() {
         router.push("/checkout");
     };
 
-    // Fetch full product details if not in cache
+    // Fetch full product details if not already fetched
     const getFullProduct = useCallback(
         async (productId: string): Promise<CartProduct | undefined> => {
             // Check if already fetched
             if (fullProducts[productId]) return fullProducts[productId];
 
-            // Check if in cache
-            const cached = getProduct(productId);
-            if (cached && cached.image) {
-                // Has image data, so it's complete
-                return cached as CartProduct;
-            }
-
-            // Not in cache with full details, fetch from API
+            // Fetch from API
             try {
                 const response = await getProductDetail(productId);
                 const product = (response as any)?.data || response;
                 if (product?._id) {
-                    // Cache it for future use
-                    upsertProduct(product);
                     setFullProducts((prev) => ({ ...prev, [productId]: product }));
                     return product;
                 }
@@ -158,28 +146,24 @@ export default function CartPage() {
             }
             return undefined;
         },
-        [fullProducts, getProduct, upsertProduct]
+        [fullProducts]
     );
 
     const attachProductDetails = useCallback((payload: any): CartResponse => {
         const items = (payload?.items ?? []).map((item: CartItem) => {
             const productId = (item.productId || (item.product as any)?._id || item._id)?.toString?.() ?? "";
-            const cached = productId ? getProduct(productId) : undefined;
+            const fullProduct = fullProducts[productId];
             const mergedProduct = {
-                ...(cached || {}),
+                ...(fullProduct || {}),
                 ...(item.product || {}),
-                _id: productId || (cached as any)?._id,
+                _id: productId || (fullProduct as any)?._id,
             } as CartProduct;
-
-            if (mergedProduct?._id) {
-                upsertProduct(mergedProduct as any);
-            }
 
             return { ...item, productId: productId || item.productId, product: mergedProduct } as CartItem;
         });
 
         return { ...(payload || {}), items } as CartResponse;
-    }, [getProduct, upsertProduct]);
+    }, [fullProducts]);
 
     useEffect(() => {
         let mounted = true;
@@ -193,8 +177,8 @@ export default function CartPage() {
 
                 // Fetch full product details for items without complete data
                 const itemsToFetch = (normalized.items || []).filter((item) => {
-                    const cached = getProduct(item.productId);
-                    return !cached || !cached.image; // Missing image = incomplete product
+                    const fetched = fullProducts[item.productId];
+                    return !fetched || !fetched.image; // Missing image = incomplete product
                 });
 
                 if (itemsToFetch.length > 0) {
@@ -226,7 +210,7 @@ export default function CartPage() {
         setCart(normalized);
     };
 
-    const groups = useMemo(() => groupCartItems(cart?.items ?? [], getProduct), [cart, getProduct]);
+    const groups = useMemo(() => groupCartItems(cart?.items ?? [], fullProducts), [cart, fullProducts]);
 
     const handleQuantityChangeGroup = async (group: GroupedItem, quantity: number) => {
         const safeQuantity = Math.max(1, Number.isNaN(quantity) ? 1 : quantity);
@@ -362,10 +346,9 @@ export default function CartPage() {
                                                 </thead>
                                                 <tbody>
                                                     {groups.map((group) => {
-                                                        // Get full product from cache or previously fetched
-                                                        const cached = getProduct(group.productId);
+                                                        // Get full product from previously fetched
                                                         const fetched = fullProducts[group.productId];
-                                                        const fullProduct = fetched || cached || group.product;
+                                                        const fullProduct = fetched || group.product;
 
                                                         const price = group.unitPrice;
                                                         const lineTotal = price * group.quantity;
@@ -450,10 +433,9 @@ export default function CartPage() {
                                         <h3>Order Summary</h3>
                                         <ul>
                                             {groups.map((group) => {
-                                                // Get full product from cache or previously fetched
-                                                const cached = getProduct(group.productId);
+                                                // Get full product from previously fetched
                                                 const fetched = fullProducts[group.productId];
-                                                const fullProduct = fetched || cached || group.product;
+                                                const fullProduct = fetched || group.product;
 
                                                 const price = group.unitPrice;
                                                 const imageSrc = fullProduct?.image || "";

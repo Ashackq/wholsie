@@ -50,11 +50,6 @@ export default function ProfilePage() {
     const cacheUser = (u: User | null) => {
         if (!u) return;
         setUser(u);
-        try {
-            localStorage.setItem("user", JSON.stringify(u));
-        } catch (err) {
-            console.error("Failed to cache user in localStorage", err);
-        }
     };
 
     // Check if it's first-time email setup (phone is in email)

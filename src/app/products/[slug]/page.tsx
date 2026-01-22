@@ -4,7 +4,6 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { addToCart } from "@/lib/api";
-import { useProductCache } from "@/context/ProductCacheContext";
 
 interface ProductImage {
     url: string;
@@ -62,7 +61,6 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'info' | 'reviews'>('info');
     const [cartMessage, setCartMessage] = useState<string>("");
-    const { upsertProduct } = useProductCache();
 
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/products/slug/${slug}`)
@@ -70,7 +68,6 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             .then((data) => {
                 if (data.success && data.data) {
                     setProduct(data.data);
-                    upsertProduct(data.data);
                     setQuantity(data.data.minOrderQty || 1);
                 }
                 setLoading(false);

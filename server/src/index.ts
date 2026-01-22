@@ -51,6 +51,7 @@ async function bootstrap() {
     "https://wholsie.vercel.app",
     "https://wholesiii.com",
   ]);
+  console.log(allowedOrigins);
 
   app.use(
     cors({
