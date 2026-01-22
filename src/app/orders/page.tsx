@@ -56,7 +56,7 @@ export default function OrdersPage() {
         async function loadData() {
             try {
                 const userData = await getCurrentUser();
-                const resolvedUser = userData.data || userData || null;
+                const resolvedUser = userData.data || null;
                 if (resolvedUser) cacheUser(resolvedUser);
 
                 const ordersData = await getOrders();

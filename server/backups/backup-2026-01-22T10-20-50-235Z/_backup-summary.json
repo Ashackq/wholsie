@@ -1,0 +1,62 @@
+{
+  "timestamp": "2026-01-22T10:20:50.238Z",
+  "database": "wholesiiii",
+  "collections": {
+    "users": {
+      "count": 1,
+      "file": "users.json"
+    },
+    "products": {
+      "count": 15,
+      "file": "products.json"
+    },
+    "categories": {
+      "count": 0,
+      "skipped": true
+    },
+    "orders": {
+      "count": 0,
+      "skipped": true
+    },
+    "carts": {
+      "count": 0,
+      "skipped": true
+    },
+    "reviews": {
+      "count": 0,
+      "skipped": true
+    },
+    "favorites": {
+      "count": 0,
+      "skipped": true
+    },
+    "notifications": {
+      "count": 0,
+      "skipped": true
+    },
+    "payments": {
+      "count": 0,
+      "skipped": true
+    },
+    "coupons": {
+      "count": 0,
+      "skipped": true
+    },
+    "supporttickets": {
+      "count": 0,
+      "skipped": true
+    },
+    "wallets": {
+      "count": 0,
+      "skipped": true
+    },
+    "emailtemplates": {
+      "count": 0,
+      "skipped": true
+    },
+    "settings": {
+      "count": 0,
+      "skipped": true
+    }
+  }
+}

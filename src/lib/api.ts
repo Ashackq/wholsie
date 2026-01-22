@@ -102,9 +102,9 @@ interface PaymentOrder {
 async function apiCall<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
     const { skipAuth, ...fetchOpts } = options;
 
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
         "Content-Type": "application/json",
-        ...fetchOpts.headers,
+        ...(fetchOpts.headers as Record<string, string>),
     };
 
     // Add authorization token from localStorage if available

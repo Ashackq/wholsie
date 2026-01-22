@@ -445,6 +445,10 @@ router.post("/auth/verify-otp", async (req: AuthRequest, res: Response, next: Ne
             });
 
             user = await db.collection("users").findOne({ _id: result.insertedId });
+
+            if (!user) {
+                return res.status(500).json({ error: "Failed to create user" });
+            }
         }
 
         // Check user status

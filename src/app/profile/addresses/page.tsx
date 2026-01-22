@@ -58,7 +58,7 @@ export default function AddressesPage() {
         async function loadData() {
             try {
                 const userData = await getCurrentUser();
-                const resolvedUser = userData.data || userData || null;
+                const resolvedUser = userData.data || null;
                 if (resolvedUser) cacheUser(resolvedUser);
                 fetchAddresses();
             } catch (err) {

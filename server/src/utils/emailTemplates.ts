@@ -1257,4 +1257,3 @@ export function generateOrderCancelledTemplate(data: CancelledTemplateData): str
     </html>
     `;
 }
-`;

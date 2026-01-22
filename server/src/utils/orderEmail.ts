@@ -352,9 +352,15 @@ export async function prepareInvoiceData(order: any): Promise<PdfInvoiceData> {
         orderDate: order.createdAt || new Date(),
         customerName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Customer",
         customerEmail: user.email,
-        customerPhone: user.phone,
+        customerPhone: user.phone || undefined,
         shippingAddress: order.shippingAddress || {},
-        billingAddress: user.address,
+        billingAddress: user.address ? {
+            street: user.address.street || undefined,
+            city: user.address.city || undefined,
+            state: user.address.state || undefined,
+            postalCode: user.address.postalCode || undefined,
+            country: user.address.country || undefined,
+        } : undefined,
         items: (order.items || []).map((item: any) => ({
             name: item.name,
             quantity: item.quantity || 1,

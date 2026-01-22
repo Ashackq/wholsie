@@ -1,0 +1,13 @@
+[
+  {
+    "_id": "695e3197b0dd04cbb73dbcd6",
+    "name": "Admin User",
+    "email": "admin@wholesiii.com",
+    "phone": "1234567890",
+    "password": "admin",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2026-01-07T10:12:39.841Z",
+    "updatedAt": "2026-01-07T10:12:39.841Z"
+  }
+]

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authRouter } from "./auth.js";
+import authRouter from "./auth.js";
 import { healthRouter } from "./health.js";
 import { paymentRouter } from "./payment.js";
 import { productsRouter } from "./products.js";
@@ -14,7 +14,7 @@ import walletRouter from "./wallet.js";
 import notificationsRouter from "./notifications.js";
 import couponsRouter from "./coupons.js";
 import supportRouter from "./support.js";
-import adminRouter from "./admin.js";
+import adminRouter from "./admin.routes.js";
 import searchRouter from "./search.js";
 
 export const apiRouter = Router();
