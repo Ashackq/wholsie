@@ -1031,6 +1031,8 @@ body {
 
 .details_slider_nav {
   gap: 10px;
+  position: relative;
+  z-index: 2;
 }
 
 .details_slider_nav_item {
@@ -1041,6 +1043,7 @@ body {
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s;
+  background: #fff;
 }
 
 .details_slider_nav_item:hover {
@@ -1203,14 +1206,18 @@ body {
   }
 
   .details_slider_nav {
-    display: flex;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
     gap: 10px;
     overflow-x: auto;
+    padding-bottom: 10px;
   }
 
   .details_slider_nav .col-12 {
-    min-width: 80px;
-    width: 80px;
+    flex: 0 0 auto !important;
+    min-width: 70px;
+    width: 70px;
   }
 
   .shop_details_sidebar {

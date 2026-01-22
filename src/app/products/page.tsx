@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { calculateDiscountPercent } from "@/lib/product-utils";
@@ -30,8 +30,10 @@ interface Category {
 
 function ProductsContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const categorySlug = searchParams?.get("category") || "";
     const searchQuery = searchParams?.get("search") || "";
+    const priceRange = searchParams?.get("price") || "";
 
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -45,10 +47,17 @@ function ProductsContent() {
     const [allProductsCount, setAllProductsCount] = useState(0);
     const [activeCategory, setActiveCategory] = useState("");
 
+    // Mobile filter modal state
+    const [showFilterModal, setShowFilterModal] = useState(false);
+    const [tempCategory, setTempCategory] = useState("");
+    const [tempPriceRange, setTempPriceRange] = useState("");
+
     // Update active category when URL changes
     useEffect(() => {
         const newSlug = searchParams?.get("category") || "";
         setActiveCategory(newSlug);
+        setTempCategory(newSlug);
+        setTempPriceRange(searchParams?.get("price") || "");
     }, [searchParams]);
 
     // Compute total all products count from categories
@@ -78,7 +87,32 @@ function ProductsContent() {
         setProducts([]);
         setIsFetching(false);
         fetchProducts(1, true);
-    }, [categorySlug, searchQuery]);
+    }, [categorySlug, searchQuery, priceRange]);
+
+    // Open filter modal with current values
+    const openFilterModal = () => {
+        setTempCategory(activeCategory);
+        setTempPriceRange(priceRange);
+        setShowFilterModal(true);
+    };
+
+    // Apply filters from modal
+    const applyFilters = () => {
+        const params = new URLSearchParams();
+        if (tempCategory) params.set("category", tempCategory);
+        if (tempPriceRange) params.set("price", tempPriceRange);
+        if (searchQuery) params.set("search", searchQuery);
+        
+        const queryString = params.toString();
+        router.push(`/products${queryString ? `?${queryString}` : ""}`);
+        setShowFilterModal(false);
+    };
+
+    // Clear all filters
+    const clearFilters = () => {
+        setTempCategory("");
+        setTempPriceRange("");
+    };
 
     const fetchProducts = useCallback((pageNum: number, reset = false) => {
         if (isFetching) return; // Prevent multiple simultaneous fetches
@@ -131,62 +165,236 @@ function ProductsContent() {
 
     const currentCategory = categories.find((cat) => cat.slug === categorySlug);
 
+    // Price range options
+    const priceRanges = [
+        { value: "", label: "All Prices" },
+        { value: "0-500", label: "Under ₹500" },
+        { value: "500-1000", label: "₹500 - ₹1000" },
+        { value: "1000-2000", label: "₹1000 - ₹2000" },
+        { value: "2000-", label: "Above ₹2000" },
+    ];
+
+    // Filter sidebar content (reused in desktop and modal)
+    const FilterContent = ({ isMobile = false }: { isMobile?: boolean }) => (
+        <>
+            <div className="sidebar_category">
+                <h3>Categories</h3>
+                <ul>
+                    <li 
+                        className={(!isMobile ? !activeCategory : !tempCategory) ? "current" : ""} 
+                        style={{ color: (!isMobile ? !activeCategory : !tempCategory) ? "var(--primary)" : "inherit" }}
+                    >
+                        {isMobile ? (
+                            <a 
+                                href="#" 
+                                onClick={(e) => { e.preventDefault(); setTempCategory(""); }}
+                                style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                            >
+                                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                    {!tempCategory && <i className="fa-solid fa-check" style={{ color: "var(--primary)", fontSize: "12px" }}></i>}
+                                    All Products
+                                </span>
+                                <span>({allProductsCount})</span>
+                            </a>
+                        ) : (
+                            <Link href="/products">
+                                <span>All Products</span>
+                                <span>({allProductsCount})</span>
+                            </Link>
+                        )}
+                    </li>
+                    {categories.map((cat) => (
+                        <li 
+                            key={cat._id} 
+                            className={(!isMobile ? cat.slug === activeCategory : cat.slug === tempCategory) ? "current" : ""} 
+                            style={{ color: (!isMobile ? cat.slug === activeCategory : cat.slug === tempCategory) ? "var(--primary)" : "inherit" }}
+                        >
+                            {isMobile ? (
+                                <a 
+                                    href="#" 
+                                    onClick={(e) => { e.preventDefault(); setTempCategory(cat.slug); }}
+                                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                >
+                                    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        {tempCategory === cat.slug && <i className="fa-solid fa-check" style={{ color: "var(--primary)", fontSize: "12px" }}></i>}
+                                        {cat.name}
+                                    </span>
+                                    <span>({cat.productCount ?? 0})</span>
+                                </a>
+                            ) : (
+                                <Link href={`/products?category=${cat.slug}${priceRange ? `&price=${priceRange}` : ""}`}>
+                                    <span>{cat.name}</span>
+                                    <span>({cat.productCount ?? 0})</span>
+                                </Link>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            <div className="sidebar_category">
+                <h3>Price Range</h3>
+                <ul>
+                    {priceRanges.map((range) => (
+                        <li 
+                            key={range.value || "all"} 
+                            className={(!isMobile ? priceRange === range.value : tempPriceRange === range.value) ? "current" : ""} 
+                            style={{ color: (!isMobile ? priceRange === range.value : tempPriceRange === range.value) ? "var(--primary)" : "inherit" }}
+                        >
+                            {isMobile ? (
+                                <a 
+                                    href="#" 
+                                    onClick={(e) => { e.preventDefault(); setTempPriceRange(range.value); }}
+                                    style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                                >
+                                    {tempPriceRange === range.value && <i className="fa-solid fa-check" style={{ color: "var(--primary)", fontSize: "12px" }}></i>}
+                                    <span>{range.label}</span>
+                                </a>
+                            ) : (
+                                <Link href={`/products${categorySlug ? `?category=${categorySlug}` : ""}${range.value ? `${categorySlug ? "&" : "?"}price=${range.value}` : ""}`}>
+                                    <span>{range.label}</span>
+                                </Link>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </>
+    );
+
     return (
-        <><section className="pt_55">
-            <div className="container">
-                <div className="row">
-                    {/* Sidebar */}
-                    <div className="col-lg-3 col-md-4 col-12">
-                        <div className="sidebar_category">
-                            <h3>Categories</h3>
-                            <ul>
-                                <li className={!activeCategory ? "current" : ""} style={{ color: !activeCategory ? "var(--primary)" : "inherit" }}>
-                                    <Link href="/products">
-                                        <span>All Products</span>
-                                        <span>({allProductsCount})</span>
-                                    </Link>
-                                </li>
-                                {categories.map((cat) => (
-                                    <li key={cat._id} className={cat.slug === activeCategory ? "current" : ""} style={{ color: cat.slug === activeCategory ? "var(--primary)" : "inherit" }}>
-                                        <Link href={`/products?category=${cat.slug}`}>
-                                            <span>{cat.name}</span>
-                                            <span>({cat.productCount ?? 0})</span>
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
+        <>
+            {/* Mobile Filter Modal */}
+            {showFilterModal && (
+                <div 
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        zIndex: 9999,
+                        display: "flex",
+                        alignItems: "flex-end",
+                        justifyContent: "center",
+                    }}
+                >
+                    {/* Backdrop */}
+                    <div 
+                        onClick={() => setShowFilterModal(false)}
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            background: "rgba(0,0,0,0.5)",
+                        }}
+                    />
+                    {/* Modal Content */}
+                    <div 
+                        style={{
+                            position: "relative",
+                            background: "#fff",
+                            width: "100%",
+                            maxHeight: "80vh",
+                            borderRadius: "20px 20px 0 0",
+                            overflow: "hidden",
+                            display: "flex",
+                            flexDirection: "column",
+                        }}
+                    >
+                        {/* Modal Header */}
+                        <div 
+                            style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                padding: "16px 20px",
+                                borderBottom: "1px solid #eee",
+                            }}
+                        >
+                            <div>
+                                <h4 style={{ margin: 0, fontWeight: 600 }}>Filters</h4>
+                                {(tempCategory || tempPriceRange) && (
+                                    <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#666" }}>
+                                        {tempCategory && <span style={{ background: "#f0f0f0", padding: "2px 8px", borderRadius: "4px", marginRight: "6px" }}>{categories.find(c => c.slug === tempCategory)?.name || tempCategory}</span>}
+                                        {tempPriceRange && <span style={{ background: "#f0f0f0", padding: "2px 8px", borderRadius: "4px" }}>{priceRanges.find(p => p.value === tempPriceRange)?.label || tempPriceRange}</span>}
+                                    </p>
+                                )}
+                            </div>
+                            <button 
+                                onClick={() => setShowFilterModal(false)}
+                                style={{
+                                    background: "none",
+                                    border: "none",
+                                    fontSize: "24px",
+                                    cursor: "pointer",
+                                    color: "#666",
+                                    lineHeight: 1,
+                                }}
+                            >
+                                ×
+                            </button>
                         </div>
 
-                        {/* Price Filter Placeholder */}
-                        <div className="sidebar_category">
-                            <h3>Price Range</h3>
-                            <ul>
-                                <li>
-                                    <Link href={`/products${categorySlug ? `?category=${categorySlug}` : ""}#price`}>
-                                        <span>Under ₹500</span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href={`/products${categorySlug ? `?category=${categorySlug}` : ""}#price`}>
-                                        <span>₹500 - ₹1000</span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href={`/products${categorySlug ? `?category=${categorySlug}` : ""}#price`}>
-                                        <span>₹1000 - ₹2000</span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href={`/products${categorySlug ? `?category=${categorySlug}` : ""}#price`}>
-                                        <span>Above ₹2000</span>
-                                    </Link>
-                                </li>
-                            </ul>
+                        {/* Scrollable Filter Content */}
+                        <div 
+                            style={{
+                                flex: 1,
+                                overflowY: "auto",
+                                padding: "20px",
+                            }}
+                        >
+                            <FilterContent isMobile={true} />
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div 
+                            style={{
+                                display: "flex",
+                                gap: "12px",
+                                padding: "16px 20px",
+                                borderTop: "1px solid #eee",
+                                background: "#fff",
+                            }}
+                        >
+                            <button 
+                                onClick={clearFilters}
+                                style={{
+                                    flex: 1,
+                                    padding: "14px",
+                                    border: "1px solid #ddd",
+                                    borderRadius: "8px",
+                                    background: "#fff",
+                                    fontSize: "15px",
+                                    fontWeight: 500,
+                                    cursor: "pointer",
+                                }}
+                            >
+                                Clear All
+                            </button>
+                            <button 
+                                onClick={applyFilters}
+                                className="common_btn"
+                                style={{
+                                    flex: 2,
+                                    padding: "14px",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    fontWeight: 500,
+                                }}
+                            >
+                                Apply Filters
+                            </button>
                         </div>
                     </div>
+                </div>
+            )}
 
-                    {/* Products Grid */
-                    }
+            <section className="pt_55" style={{ paddingTop: "70px" }}>
+            <div className="container">
+                <div className="row">
+                    {/* Sidebar - Hidden on mobile */}
+                    <div className="col-lg-3 col-md-4 d-none d-md-block">
+                        <FilterContent isMobile={false} />
+                    </div>
+
+                    {/* Products Grid */}
                     <div className="col-lg-9 col-md-8 col-12">
                         {/* Page Header */}
                         <div className="section_heading">
@@ -198,7 +406,45 @@ function ProductsContent() {
                                         : "All Products"}
                             </h3>
                             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                                <label htmlFor="sort" style={{ color: "#666", fontSize: 14 }}>Sort by:</label>
+                                {/* Mobile Filter Button */}
+                                <button 
+                                    onClick={openFilterModal}
+                                    className="d-flex d-md-none"
+                                    style={{
+                                        alignItems: "center",
+                                        gap: "6px",
+                                        padding: "8px 12px",
+                                        border: "1px solid #ddd",
+                                        borderRadius: "6px",
+                                        background: "#fff",
+                                        fontSize: "14px",
+                                        fontWeight: 500,
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                    </svg>
+                                    Filters
+                                    {(categorySlug || priceRange) && (
+                                        <span 
+                                            style={{
+                                                background: "var(--primary)",
+                                                color: "#fff",
+                                                borderRadius: "50%",
+                                                width: "18px",
+                                                height: "18px",
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                fontSize: "11px",
+                                            }}
+                                        >
+                                            {(categorySlug ? 1 : 0) + (priceRange ? 1 : 0)}
+                                        </span>
+                                    )}
+                                </button>
+                                <label htmlFor="sort" className="d-none d-sm-inline" style={{ color: "#666", fontSize: 14 }}>Sort by:</label>
                                 <select
                                     id="sort"
                                     value={sort}

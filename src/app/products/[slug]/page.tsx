@@ -180,7 +180,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     return (
         <>
             {/* Breadcrumb */}
-            <section className="breadcrumb_part">
+            <section className="breadcrumb_part" style={{ paddingTop: "70px" }}>
                 <div className="container">
                     <div className="row">
                         <div className="col-lg-12">
@@ -218,7 +218,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                     <div className="shop_details_slider_area">
                                         <div className="row">
                                             {/* Thumbnail Navigation */}
-                                            <div className="col-xl-2 col-lg-3 col-md-3 order-2 order-md-1">
+                                            <div className="col-xl-2 col-lg-3 col-md-3 col-12 order-2 order-md-1" style={{ position: 'relative', zIndex: 2, paddingRight: '20px' }}>
                                                 <div className="row details_slider_nav">
                                                     {imageList.map((img, idx) => (
                                                         <div className="col-12" key={idx}>
@@ -229,7 +229,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                                     cursor: 'pointer',
                                                                     border: selectedImage === idx ? '2px solid #333' : '1px solid #ddd',
                                                                     padding: '5px',
-                                                                    borderRadius: '4px'
+                                                                    borderRadius: '4px',
+                                                                    background: '#fff'
                                                                 }}
                                                             >
                                                                 <Image
@@ -247,7 +248,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                             </div>
 
                                             {/* Main Image Display */}
-                                            <div className="col-xl-10 col-lg-9 col-md-9 order-1 order-md-1">
+                                            <div className="col-xl-10 col-lg-9 col-md-9 order-1 order-md-2" style={{ position: 'relative', zIndex: 1 }}>
                                                 <div className="details_slider_thumb">
                                                     <div
                                                         className="details_slider_thumb_item"
