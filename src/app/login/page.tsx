@@ -251,11 +251,13 @@ export default function LoginPage() {
                                                     />
                                                 </div>
                                             </div>
+                                            {/* Forgot password link hidden for now
                                             <div className="col-12 mb-3">
                                                 <Link href="/reset-password" style={{ color: "var(--primary)" }}>
                                                     Forgot your password?
                                                 </Link>
                                             </div>
+                                            */}
                                             <div className="col-xl-12">
                                                 <button type="submit" className="common_btn" disabled={loading}>
                                                     {loading ? "Signing in..." : "Sign In"} <i className="fas fa-long-arrow-right" />
