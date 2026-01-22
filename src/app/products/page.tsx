@@ -245,7 +245,7 @@ function ProductsContent() {
                                                 const discountPercent = hasDiscount
                                                     ? calculateDiscountPercent(basePrice, discounted)
                                                     : 0;
-                                                const imageSrc = resolveProductImage(product);
+                                                const imageSrc = product.image;
 
                                                 return (
                                                     <div
