@@ -49,7 +49,7 @@ async function bootstrap() {
   const allowedOrigins = new Set([
     ...originsFromEnv,
     "https://wholsie.vercel.app",
-    "https://wholesiii.com",
+    "https://www.wholesiii.com",
   ]);
   console.log(allowedOrigins);
 
