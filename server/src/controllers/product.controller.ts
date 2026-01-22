@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { Product } from '../models/Product.js';
+import { Category } from '../models/Category.js';
 
 /**
  * Get all products (admin)
  */
 export async function getProducts(req: Request, res: Response, next: NextFunction) {
     try {
-        const { limit = 20, offset = 0, search, categoryId } = req.query;
+        const { limit = 20, offset = 0, search, categoryId, category } = req.query;
 
         const filter: any = { status: { $ne: 'deleted' } };
 
@@ -17,8 +18,15 @@ export async function getProducts(req: Request, res: Response, next: NextFunctio
             ];
         }
 
+        // Support both categoryId (ObjectId) and category (slug)
         if (categoryId) {
             filter.categoryId = categoryId;
+        } else if (category) {
+            // Find category by slug and use its _id
+            const cat = await Category.findOne({ slug: category });
+            if (cat) {
+                filter.categoryId = cat._id;
+            }
         }
 
         const products = await Product
