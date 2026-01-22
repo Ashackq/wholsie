@@ -176,8 +176,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
     // Build image list - use product.images if available, fallback to single image
     const imageList = (product.images && product.images.length > 0)
-        ? product.images
-        : [{ url: product.image, alt: product.name }];
+        ? [product.image, ...product.images]
+        : [product.image];
+
 
     return (
         <>
@@ -235,8 +236,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                                 }}
                                                             >
                                                                 <Image
-                                                                    src={`/assets/uploaded/item/${img.url}`}
-                                                                    alt={img.alt || product.name}
+                                                                    src={`/${img}`}
+                                                                    alt={product.name}
                                                                     width={100}
                                                                     height={100}
                                                                     className="img-fluid"
@@ -264,8 +265,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                         }}
                                                     >
                                                         <Image
-                                                            src={`/assets/uploaded/item/${imageList[selectedImage].url}`}
-                                                            alt={imageList[selectedImage].alt || product.name}
+                                                            src={`/${imageList[selectedImage]}`}
+                                                            alt={product.name}
                                                             width={600}
                                                             height={600}
                                                             className="img-fluid"

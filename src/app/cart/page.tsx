@@ -372,7 +372,7 @@ export default function CartPage() {
                                                         const lineTotal = price * group.quantity;
                                                         const name = fullProduct?.name ?? group.name ?? "Product";
                                                         const categoryName = fullProduct?.category?.name;
-                                                        const imageSrc = resolveProductImage(fullProduct);
+                                                        const imageSrc = fullProduct?.image || "";
 
                                                         return (
                                                             <tr key={group.key}>
@@ -457,7 +457,7 @@ export default function CartPage() {
                                                 const fullProduct = fetched || cached || group.product;
 
                                                 const price = group.unitPrice;
-                                                const imageSrc = resolveProductImage(fullProduct);
+                                                const imageSrc = fullProduct?.image || "";
                                                 const name = fullProduct?.name ?? group.name ?? "Product";
                                                 return (
                                                     <li key={`summary-${group.key}`}>

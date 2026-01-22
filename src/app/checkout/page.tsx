@@ -938,7 +938,7 @@ export default function CheckoutPage() {
                                         {groups.map((group) => {
                                             const price = group.unitPrice;
                                             const quantity = group.quantity;
-                                            const imageSrc = resolveProductImage(group.product);
+                                            const imageSrc = group.product?.image || "";
                                             const name = group.product?.name || group.name || "Product";
                                             return (
                                                 <li key={group.key}>

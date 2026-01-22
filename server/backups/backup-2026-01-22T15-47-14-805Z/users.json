@@ -1,0 +1,33 @@
+[
+  {
+    "_id": {
+      "$oid": "695e3197b0dd04cbb73dbcd6"
+    },
+    "name": "Admin User",
+    "email": "admin@wholesiii.com",
+    "phone": "1234567890",
+    "password": "$2a$10$ns1xGpFz40ynZE0uQsQ4BePMA0xGF8mEa2U8keMVsVafr/opJwDfS",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2026-01-07T10:12:39.841Z",
+    "updatedAt": "2026-01-07T10:12:39.841Z"
+  },
+  {
+    "_id": {
+      "$oid": "697243e5449a14a0f4c42e80"
+    },
+    "name": "Akash Patel",
+    "phone": "7069928282",
+    "email": "akashpatelyo2@gmail.com",
+    "password": "",
+    "role": "customer",
+    "status": "active",
+    "wallet": {
+      "balance": 0,
+      "reserved": 0
+    },
+    "addresses": [],
+    "createdAt": "2026-01-22T15:36:05.715Z",
+    "updatedAt": "2026-01-22T15:38:39.240Z"
+  }
+]

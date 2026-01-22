@@ -1,0 +1,48 @@
+[
+  {
+    "_id": {
+      "$oid": "69707449500e38acf28b2611"
+    },
+    "name": "Makhana",
+    "slug": "makhana",
+    "status": "active",
+    "createdAt": "2026-01-21T06:38:01.244Z",
+    "updatedAt": "2026-01-21T07:08:34.936Z",
+    "__v": 0,
+    "image": "/assets/uploaded/menu_category/makhana.webp"
+  },
+  {
+    "_id": {
+      "$oid": "697074a4500e38acf28b2614"
+    },
+    "name": "Jowar Puffs",
+    "slug": "jowar-puffs",
+    "status": "active",
+    "createdAt": "2026-01-21T06:39:32.072Z",
+    "updatedAt": "2026-01-21T08:31:56.177Z",
+    "__v": 0,
+    "image": "/assets/uploaded/menu_category/puffs.png"
+  },
+  {
+    "_id": {
+      "$oid": "697074aa500e38acf28b2617"
+    },
+    "name": "Protein Puffs",
+    "slug": "protein-puffs",
+    "status": "active",
+    "createdAt": "2026-01-21T06:39:38.645Z",
+    "updatedAt": "2026-01-21T06:39:38.645Z",
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "697074b1500e38acf28b261a"
+    },
+    "name": "Oats Puffs",
+    "slug": "oats-puffs",
+    "status": "active",
+    "createdAt": "2026-01-21T06:39:45.170Z",
+    "updatedAt": "2026-01-21T06:39:45.170Z",
+    "__v": 0
+  }
+]
