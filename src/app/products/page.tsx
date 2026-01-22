@@ -19,6 +19,11 @@ interface Product {
     discount?: number;
     isRecentLaunch?: boolean;
     isCombo?: boolean;
+    categoryId?: {
+        _id: string;
+        name: string;
+        slug: string;
+    };
 }
 
 interface Category {
@@ -475,6 +480,11 @@ function ProductsContent() {
                                 <div className="row">
                                     {products.length > 0 ? (
                                         [...products]
+                                            // Filter by category
+                                            .filter((product) => {
+                                                if (!categorySlug) return true;
+                                                return product.categoryId?.slug === categorySlug;
+                                            })
                                             // Filter by price range
                                             .filter((product) => {
                                                 if (!priceRange) return true;
