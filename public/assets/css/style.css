@@ -47,24 +47,24 @@ CSS INDEX
 }
 
 :root {
-    --white: #ffffff;
-    --black: #000000;
-    --primary: #F05F22;
+        --headingFont: "Albert Sans", "Segoe UI", Arial, sans-serif;
+        --bodyFont: "Albert Sans", "Segoe UI", Arial, sans-serif;
+        --cursiveFont: "Albert Sans", "Segoe UI", Arial, sans-serif;
     --colorPrimary: #F05F22;
     --red_1: #db1215;
     --backdrop: rgba(0, 0, 0, 0.5);
     --yellow: #ffb321;
-    --main-rgba-1: rgba(0, 0, 0, 0.16);
+            font-size: 15px;
     --main-rgba-2: rgba(0, 0, 0, 0.15);
     --text: #545454;
     --text-2: #909090;
-    --text-3: #868686;
+        font-size: 16px;
     --line: #f3efef;
     --line-3: #dedada;
-    --line-2: #ececec;
+        font-family: var(--headingFont);
     --bg-1: #fcfbf9;
     --bg-2: #f6f6f6;
-    --bg-3: #fcffb2;
+        font-family: var(--headingFont);
     --bg-4: #c9f4aa;
     --bg-5: #ff7b54;
     --bg-6: #8054ff;
@@ -318,9 +318,9 @@ button {
     --colorWhite: #ffffff;
     --lightBg: #FFF2E9;
     --lightBg2: #FFF2E9;
-    --headingFont: sans-serif;
-    --bodyFont: sans-serif;
-    --cursiveFont: sans-serif;
+    --headingFont: "Albert Sans", "Segoe UI", Arial, sans-serif;
+    --bodyFont: "Albert Sans", "Segoe UI", Arial, sans-serif;
+    --cursiveFont: "Albert Sans", "Segoe UI", Arial, sans-serif;
     --ratingColor: #F9A61C;
     --boxShadow: rgb(149 157 165 / 16%) 0px 3px 22px;
 }
@@ -863,8 +863,12 @@ header form .input {
 header form input {
     border: none;
     padding: 14px 20px;
-    font-size: 14px;
+    font-size: 16px;
     background: none;
+}
+
+header form input::placeholder {
+    font-size: 16px;
 }
 
 header form button {
@@ -918,7 +922,7 @@ header .header_support .icon {
 }
 
 header .header_support h3 {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 400;
     color: var(--themeColoeOne);
     font-family: var(--bodyFont);
@@ -927,7 +931,7 @@ header .header_support h3 {
 header .header_support h3 a span,
 header .header_support h3 a {
     display: block;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--colorBlack);
     font-family: var(--headingFont);
@@ -954,7 +958,7 @@ header .header_support h3 a:hover {
     /* background: var(--lightBg); */
     position: relative;
     z-index: 9;
-    border-bottom: 1px solid #8585851a;
+    /* border-bottom: 1px solid #8585851a; */
 }
 
 .menu_category_bar {
@@ -994,7 +998,7 @@ header .header_support h3 a:hover {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    font-family: sans-serif;
+    font-family: var(--headingFont);
 }
 
 .menu_category_bar span {
@@ -1269,7 +1273,7 @@ header .header_support h3 a:hover {
     -o-transition: all linear .3s;
     font-size: 16px;
     opacity: 1;
-    font-family: sans-serif;
+    font-family: var(--headingFont);
 }
 
 .menu_item li a i {
@@ -3419,7 +3423,7 @@ footer {
 /* menu 2 start */
 .main_menu_2 {
     background: #fff !important;
-    border: 1px solid #fff2e9;
+    /* border: 1px solid #fff2e9; */
 }
 
 .main_menu_2 .menu_item {
