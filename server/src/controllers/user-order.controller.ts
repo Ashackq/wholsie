@@ -31,6 +31,7 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
 
         // Get user
         const user = await User.findById(userId);
+        
         if (!user?.email || user.email.includes('phonenumber@')) {
             return res.status(400).json({
                 error: 'Please update your email address before placing an order',
@@ -38,10 +39,14 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
             });
         }
 
-        const fullName = `${user.firstName} ${user.lastName}`.trim();
+        // Check for name - support both firstName/lastName and legacy name field
+        const firstName = (user as any).firstName || (user as any).name?.split(' ')[0] || '';
+        const lastName = (user as any).lastName || (user as any).name?.split(' ').slice(1).join(' ') || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+
         if (!fullName || /^user\d*$/i.test(fullName)) {
             return res.status(400).json({
-                error: 'Please update your name before placing an order',
+                error: `Please update your name before placing an order`,
                 requiresProfileUpdate: true
             });
         }

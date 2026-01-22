@@ -218,7 +218,13 @@ router.put("/auth/profile", requireAuth, async (req: AuthRequest, res: Response,
         }
 
         const updateData: any = { updatedAt: new Date() };
-        if (name) updateData.name = name;
+        if (name) {
+            // Split name into firstName and lastName for schema compatibility
+            const nameParts = name.trim().split(/\s+/);
+            updateData.firstName = nameParts[0] || "";
+            updateData.lastName = nameParts.slice(1).join(" ") || "";
+            updateData.name = name; // Also keep full name for backwards compatibility
+        }
         if (phone) updateData.phone = phone;
         if (profileImage) updateData.profileImage = profileImage;
         if (bio) updateData.bio = bio;

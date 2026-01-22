@@ -18,13 +18,16 @@ interface User {
 
 interface Address {
     _id: string;
-    name: string;
-    phone: string;
-    street: string;
+    address: string;  // street address from API
+    address2?: string;
     city: string;
     state: string;
-    postalCode: string;
+    pincode: string;  // postalCode from API
+    landmark?: string;
     isDefault: boolean;
+    // These may not exist in DB but frontend form uses them
+    name?: string;
+    phone?: string;
 }
 
 export default function AddressesPage() {
@@ -150,12 +153,12 @@ export default function AddressesPage() {
     const handleEditAddress = (address: Address) => {
         setEditingAddressId(address._id);
         setFormData({
-            name: address.name,
-            phone: address.phone,
-            street: address.street,
+            name: address.name || "",
+            phone: address.phone || "",
+            street: address.address || "",  // Map API 'address' to form 'street'
             city: address.city,
             state: address.state,
-            postalCode: address.postalCode,
+            postalCode: address.pincode || "",  // Map API 'pincode' to form 'postalCode'
             isDefault: address.isDefault,
         });
         setShowForm(true);
@@ -341,27 +344,41 @@ export default function AddressesPage() {
                                     </form>
                                 )}
 
-                                {/* Addresses List */}
+                                {/* Addresses List - Hide when editing */}
+                                {!showForm && (
                                 <div className="row">
                                     {addresses.length > 0 ? (
                                         addresses.map((address) => (
                                             <div key={address._id} className="col-md-6 mb-4">
-                                                <div className="address-card">
+                                                <div className="address-card" style={{ position: "relative", padding: "20px", background: "#f8f9fa", borderRadius: "10px", border: address.isDefault ? "2px solid #F05F22" : "1px solid #eee" }}>
                                                     {address.isDefault && (
-                                                        <span className="badge bg-primary" style={{ position: "absolute", top: "15px", right: "15px" }}>
+                                                        <span style={{ position: "absolute", top: "12px", right: "12px", background: "#F05F22", color: "#fff", padding: "4px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: 500 }}>
                                                             Default
                                                         </span>
                                                     )}
-                                                    <h5 className="mb-2">{address.name}</h5>
-                                                    <p className="mb-1 text-muted">{address.street}</p>
-                                                    <p className="mb-1 text-muted">
-                                                        {address.city}, {address.state} {address.postalCode}
+                                                    {address.name && <h5 style={{ marginBottom: "10px", fontWeight: 600, color: "#333" }}>{address.name}</h5>}
+                                                    <p style={{ marginBottom: "6px", fontWeight: 500, color: "#333" }}>
+                                                        <i className="fa-solid fa-location-dot" style={{ marginRight: "8px", color: "#F05F22" }}></i>
+                                                        {address.address}
                                                     </p>
-                                                    <p className="mb-3 text-muted">
-                                                        <i className="fa-solid fa-phone"></i> {address.phone}
+                                                    {address.address2 && (
+                                                        <p style={{ marginBottom: "6px", color: "#666", paddingLeft: "22px" }}>{address.address2}</p>
+                                                    )}
+                                                    {address.landmark && (
+                                                        <p style={{ marginBottom: "6px", color: "#888", paddingLeft: "22px", fontSize: "14px" }}>
+                                                            Landmark: {address.landmark}
+                                                        </p>
+                                                    )}
+                                                    <p style={{ marginBottom: "6px", color: "#666", paddingLeft: "22px" }}>
+                                                        {address.city}, {address.state} - {address.pincode}
                                                     </p>
-                                                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                                                        <label className="mb-0" style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                                                    {address.phone && (
+                                                        <p style={{ marginBottom: "15px", color: "#666", paddingLeft: "22px" }}>
+                                                            <i className="fa-solid fa-phone" style={{ marginRight: "6px" }}></i> {address.phone}
+                                                        </p>
+                                                    )}
+                                                    <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", marginTop: "15px", paddingTop: "15px", borderTop: "1px solid #eee" }}>
+                                                        <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", margin: 0 }}>
                                                             <input
                                                                 type="checkbox"
                                                                 checked={address.isDefault}
@@ -369,13 +386,21 @@ export default function AddressesPage() {
                                                                 className="form-check-input"
                                                                 style={{ margin: 0 }}
                                                             />
-                                                            <span style={{ fontSize: "14px", color: "#666" }}>Set as Default</span>
+                                                            <span style={{ fontSize: "14px", color: "#666" }}>Set Default</span>
                                                         </label>
                                                         <button
-                                                            onClick={() => handleDeleteAddress(address._id)}
-                                                            className="btn btn-sm btn-outline-danger"
+                                                            onClick={() => handleEditAddress(address)}
+                                                            className="common_btn"
+                                                            style={{ padding: "8px 16px", fontSize: "14px" }}
                                                         >
-                                                            <i className="fa-solid fa-trash"></i> Delete
+                                                            <i className="fa-solid fa-pen" style={{ marginRight: "6px" }}></i> Edit
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteAddress(address._id)}
+                                                            className="common_btn"
+                                                            style={{ padding: "8px 16px", fontSize: "14px", background: "#dc3545" }}
+                                                        >
+                                                            <i className="fa-solid fa-trash" style={{ marginRight: "6px" }}></i> Delete
                                                         </button>
                                                     </div>
                                                 </div>
@@ -385,18 +410,17 @@ export default function AddressesPage() {
                                         <div className="col-12">
                                             <div style={{ padding: "60px 20px", textAlign: "center", background: "#f8f9fa", borderRadius: "8px" }}>
                                                 <i className="fa-solid fa-map-pin" style={{ fontSize: "48px", color: "#ccc", marginBottom: "15px" }}></i>
-                                                <p style={{ color: "#666", marginBottom: showForm ? "0" : "15px" }}>
+                                                <p style={{ color: "#666", marginBottom: "15px" }}>
                                                     No addresses yet
                                                 </p>
-                                                {!showForm && (
-                                                    <button onClick={() => setShowForm(true)} className="common_btn">
-                                                        Add Your First Address
-                                                    </button>
-                                                )}
+                                                <button onClick={() => setShowForm(true)} className="common_btn">
+                                                    Add Your First Address
+                                                </button>
                                             </div>
                                         </div>
                                     )}
                                 </div>
+                                )}
                             </div>
                         </div>
                     </div>

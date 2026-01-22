@@ -3,6 +3,8 @@ import { Schema, model } from 'mongoose';
 const addressSchema = new Schema(
     {
         userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        name: { type: String, default: '' },  // Address label or recipient name
+        phone: { type: String, default: '' },  // Contact phone for this address
         address: { type: String, required: true },
         address2: String,
         city: { type: String, required: true },

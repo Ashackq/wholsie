@@ -58,6 +58,8 @@ export async function addAddress(req: Request, res: Response, next: NextFunction
 
         const newAddress = new Address({
             userId,
+            name: name || "",
+            phone: phone || "",
             address: streetAddress,
             address2: address2 || addressLine2 || "",
             city,
@@ -88,7 +90,20 @@ export async function updateAddress(req: Request, res: Response, next: NextFunct
     try {
         const userId = req.userId!;
         const { addressId } = req.params;
-        const { isDefault, ...updateData } = req.body;
+        const { 
+            isDefault,
+            // Handle field mapping: street -> address, postalCode -> pincode
+            address, street,
+            address2, addressLine2,
+            city,
+            state,
+            pincode, postalCode,
+            landmark,
+            name,
+            phone,
+            latitude,
+            longitude
+        } = req.body;
 
         // If setting as default, unset others
         if (isDefault) {
@@ -98,20 +113,37 @@ export async function updateAddress(req: Request, res: Response, next: NextFunct
             );
         }
 
-        const address = await Address.findOneAndUpdate(
+        // Build update object with field mapping
+        const updateFields: any = { 
+            isDefault: !!isDefault, 
+            updatedAt: new Date() 
+        };
+        
+        if (address || street) updateFields.address = address || street;
+        if (address2 !== undefined || addressLine2 !== undefined) updateFields.address2 = address2 || addressLine2 || "";
+        if (city) updateFields.city = city;
+        if (state) updateFields.state = state;
+        if (pincode || postalCode) updateFields.pincode = pincode || postalCode;
+        if (landmark !== undefined) updateFields.landmark = landmark;
+        if (name !== undefined) updateFields.name = name;
+        if (phone !== undefined) updateFields.phone = phone;
+        if (latitude !== undefined) updateFields.latitude = latitude;
+        if (longitude !== undefined) updateFields.longitude = longitude;
+
+        const updatedAddress = await Address.findOneAndUpdate(
             { _id: addressId, userId },
-            { ...updateData, isDefault: !!isDefault, updatedAt: new Date() },
+            updateFields,
             { new: true }
         );
 
-        if (!address) {
+        if (!updatedAddress) {
             return res.status(404).json({ error: 'Address not found' });
         }
 
         res.json({
             success: true,
             message: 'Address updated',
-            data: address
+            data: updatedAddress
         });
     } catch (error) {
         next(error);
