@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { getCart, createOrder, createPaymentOrder, updateCartItem, removeFromCart } from "@/lib/api";
+import { getCart, createOrder, createPaymentOrder, updateCartItem, removeFromCart, getProduct } from "@/lib/api";
 import AddressModals from "@/components/AddressModals";
 import { resolveProductImage } from "@/lib/product-utils";
 
@@ -64,6 +64,7 @@ export default function CheckoutPage() {
     const [shippingCharge, setShippingCharge] = useState(0);
     const [packagingCharges, setPackagingCharges] = useState(0);
     const [platformFee, setPlatformFee] = useState(0);
+    const [groups, setGroups] = useState<GroupedItem[]>([]);
 
     const cacheUser = (u: any) => {
         if (!u) return;
@@ -132,18 +133,30 @@ export default function CheckoutPage() {
         unitPrice: number;
     };
 
-    const groupCartItems = (items: CartItem[]): GroupedItem[] => {
+    const groupCartItems = async (items: CartItem[]): Promise<GroupedItem[]> => {
         const map = new Map<string, GroupedItem>();
         for (const item of items) {
             const pid = (item.productId?._id || item.productId || "").toString();
+
+            // Fetch product data from API
+            let product = item.product;
+            if (pid && (!product || !product.name)) {
+                try {
+                    const response = await getProduct(pid);
+                    product = response?.data || response || product;
+                } catch (err) {
+                    console.error(`Failed to fetch product ${pid}:`, err);
+                }
+            }
+
             const key = `${pid}:${item.variantIndex ?? -1}`;
-            const unitPrice = resolvePrice(item as any);
+            const unitPrice = resolvePrice(product);
             const existing = map.get(key);
             if (existing) {
                 existing.quantity += item.quantity ?? 1;
                 existing.mergedIds.push(item._id);
-                existing.product = existing.product || (item as any).product;
-                existing.name = existing.name || item.name || (item as any).product?.name;
+                existing.product = existing.product || product;
+                existing.name = existing.name || item.name || product?.name;
                 if (!existing.unitPrice && unitPrice) existing.unitPrice = unitPrice;
             } else {
                 map.set(key, {
@@ -152,8 +165,8 @@ export default function CheckoutPage() {
                     productId: pid,
                     variantIndex: (item as any).variantIndex,
                     quantity: item.quantity ?? 1,
-                    product: (item as any).product,
-                    name: item.name || (item as any).product?.name,
+                    product: product,
+                    name: item.name || product?.name,
                     unitPrice,
                 });
             }
@@ -239,7 +252,17 @@ export default function CheckoutPage() {
         }
     };
 
-    const groups = useMemo(() => groupCartItems(cart?.items ?? []), [cart]);
+    useEffect(() => {
+        const fetchGroups = async () => {
+            if (cart?.items) {
+                const groupedItems = await groupCartItems(cart.items);
+                setGroups(groupedItems);
+            } else {
+                setGroups([]);
+            }
+        };
+        fetchGroups();
+    }, [cart]);
 
     const summary = useMemo(() => {
         const subtotalCalc = groups.reduce((sum, g) => sum + (g.unitPrice || 0) * (g.quantity || 0), 0);
@@ -926,6 +949,7 @@ export default function CheckoutPage() {
                                     {/* Cart Items */}
                                     <ul>
                                         {groups.map((group) => {
+
                                             const price = group.unitPrice;
                                             const quantity = group.quantity;
                                             const imageSrc = group.product?.image || "";
@@ -934,7 +958,7 @@ export default function CheckoutPage() {
                                                 <li key={group.key}>
                                                     <a href="#" className="img" style={{ display: 'block' }}>
                                                         <Image
-                                                            src={imageSrc}
+                                                            src={"/" + imageSrc}
                                                             alt={name}
                                                             width={60}
                                                             height={60}
