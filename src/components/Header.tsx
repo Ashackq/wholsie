@@ -17,6 +17,8 @@ export default function Header() {
         try {
             await logout();
             localStorage.removeItem("user");
+            localStorage.removeItem("authToken");
+            sessionStorage.clear();
             setIsLoggedIn(false);
             router.push("/");
             setMobileOpen(false);

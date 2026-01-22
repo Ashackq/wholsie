@@ -13,6 +13,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         try {
             await logout();
             localStorage.removeItem("user");
+            localStorage.removeItem("authToken");
+            sessionStorage.clear();
             router.push("/");
         } catch (err) {
             console.error("Logout failed:", err);

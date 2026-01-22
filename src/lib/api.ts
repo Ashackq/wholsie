@@ -231,7 +231,7 @@ export async function register(data: {
 }
 
 export async function logout(): Promise<ApiResponse<{ message: string }>> {
-    return apiCall<ApiResponse<{ message: string }>>("/auth/logout", { 
+    return apiCall<ApiResponse<{ message: string }>>("/auth/logout", {
         method: "POST",
         cache: "no-store",
         headers: {
