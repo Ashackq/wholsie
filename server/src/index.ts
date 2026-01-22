@@ -28,6 +28,10 @@ async function bootstrap() {
     await verifyEmailConnection();
 
     const app = express();
+
+    // Trust proxy headers when behind a reverse proxy (nginx, load balancer, etc.)
+    app.set('trust proxy', true);
+
     app.use(helmet());
 
     // Rate limiting - prevent brute force and DDoS attacks

@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useProductCache } from "@/context/ProductCacheContext";
-import { resolveProductImage, calculateDiscountPercent } from "@/lib/product-utils";
+import { calculateDiscountPercent } from "@/lib/product-utils";
 
 interface Product {
     _id: string;
@@ -15,8 +15,11 @@ interface Product {
     price: number;
     discountPrice?: number;
     discountedPrice?: number;
+    salePrice?: number;
     image: string;
     discount?: number;
+    isRecentLaunch?: boolean;
+    isCombo?: boolean;
 }
 
 interface Category {
@@ -231,21 +234,20 @@ function ProductsContent() {
                                     {products.length > 0 ? (
                                         [...products]
                                             .sort((a, b) => {
-                                                const priceA = a.discountPrice || a.discountedPrice || a.price;
-                                                const priceB = b.discountPrice || b.discountedPrice || b.price;
+                                                const priceA = (a.discountPrice ?? a.discountedPrice ?? a.price);
+                                                const priceB = (b.discountPrice ?? b.discountedPrice ?? b.price);
                                                 if (sort === "price-asc") return priceA - priceB;
                                                 if (sort === "price-desc") return priceB - priceA;
                                                 if (sort === "newest") return (b as any)._id.localeCompare((a as any)._id);
                                                 return 0;
                                             })
                                             .map((product) => {
-                                                const basePrice = product.price;
-                                                const discounted = product.discountPrice ?? product.discountedPrice;
-                                                const hasDiscount = discounted && discounted < basePrice;
-                                                const discountPercent = hasDiscount
-                                                    ? calculateDiscountPercent(basePrice, discounted)
-                                                    : 0;
-                                                const imageSrc = product.image;
+                                                const basePrice = product.price ?? 0;
+                                                const discounted = product.discountPrice ?? product.discountedPrice ?? product.salePrice;
+                                                const hasDiscount = typeof discounted === "number" && discounted < basePrice && basePrice > 0;
+                                                const discountPercent = hasDiscount ? calculateDiscountPercent(basePrice, discounted as number) : 0;
+                                                const finalPrice = hasDiscount ? (discounted as number) : basePrice;
+                                                const imageSrc = product.image?.startsWith('/') ? product.image : `/${product.image}`;
 
                                                 return (
                                                     <div
@@ -253,39 +255,117 @@ function ProductsContent() {
                                                         className="col-lg-4 col-md-6 col-sm-6 col-12"
                                                         style={{ marginBottom: "30px" }}
                                                     >
-                                                        <div className="gadget_product_item wow fadeInUp">
-                                                            <div className="top_text">
-                                                                <Link href={`/products/${product.slug}`} className="title">
-                                                                    {product.name || product.title}
-                                                                </Link>
+                                                        <div
+                                                            className="gadget_product_item wow fadeInUp"
+                                                            style={{
+                                                                background: "linear-gradient(145deg, #ffffff 0%, #f7f9ff 100%)",
+                                                                borderRadius: "18px",
+                                                                padding: "14px",
+                                                                boxShadow: "0 14px 34px rgba(0,0,0,0.08)",
+                                                                display: "flex",
+                                                                flexDirection: "column",
+                                                                gap: "12px",
+                                                                height: "100%",
+                                                            }}
+                                                        >
+                                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                                                                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                                                                    {product.isRecentLaunch && (
+                                                                        <span style={{
+                                                                            background: "#0f172a",
+                                                                            color: "#fff",
+                                                                            borderRadius: "999px",
+                                                                            padding: "4px 10px",
+                                                                            fontSize: "12px",
+                                                                            letterSpacing: "0.4px",
+                                                                            textTransform: "uppercase",
+                                                                        }}>
+                                                                            New Launch
+                                                                        </span>
+                                                                    )}
+                                                                    {product.isCombo && (
+                                                                        <span style={{
+                                                                            background: "#0ea5e9",
+                                                                            color: "#fff",
+                                                                            borderRadius: "999px",
+                                                                            padding: "4px 10px",
+                                                                            fontSize: "12px",
+                                                                            letterSpacing: "0.4px",
+                                                                            textTransform: "uppercase",
+                                                                        }}>
+                                                                            Healthy Hamper
+                                                                        </span>
+                                                                    )}
+                                                                    {hasDiscount && (
+                                                                        <span style={{
+                                                                            background: "#f97316",
+                                                                            color: "#fff",
+                                                                            borderRadius: "999px",
+                                                                            padding: "4px 10px",
+                                                                            fontSize: "12px",
+                                                                            letterSpacing: "0.4px",
+                                                                            textTransform: "uppercase",
+                                                                        }}>
+                                                                            {discountPercent}% Off
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="rating" style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px", color: "#0f172a" }}>
+                                                                    <span style={{ fontWeight: 700 }}>0.0</span>
+                                                                    <i className="fas fa-star" aria-hidden="true"></i>
+                                                                    <span style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
+                                                                </p>
                                                             </div>
-                                                            <Link href={`/products/${product.slug}`}>
-                                                                <div className="img">
+
+                                                            <Link href={`/products/${product.slug}`} style={{ display: "block", borderRadius: "12px", overflow: "hidden", background: "#f8fafc" }}>
+                                                                <div className="img" style={{ position: "relative" }}>
                                                                     <Image
                                                                         src={imageSrc}
                                                                         alt={product.name || product.title || 'Product'}
                                                                         width={300}
                                                                         height={250}
                                                                         className="img-fluid w-100"
-                                                                        style={{ objectFit: "cover" }}
+                                                                        style={{ objectFit: "cover", width: "100%", height: "220px" }}
                                                                     />
                                                                 </div>
                                                             </Link>
-                                                            <div className="bottom_text">
-                                                                <p className="rating">
-                                                                    0.0 <i className="fas fa-star" aria-hidden="true"></i>
-                                                                    <span>(0 reviews)</span>
-                                                                </p>
-                                                                {hasDiscount ? (
-                                                                    <p className="price-on-sale price">
-                                                                        ₹{Math.round(discounted!)} <del>₹{Math.round(basePrice)}</del>{' '}
-                                                                        <span style={{ color: 'red' }}>
-                                                                            <b>{discountPercent}% Off</b>
-                                                                        </span>
-                                                                    </p>
-                                                                ) : (
-                                                                    <p className="price">₹{Math.round(basePrice)}</p>
-                                                                )}
+
+                                                            <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
+                                                                <div className="top_text" style={{ margin: 0 }}>
+                                                                    <Link href={`/products/${product.slug}`} className="title" style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", lineHeight: 1.35 }}>
+                                                                        {product.name || product.title}
+                                                                    </Link>
+                                                                </div>
+
+                                                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+                                                                    <div>
+                                                                        {hasDiscount ? (
+                                                                            <p className="price-on-sale price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
+                                                                                ₹{Math.round(finalPrice)} <del style={{ color: "#94a3b8", marginLeft: "6px", fontWeight: 500 }}>₹{Math.round(basePrice)}</del>
+                                                                                <span style={{ color: "#f97316", marginLeft: "8px", fontWeight: 700 }}>{discountPercent}% Off</span>
+                                                                            </p>
+                                                                        ) : (
+                                                                            <p className="price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
+                                                                                ₹{Math.round(finalPrice)}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                    <Link
+                                                                        href={`/products/${product.slug}`}
+                                                                        style={{
+                                                                            background: "#0f172a",
+                                                                            color: "#fff",
+                                                                            padding: "10px 14px",
+                                                                            borderRadius: "12px",
+                                                                            fontSize: "13px",
+                                                                            fontWeight: 700,
+                                                                            textTransform: "uppercase",
+                                                                            letterSpacing: "0.4px",
+                                                                        }}
+                                                                    >
+                                                                        View
+                                                                    </Link>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
