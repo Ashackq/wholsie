@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 
+// Import all necessary routes
+import authRouter from './auth.js';
+import { paymentRouter } from './payment.js';
+import { healthRouter } from './health.js';
+
 // Public controllers
 import * as publicProductController from '../controllers/public-product.controller.js';
 import * as publicCategoryController from '../controllers/public-category.controller.js';
@@ -13,6 +18,15 @@ import * as userOrderController from '../controllers/user-order.controller.js';
 import * as addressController from '../controllers/address.controller.js';
 
 const router = Router();
+
+// ==================== HEALTH CHECK ====================
+router.use(healthRouter);
+
+// ==================== AUTHENTICATION ====================
+router.use(authRouter);
+
+// ==================== PAYMENT ====================
+router.use(paymentRouter);
 
 // ==================== PUBLIC ROUTES ====================
 
@@ -63,7 +77,7 @@ router.post('/favorites', requireAuth, favoriteController.addToFavorites);
 router.delete('/favorites/:productId', requireAuth, favoriteController.removeFromFavorites);
 router.get('/favorites/check/:productId', requireAuth, favoriteController.checkFavorite);
 
-// Backward compatibility for wishlist endpoints
+// Backward compatibility for wishlist endpoints (REDUNDANT - KEPT FOR COMPATIBILITY ONLY)
 router.get('/wishlist', requireAuth, favoriteController.getFavorites);
 router.post('/wishlist', requireAuth, favoriteController.addToFavorites);
 router.delete('/wishlist/:productId', requireAuth, favoriteController.removeFromFavorites);

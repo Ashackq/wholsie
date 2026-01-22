@@ -10,18 +10,7 @@ import { errorHandler } from "./middleware/error-handler.js";
 import { verifyToken } from "./middleware/auth.js";
 import { verifyEmailConnection } from "./utils/email.js";
 import apiRouter from "./routes/api.routes.js";
-import authRouter from "./routes/auth.js";
 import adminRouter from "./routes/admin.routes.js";
-import { paymentRouter } from "./routes/payment.js";
-import { delhiveryRouter } from "./routes/delhivery.js";
-import variantsRouter from "./routes/variants.js";
-import favoritesRouter from "./routes/favorites.js";
-import reviewsRouter from "./routes/reviews.js";
-import walletRouter from "./routes/wallet.js";
-import notificationsRouter from "./routes/notifications.js";
-import couponsRouter from "./routes/coupons.js";
-import supportRouter from "./routes/support.js";
-import searchRouter from "./routes/search.js";
 
 async function bootstrap() {
   await connectToDatabase();
@@ -86,21 +75,8 @@ async function bootstrap() {
     res.json({ status: "ok" });
   });
 
-  // API routes - Core public/user routes
+  // API routes - All consolidated in apiRouter (includes auth, payment, products, cart, orders, etc.)
   app.use("/api", apiRouter);
-  app.use("/api", authRouter);
-  app.use("/api", paymentRouter);
-
-  // Feature-specific routes
-  app.use("/api/delhivery", delhiveryRouter);
-  app.use("/api/variants", variantsRouter);
-  app.use("/api/favorites", favoritesRouter);
-  app.use("/api/reviews", reviewsRouter);
-  app.use("/api/wallet", walletRouter);
-  app.use("/api/notifications", notificationsRouter);
-  app.use("/api/coupons", couponsRouter);
-  app.use("/api/support", supportRouter);
-  app.use("/api/search", searchRouter);
 
   // Admin routes
   app.use("/api/admin", adminRouter);

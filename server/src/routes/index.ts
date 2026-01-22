@@ -1,38 +1,15 @@
 import { Router } from "express";
-import authRouter from "./auth.js";
 import { healthRouter } from "./health.js";
-import { paymentRouter } from "./payment.js";
-import { productsRouter } from "./products.js";
-import { cartRouter } from "./cart.js";
-import { ordersRouter } from "./orders.js";
-import { addressesRouter } from "./addresses.js";
-import { delhiveryRouter } from "./delhivery.js";
-import variantsRouter from "./variants.js";
-import favoritesRouter from "./favorites.js";
-import reviewsRouter from "./reviews.js";
-import walletRouter from "./wallet.js";
-import notificationsRouter from "./notifications.js";
-import couponsRouter from "./coupons.js";
-import supportRouter from "./support.js";
 import adminRouter from "./admin.routes.js";
-import searchRouter from "./search.js";
+import apiRouter from "./api.routes.js";
 
-export const apiRouter = Router();
+export const mainRouter = Router();
 
-apiRouter.use(healthRouter);
-apiRouter.use(authRouter);
-apiRouter.use(paymentRouter);
-apiRouter.use(productsRouter);
-apiRouter.use(cartRouter);
-apiRouter.use(ordersRouter);
-apiRouter.use(addressesRouter);
-apiRouter.use(delhiveryRouter);
-apiRouter.use("/variants", variantsRouter);
-apiRouter.use("/favorites", favoritesRouter);
-apiRouter.use("/reviews", reviewsRouter);
-apiRouter.use("/wallet", walletRouter);
-apiRouter.use("/notifications", notificationsRouter);
-apiRouter.use("/coupons", couponsRouter);
-apiRouter.use("/support", supportRouter);
-apiRouter.use("/admin", adminRouter);
-apiRouter.use("/search", searchRouter);
+// Health check
+mainRouter.use(healthRouter);
+
+// Main API routes (consolidates auth, products, cart, orders, etc.)
+mainRouter.use("/api", apiRouter);
+
+// Admin routes
+mainRouter.use("/api/admin", adminRouter);

@@ -381,7 +381,7 @@ export default function CartPage() {
                                                                         <div className="col-md-4 cart_page_img">
                                                                             <div className="img">
                                                                                 <Image
-                                                                                    src={imageSrc}
+                                                                                    src={'/' + imageSrc}
                                                                                     alt={name}
                                                                                     width={120}
                                                                                     height={120}
@@ -463,7 +463,7 @@ export default function CartPage() {
                                                     <li key={`summary-${group.key}`}>
                                                         <div className="img">
                                                             <Image
-                                                                src={imageSrc}
+                                                                src={'/' + imageSrc}
                                                                 alt={name}
                                                                 width={60}
                                                                 height={60}
