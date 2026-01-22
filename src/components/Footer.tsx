@@ -44,7 +44,7 @@ export default function Footer() {
     >
       <div className="container">
         <div className="row justify-content-between">
-          <div className="col-xl-3 col-md-6 col-lg-3 wow fadeInUp">
+          <div className="col-xl-3 col-md-6 col-lg-3 col-12 wow fadeInUp">
             <div className="footer_2_logo_area">
               <a href="/" className="footer_logo">
                 <img
@@ -85,7 +85,7 @@ export default function Footer() {
               </ul>
             </div>
           </div>
-          <div className="col-xl-2 col-sm-6 col-md-4 col-lg-2 wow fadeInUp">
+          <div className="col-xl-2 col-6 col-md-4 col-lg-2 wow fadeInUp">
             <div className="footer_link">
               <h3>Company</h3>
               <ul>
@@ -107,7 +107,7 @@ export default function Footer() {
               </ul>
             </div>
           </div>
-          <div className="col-xl-2 col-sm-6 col-md-4 col-lg-2 wow fadeInUp">
+          <div className="col-xl-2 col-6 col-md-4 col-lg-2 wow fadeInUp">
             <div className="footer_link">
               <h3>Category</h3>
               <ul>
@@ -124,7 +124,7 @@ export default function Footer() {
               </ul>
             </div>
           </div>
-          <div className="col-xl-2 col-sm-6 col-md-4 col-lg-2 wow fadeInUp">
+          <div className="col-xl-2 col-6 col-md-4 col-lg-2 wow fadeInUp">
             <div className="footer_link">
               <h3>Quick Links</h3>
               <ul>
@@ -151,7 +151,7 @@ export default function Footer() {
               </ul>
             </div>
           </div>
-          <div className="col-xl-3 col-sm-6 col-md-4 col-lg-3 wow fadeInUp">
+          <div className="col-xl-3 col-6 col-md-4 col-lg-3 wow fadeInUp">
             <div className="footer_link footer_logo_area">
               <h3>Contact Us</h3>
               <span>

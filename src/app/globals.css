@@ -29,6 +29,11 @@
   box-sizing: border-box;
 }
 
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 body {
   font-family: 'Jost', sans-serif;
   color: var(--text);
@@ -236,6 +241,37 @@ body {
   color: white;
   padding: 80px 0 20px;
   margin-top: 80px;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Mobile footer: fix spacing */
+@media (max-width: 767px) {
+  .gadget_footer {
+    padding: 40px 0 20px;
+  }
+  
+  .gadget_footer .container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .footer_link {
+    margin-bottom: 20px;
+  }
+  
+  .footer_link h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .footer_link ul li {
+    margin-bottom: 5px;
+  }
+  
+  .footer_2_logo_area {
+    margin-bottom: 25px;
+  }
 }
 
 .gadget_footer a {
@@ -2128,12 +2164,17 @@ body {
 /* Product badge pills */
 .product-badge {
   border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
-  letter-spacing: 0.4px;
+  padding: 3px 8px;
+  font-size: 10px;
+  letter-spacing: 0.3px;
   text-transform: uppercase;
   color: #fff;
   font-weight: 500;
+  white-space: nowrap;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .product-badge-launch {
@@ -2150,9 +2191,46 @@ body {
 
 @media (max-width: 576px) {
   .product-badge {
-    padding: 2px 6px;
-    font-size: 9px;
-    letter-spacing: 0.2px;
+    padding: 2px 5px;
+    font-size: 8px;
+    letter-spacing: 0.1px;
+  }
+  
+  /* Hide reviews text on mobile */
+  .reviews-text {
+    display: none !important;
+  }
+  
+  /* Smaller price on mobile */
+  .product-price {
+    font-size: 14px !important;
+  }
+  
+  /* Smaller view button on mobile */
+  .view-btn {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+  
+  /* Hide discount text on mobile for space */
+  .discount-text {
+    display: none !important;
+  }
+  
+  /* Smaller product rating */
+  .product-rating {
+    font-size: 12px !important;
+  }
+}
+
+/* Slider wrapper responsive margin */
+.slider-wrapper {
+  margin: 0 40px;
+}
+
+@media (max-width: 767px) {
+  .slider-wrapper {
+    margin: 0 10px;
   }
 }
 

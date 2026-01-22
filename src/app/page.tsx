@@ -206,7 +206,7 @@ export default function Home() {
           <>
             {combos.length > 0 ? (
               <div style={{ width: '100vw', position: 'relative', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw' }}>
-                <div className="row flash_sell_2_slider" style={{ margin: '0 40px' }}>
+                <div className="row flash_sell_2_slider slider-wrapper">
                   <Swiper
                     modules={[Autoplay, Navigation]}
                     spaceBetween={16}
@@ -252,37 +252,20 @@ export default function Home() {
                           >
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
                               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                                <span style={{
-                                  background: "#0ea5e9",
-                                  color: "#fff",
-                                  borderRadius: "999px",
-                                  padding: "4px 10px",
-                                  fontSize: "12px",
-                                  letterSpacing: "0.4px",
-                                  textTransform: "uppercase",
-                                  fontWeight: 700,
-                                }}>
+                                <span className="product-badge product-badge-combo">
                                   Healthy Hamper
                                 </span>
 
                                 {hasDiscount && (
-                                  <span style={{
-                                    background: "#f97316",
-                                    color: "#fff",
-                                    borderRadius: "999px",
-                                    padding: "4px 10px",
-                                    fontSize: "12px",
-                                    letterSpacing: "0.4px",
-                                    textTransform: "uppercase",
-                                  }}>
+                                  <span className="product-badge product-badge-discount">
                                     {discountPercent}% Off
                                   </span>
                                 )}
                               </div>
-                              <p className="rating" style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px", color: "#0f172a" }}>
+                              <p className="rating product-rating" style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px", color: "#0f172a" }}>
                                 <span style={{ fontWeight: 700 }}>0.0</span>
                                 <i className="fas fa-star" aria-hidden="true"></i>
-                                <span style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
+                                <span className="reviews-text" style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
                               </p>
                             </div>
 
@@ -309,18 +292,19 @@ export default function Home() {
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
                                 <div>
                                   {hasDiscount ? (
-                                    <p className="price-on-sale price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
+                                    <p className="price-on-sale price product-price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
                                       ₹{Math.round(finalPrice)} <del style={{ color: "#94a3b8", marginLeft: "6px", fontWeight: 500 }}>₹{Math.round(basePrice)}</del>
-                                      <span style={{ color: "#f97316", marginLeft: "8px", fontWeight: 700 }}>{discountPercent}% Off</span>
+                                      <span className="discount-text" style={{ color: "#f97316", marginLeft: "8px", fontWeight: 700 }}>{discountPercent}% Off</span>
                                     </p>
                                   ) : (
-                                    <p className="price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
+                                    <p className="price product-price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
                                       ₹{Math.round(finalPrice)}
                                     </p>
                                   )}
                                 </div>
                                 <Link
                                   href={`/products/${product.slug}`}
+                                  className="view-btn"
                                   style={{
                                     background: "#0f172a",
                                     color: "#fff",
@@ -380,7 +364,7 @@ export default function Home() {
           <>
             {recentLaunches.length > 0 ? (
               <div style={{ width: '100vw', position: 'relative', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw' }}>
-                <div className="row flash_sell_2_slider" style={{ margin: '0 40px' }}>
+                <div className="row flash_sell_2_slider slider-wrapper">
                   <Swiper
                     modules={[Autoplay, Navigation]}
                     spaceBetween={16}
@@ -433,7 +417,7 @@ export default function Home() {
                                 )}
                                 {product.isCombo && (
                                   <span className="product-badge product-badge-combo">
-                                    Combo
+                                    Healthy Hamper
                                   </span>
                                 )}
                                 {hasDiscount && (
@@ -442,10 +426,10 @@ export default function Home() {
                                   </span>
                                 )}
                               </div>
-                              <p className="rating" style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px", color: "#0f172a" }}>
+                              <p className="rating product-rating" style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px", color: "#0f172a" }}>
                                 <span style={{ fontWeight: 700 }}>0.0</span>
                                 <i className="fas fa-star" aria-hidden="true"></i>
-                                <span style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
+                                <span className="reviews-text" style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
                               </p>
                             </div>
 
@@ -472,18 +456,19 @@ export default function Home() {
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
                                 <div>
                                   {hasDiscount ? (
-                                    <p className="price-on-sale price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
+                                    <p className="price-on-sale price product-price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
                                       ₹{Math.round(finalPrice)} <del style={{ color: "#94a3b8", marginLeft: "6px", fontWeight: 500 }}>₹{Math.round(basePrice)}</del>
-                                      <span style={{ color: "#f97316", marginLeft: "8px", fontWeight: 700 }}>{discountPercent}% Off</span>
+                                      <span className="discount-text" style={{ color: "#f97316", marginLeft: "8px", fontWeight: 700 }}>{discountPercent}% Off</span>
                                     </p>
                                   ) : (
-                                    <p className="price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
+                                    <p className="price product-price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
                                       ₹{Math.round(finalPrice)}
                                     </p>
                                   )}
                                 </div>
                                 <Link
                                   href={`/products/${product.slug}`}
+                                  className="view-btn"
                                   style={{
                                     background: "#0f172a",
                                     color: "#fff",
