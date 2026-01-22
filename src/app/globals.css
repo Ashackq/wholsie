@@ -58,6 +58,23 @@ body {
 .header_2 {
   background: white;
   top: 0;
+  position: sticky;
+  z-index: 999;
+}
+
+/* Add space below header on mobile to prevent content overlap */
+@media (max-width: 991px) {
+  .header_2 {
+    position: sticky;
+    top: 0;
+  }
+  
+  /* Add margin to first content section after header */
+  main > section:first-child,
+  .breadcrumb,
+  .breadcrumb_area {
+    margin-top: 15px;
+  }
 }
 
 .main_menu_2 {
