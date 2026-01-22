@@ -9,10 +9,7 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
     try {
         const userId = req.userId!;
 
-        let cart = await Cart.findOne({ userId }).populate({
-            path: 'items.productId',
-            select: 'name images price salePrice discount variants tax status'
-        });
+        let cart = await Cart.findOne({ userId });
 
         if (!cart) {
             cart = new Cart({

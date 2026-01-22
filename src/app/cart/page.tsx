@@ -108,7 +108,6 @@ export default function CartPage() {
 
         const user = JSON.parse(userString);
         const missingFields: string[] = [];
-        console.log(user);
 
         // Check if name is valid (not default pattern like User1234)
         if (!user.name || user.name.trim() === "" || user.name === "N/A" || /^user\d*$/i.test(user.name.trim())) {
