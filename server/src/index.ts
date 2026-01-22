@@ -30,7 +30,8 @@ async function bootstrap() {
     const app = express();
 
     // Trust proxy headers when behind a reverse proxy (nginx, load balancer, etc.)
-    app.set('trust proxy', true);
+    // Set to 1 to trust only the first proxy hop (most common setup)
+    app.set('trust proxy', 1);
 
     app.use(helmet());
 
