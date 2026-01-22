@@ -78,6 +78,8 @@ export async function addToCart(req: Request, res: Response, next: NextFunction)
             } as any);
         }
 
+        await cart.save();
+
         await cart.populate({
             path: 'items.productId',
             select: 'name images price salePrice discount variants tax'
