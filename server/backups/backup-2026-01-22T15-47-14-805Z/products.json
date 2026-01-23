@@ -1,6 +1,8 @@
 [
   {
-    "_id": {"$oid": "6970918e2e101d5a40813864"},
+    "_id": {
+      "$oid": "6970918e2e101d5a40813864"
+    },
     "name": "Cheese Burst Makhana",
     "title": "Cheese Burst Makhana",
     "image": "assets/uploaded/makhana/Cheese Burst Makhana.jpg",
@@ -26,11 +28,15 @@
     "createdAt": "2026-01-21T08:42:54.226Z",
     "updatedAt": "2026-01-21T09:09:49.927Z",
     "__v": 0,
-    "categoryId": {"$oid": "69707449500e38acf28b2611"},
+    "categoryId": {
+      "$oid": "69707449500e38acf28b2611"
+    },
     "description": "Crunchy roasted makhana with cheesy twist"
   },
   {
-    "_id": {"$oid": "69709487143a016c9073cec8"},
+    "_id": {
+      "$oid": "69709487143a016c9073cec8"
+    },
     "name": "Mexican Salsa Makhana",
     "title": "Mexican Salsa Makhana",
     "image": "assets/uploaded/makhana/Mexican Salsa Makhana.jpg",
@@ -56,11 +62,15 @@
     "createdAt": "2026-01-21T08:55:35.187Z",
     "updatedAt": "2026-01-21T09:09:38.908Z",
     "__v": 0,
-    "categoryId": {"$oid": "69707449500e38acf28b2611"},
+    "categoryId": {
+      "$oid": "69707449500e38acf28b2611"
+    },
     "description": "Crunchy roasted makhana with Mexican salsa Twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e7f0"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e7f0"
+    },
     "name": "Peri Peri Makhana",
     "title": "Peri Peri Makhana",
     "image": "assets/uploaded/makhana/Peri Peri Makhana.jpg",
@@ -86,11 +96,15 @@
     "createdAt": "2025-11-10T13:01:48.000Z",
     "updatedAt": "2026-01-21T10:04:12.376Z",
     "__v": 0,
-    "categoryId": {"$oid": "69707449500e38acf28b2611"},
+    "categoryId": {
+      "$oid": "69707449500e38acf28b2611"
+    },
     "description": "Crunchy roasted makhana with Spicy twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e7f5"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e7f5"
+    },
     "name": "Cream & Onion Makhana",
     "title": "Cream & Onion Makhana",
     "image": "assets/uploaded/makhana/Cream & Onion Makhana.jpg",
@@ -116,11 +130,15 @@
     "createdAt": "2025-11-10T13:04:34.000Z",
     "updatedAt": "2026-01-21T10:03:57.625Z",
     "__v": 0,
-    "categoryId": {"$oid": "69707449500e38acf28b2611"},
+    "categoryId": {
+      "$oid": "69707449500e38acf28b2611"
+    },
     "description": "Crunchy roasted makhana with Ceam&onion twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e7fa"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e7fa"
+    },
     "name": "Tangy tomato Makhana",
     "title": "Tangy tomato Makhana",
     "image": "assets/uploaded/makhana/Tangy tomato Makhana.jpg",
@@ -146,11 +164,15 @@
     "createdAt": "2025-11-10T13:15:12.000Z",
     "updatedAt": "2026-01-21T10:03:42.705Z",
     "__v": 0,
-    "categoryId": {"$oid": "69707449500e38acf28b2611"},
+    "categoryId": {
+      "$oid": "69707449500e38acf28b2611"
+    },
     "description": "Crunchy roasted makhana with Tangy Tomato twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e7ff"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e7ff"
+    },
     "name": "Classic Salted Makhana",
     "title": "Classic Salted Makhana",
     "image": "assets/uploaded/makhana/Classic Salted Makhana.jpg",
@@ -176,11 +198,15 @@
     "createdAt": "2025-11-10T13:17:32.000Z",
     "updatedAt": "2026-01-21T10:03:24.067Z",
     "__v": 0,
-    "categoryId": {"$oid": "69707449500e38acf28b2611"},
+    "categoryId": {
+      "$oid": "69707449500e38acf28b2611"
+    },
     "description": "Crunchy roasted makhana with Salty twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e804"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e804"
+    },
     "name": "Cheese Burst Jowar Puffs",
     "title": "Cheese Burst Jowar Puffs",
     "image": "assets/uploaded/jowar/Cheese Burst Jowar Puffs.jpg",
@@ -206,11 +232,15 @@
     "createdAt": "2025-11-10T13:23:51.000Z",
     "updatedAt": "2025-12-18T04:31:23.000Z",
     "__v": 0,
-    "categoryId": {"$oid": "697074a4500e38acf28b2614"},
+    "categoryId": {
+      "$oid": "697074a4500e38acf28b2614"
+    },
     "description": "Crunchy roasted Jowar Puffs with Cheesy Twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e809"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e809"
+    },
     "name": "Tangy tomato Jowar Puffs",
     "title": "Tangy tomato Jowar Puffs",
     "image": "assets/uploaded/jowar/Tangy tomato Jowar Puffs.jpg",
@@ -236,11 +266,15 @@
     "createdAt": "2025-11-10T13:26:02.000Z",
     "updatedAt": "2025-12-18T04:32:05.000Z",
     "__v": 0,
-    "categoryId": {"$oid": "697074a4500e38acf28b2614"},
+    "categoryId": {
+      "$oid": "697074a4500e38acf28b2614"
+    },
     "description": "Crunchy roasted Jowar Puffs with Tangy tomato Twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e80e"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e80e"
+    },
     "name": "Peri Peri Jowar Puffs",
     "title": "Peri Peri Jowar Puffs",
     "image": "assets/uploaded/jowar/Peri Peri Jowar Puffs.jpg",
@@ -266,11 +300,15 @@
     "createdAt": "2025-11-10T13:28:28.000Z",
     "updatedAt": "2025-12-18T04:32:17.000Z",
     "__v": 0,
-    "categoryId": {"$oid": "697074a4500e38acf28b2614"},
+    "categoryId": {
+      "$oid": "697074a4500e38acf28b2614"
+    },
     "description": "Crunchy roasted Jowar Puffs with Spicy Twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e813"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e813"
+    },
     "name": "Cheese Burst Protein Puffs",
     "title": "Cheese Burst Protein Puffs",
     "image": "assets/uploaded/protein/Cheese Burst Protein Puffs.jpg",
@@ -296,11 +334,15 @@
     "createdAt": "2025-11-10T15:38:11.000Z",
     "updatedAt": "2025-12-18T04:32:45.000Z",
     "__v": 0,
-    "categoryId": {"$oid": "697074aa500e38acf28b2617"},
+    "categoryId": {
+      "$oid": "697074aa500e38acf28b2617"
+    },
     "description": "Crunchy roasted Protein Puffs with Cheesy Twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e818"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e818"
+    },
     "name": "Tangy Tomato Protein Puffs",
     "title": "Tangy Tomato Protein Puffs",
     "image": "assets/uploaded/protein/Tangy Tomato Protein Puffs.jpg",
@@ -326,11 +368,15 @@
     "createdAt": "2025-11-10T15:42:00.000Z",
     "updatedAt": "2025-12-18T04:33:08.000Z",
     "__v": 0,
-    "categoryId": {"$oid": "697074aa500e38acf28b2617"},
+    "categoryId": {
+      "$oid": "697074aa500e38acf28b2617"
+    },
     "description": "Crunchy roasted Protein Puffs with Tangy tomato Twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e81d"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e81d"
+    },
     "name": "Peri Peri Protein Puffs",
     "title": "Peri Peri Protein Puffs",
     "image": "assets/uploaded/protein/Peri Peri Protein Puffs.jpg",
@@ -356,11 +402,15 @@
     "createdAt": "2025-11-10T15:44:44.000Z",
     "updatedAt": "2025-12-18T04:32:56.000Z",
     "__v": 0,
-    "categoryId": {"$oid": "697074aa500e38acf28b2617"},
+    "categoryId": {
+      "$oid": "697074aa500e38acf28b2617"
+    },
     "description": "Crunchy roasted Protein Puffs with Spicy Twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e81f"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e81f"
+    },
     "name": "Cheese Burst Oats Puffs",
     "title": "Cheese Burst Oats Puffs",
     "image": "assets/uploaded/oats/Cheese Burst Oats Puffs.jpg",
@@ -386,11 +436,15 @@
     "createdAt": "2025-11-10T16:03:31.000Z",
     "updatedAt": "2025-12-18T04:33:27.000Z",
     "__v": 0,
-    "categoryId": {"$oid": "697074b1500e38acf28b261a"},
+    "categoryId": {
+      "$oid": "697074b1500e38acf28b261a"
+    },
     "description": "Crunchy roasted Oats Puffs with Cheesy Twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e824"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e824"
+    },
     "name": "Tangy tomato Oats Puffs",
     "title": "Tangy tomato Oats Puffs",
     "image": "assets/uploaded/oats/Tangy tomato Oats Puffs.jpg",
@@ -416,11 +470,15 @@
     "createdAt": "2025-11-10T16:07:15.000Z",
     "updatedAt": "2025-11-29T13:48:22.000Z",
     "__v": 0,
-    "categoryId": {"$oid": "697074b1500e38acf28b261a"},
+    "categoryId": {
+      "$oid": "697074b1500e38acf28b261a"
+    },
     "description": "Crunchy roasted Oats Puffs with Tangy tomato Twist"
   },
   {
-    "_id": {"$oid": "695e3170bfc4cd1c74a6e829"},
+    "_id": {
+      "$oid": "695e3170bfc4cd1c74a6e829"
+    },
     "name": "Peri Peri Oats Puffs",
     "title": "Peri Peri Oats Puffs",
     "image": "assets/uploaded/oats/Peri Peri Oats Puffs.jpg",
@@ -446,8 +504,254 @@
     "createdAt": "2025-11-10T16:10:50.000Z",
     "updatedAt": "2026-01-21T10:32:59.569Z",
     "__v": 0,
-    "categoryId": {"$oid": "697074b1500e38acf28b261a"},
+    "categoryId": {
+      "$oid": "697074b1500e38acf28b261a"
+    },
     "description": "Oats Puffs, Peri Peri Powder, Rock Salt, Olive Oil"
-  }
+  },
+  [
+    {
+      "_id": {
+        "$oid": "6970918e2e101d5a40813901"
+      },
+      "name": "Fab 4 Makhana Medley",
+      "title": "Fab 4 Makhana Medley",
+      "image": "assets/uploaded/combos/combo-01.jpg",
+      "images": [],
+      "price": 440,
+      "salePrice": 400,
+      "discountedPrice": 400,
+      "discount": 9,
+      "quantity": 100,
+      "stock": 100,
+      "variants": [],
+      "rating": 0,
+      "reviewCount": 0,
+      "totalReviews": 0,
+      "isRecentLaunch": true,
+      "isCombo": true,
+      "slug": "fab-4-makhana-medley",
+      "status": "active",
+      "createdAt": "2026-01-23T09:00:00.000Z",
+      "updatedAt": "2026-01-23T09:00:00.000Z",
+      "__v": 0,
+      "description": "The ultimate crunch pack featuring 4 distinct Makhana flavors: Cheese, Peri Peri, Tangy Tomato, and Cream & Onion."
+    },
+    {
+      "_id": {
+        "$oid": "6970918e2e101d5a40813902"
+      },
+      "name": "Famous 5 Makhana Fiesta",
+      "title": "Famous 5 Makhana Fiesta",
+      "image": "assets/uploaded/combos/combo-02.jpg",
+      "images": [],
+      "price": 550,
+      "salePrice": 499,
+      "discountedPrice": 499,
+      "discount": 10,
+      "quantity": 100,
+      "stock": 100,
+      "variants": [],
+      "rating": 0,
+      "reviewCount": 0,
+      "totalReviews": 0,
+      "isRecentLaunch": true,
+      "isCombo": true,
+      "slug": "famous-5-makhana-fiesta",
+      "status": "active",
+      "createdAt": "2026-01-23T09:00:00.000Z",
+      "updatedAt": "2026-01-23T09:00:00.000Z",
+      "__v": 0,
+      "description": "A party pack of 5 Makhana varieties, including the exotic Mexican Salsa alongside Cheese, Peri Peri, Tomato, and Cream & Onion."
+    },
+    {
+      "_id": {
+        "$oid": "6970918e2e101d5a40813903"
+      },
+      "name": "Super 6 Makhana Collection",
+      "title": "Super 6 Makhana Collection",
+      "image": "assets/uploaded/combos/combo-03.jpg",
+      "images": [],
+      "price": 660,
+      "salePrice": 599,
+      "discountedPrice": 599,
+      "discount": 10,
+      "quantity": 100,
+      "stock": 100,
+      "variants": [],
+      "rating": 0,
+      "reviewCount": 0,
+      "totalReviews": 0,
+      "isRecentLaunch": true,
+      "isCombo": true,
+      "slug": "super-6-makhana-collection",
+      "status": "active",
+      "createdAt": "2026-01-23T09:00:00.000Z",
+      "updatedAt": "2026-01-23T09:00:00.000Z",
+      "__v": 0,
+      "description": "Our complete Makhana range in one box! Includes Salted & Roasted, Mexican Salsa, Peri Peri, Cheese, Tomato, and Cream & Onion."
+    },
+    {
+      "_id": {
+        "$oid": "6970918e2e101d5a40813904"
+      },
+      "name": "Cheesy Puff Quartet",
+      "title": "Cheesy Puff Quartet",
+      "image": "assets/uploaded/combos/combo-04.jpg",
+      "images": [],
+      "price": 400,
+      "salePrice": 360,
+      "discountedPrice": 360,
+      "discount": 10,
+      "quantity": 100,
+      "stock": 100,
+      "variants": [],
+      "rating": 0,
+      "reviewCount": 0,
+      "totalReviews": 0,
+      "isRecentLaunch": true,
+      "isCombo": true,
+      "slug": "cheesy-puff-quartet",
+      "status": "active",
+      "createdAt": "2026-01-23T09:00:00.000Z",
+      "updatedAt": "2026-01-23T09:00:00.000Z",
+      "__v": 0,
+      "description": "For the cheese lovers! A mix of Protein, Oats, and Jowar Cheese puffs, topped off with a Tangy Tomato Jowar pack."
+    },
+    {
+      "_id": {
+        "$oid": "6970918e2e101d5a40813905"
+      },
+      "name": "Tangy & Spicy Puff Mix",
+      "title": "Tangy & Spicy Puff Mix",
+      "image": "assets/uploaded/combos/combo-05.jpg",
+      "images": [],
+      "price": 400,
+      "salePrice": 360,
+      "discountedPrice": 360,
+      "discount": 10,
+      "quantity": 100,
+      "stock": 100,
+      "variants": [],
+      "rating": 0,
+      "reviewCount": 0,
+      "totalReviews": 0,
+      "isRecentLaunch": true,
+      "isCombo": true,
+      "slug": "tangy-spicy-puff-mix",
+      "status": "active",
+      "createdAt": "2026-01-23T09:00:00.000Z",
+      "updatedAt": "2026-01-23T09:00:00.000Z",
+      "__v": 0,
+      "description": "A zest explosion featuring three Tangy Tomato packs (Protein, Oats, Jowar) and one spicy Peri Peri Jowar pack."
+    },
+    {
+      "_id": {
+        "$oid": "6970918e2e101d5a40813906"
+      },
+      "name": "Peri Peri Power Pack",
+      "title": "Peri Peri Power Pack",
+      "image": "assets/uploaded/combos/combo-06.jpg",
+      "images": [],
+      "price": 400,
+      "salePrice": 360,
+      "discountedPrice": 360,
+      "discount": 10,
+      "quantity": 100,
+      "stock": 100,
+      "variants": [],
+      "rating": 0,
+      "reviewCount": 0,
+      "totalReviews": 0,
+      "isRecentLaunch": true,
+      "isCombo": true,
+      "slug": "peri-peri-power-pack",
+      "status": "active",
+      "createdAt": "2026-01-23T09:00:00.000Z",
+      "updatedAt": "2026-01-23T09:00:00.000Z",
+      "__v": 0,
+      "description": "Turn up the heat with 3 packs of Peri Peri puffs (Oats, Protein, Jowar) and a single Cheese Jowar pack to cool it down."
+    },
+    {
+      "_id": {
+        "$oid": "6970918e2e101d5a40813907"
+      },
+      "name": "Assorted Puff Sampler",
+      "title": "Assorted Puff Sampler",
+      "image": "assets/uploaded/combos/combo-07.jpg",
+      "images": [],
+      "price": 400,
+      "salePrice": 360,
+      "discountedPrice": 360,
+      "discount": 10,
+      "quantity": 100,
+      "stock": 100,
+      "variants": [],
+      "rating": 0,
+      "reviewCount": 0,
+      "totalReviews": 0,
+      "isRecentLaunch": true,
+      "isCombo": true,
+      "slug": "assorted-puff-sampler",
+      "status": "active",
+      "createdAt": "2026-01-23T09:00:00.000Z",
+      "updatedAt": "2026-01-23T09:00:00.000Z",
+      "__v": 0,
+      "description": "Can't decide? Try this mix of Protein Peri Peri, Oats Cheese, Jowar Cheese, and Oats Tangy Tomato."
+    },
+    {
+      "_id": {
+        "$oid": "6970918e2e101d5a40813908"
+      },
+      "name": "Cheese & Spice Puff Fusion",
+      "title": "Cheese & Spice Puff Fusion",
+      "image": "assets/uploaded/combos/combo-08.jpg",
+      "images": [],
+      "price": 400,
+      "salePrice": 360,
+      "discountedPrice": 360,
+      "discount": 10,
+      "quantity": 100,
+      "stock": 100,
+      "variants": [],
+      "rating": 0,
+      "reviewCount": 0,
+      "totalReviews": 0,
+      "isRecentLaunch": true,
+      "isCombo": true,
+      "slug": "cheese-spice-puff-fusion",
+      "status": "active",
+      "createdAt": "2026-01-23T09:00:00.000Z",
+      "updatedAt": "2026-01-23T09:00:00.000Z",
+      "__v": 0,
+      "description": "The perfect balance of flavors. Contains two Cheese packs (Protein & Oats) and two Peri Peri packs (Protein & Jowar)."
+    },
+    {
+      "_id": {
+        "$oid": "6970918e2e101d5a40813909"
+      },
+      "name": "Savory Snacker Puff Combo",
+      "title": "Savory Snacker Puff Combo",
+      "image": "assets/uploaded/combos/combo-09.jpg",
+      "images": [],
+      "price": 400,
+      "salePrice": 360,
+      "discountedPrice": 360,
+      "discount": 10,
+      "quantity": 100,
+      "stock": 100,
+      "variants": [],
+      "rating": 0,
+      "reviewCount": 0,
+      "totalReviews": 0,
+      "isRecentLaunch": true,
+      "isCombo": true,
+      "slug": "savory-snacker-puff-combo",
+      "status": "active",
+      "createdAt": "2026-01-23T09:00:00.000Z",
+      "updatedAt": "2026-01-23T09:00:00.000Z",
+      "__v": 0,
+      "description": "A delicious savory assortment featuring Oats Tangy Tomato, Protein Cheese, Jowar Tangy Tomato, and Oats Peri Peri."
+    }
+  ]
 ]
-
