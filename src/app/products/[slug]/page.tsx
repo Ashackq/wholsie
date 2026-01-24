@@ -38,7 +38,7 @@ interface Product {
     minOrderQty: number;
     maxOrderQty?: number;
     taxPercentage: number;
-    categoryId: string;
+    categoryId: any;
     category?: {
         _id: string;
         name: string;
@@ -55,6 +55,8 @@ interface Product {
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
     const [product, setProduct] = useState<Product | null>(null);
+    console.log(product);
+
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState(0);
@@ -179,6 +181,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
     return (
         <>
+            {/* Page Banner */}
+            <section className="page_banner" style={{ background: "url('/assets/images/bannerOther.jpg')", minHeight: 200 }}>
+
+            </section>
+
             {/* Breadcrumb */}
             <section className="breadcrumb_part" style={{ paddingTop: "70px" }}>
                 <div className="container">
@@ -324,7 +331,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                             {product.description}
                                         </p>
 
-                                        {product.categoryId === '695e28b94394cfdad2a77e07' && (
+                                        {product.categoryId && product.categoryId.slug.includes("puff") && (
 
                                             <img
                                                 className="highlight"
@@ -335,7 +342,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                             />
 
                                         )}
-                                        {product.categoryId === '695e28b94394cfdad2a77e06' && (
+                                        {product.categoryId && product.categoryId.slug === 'makhana' && (
 
                                             <img
                                                 className="highlight"

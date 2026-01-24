@@ -575,7 +575,7 @@ export default function CheckoutPage() {
         <main style={{ minHeight: '100vh' }}>
             <style>{`
                 .page_banner {
-                    background: url('/assets/images/banners.jpg') center/cover no-repeat;
+                    background: url('/assets/images/bannerOther.jpg') center/cover no-repeat;
                     padding: 50px 0 52px 0;
                 }
                 .page_banner_overlay {

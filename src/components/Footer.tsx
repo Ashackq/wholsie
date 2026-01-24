@@ -12,6 +12,7 @@ interface Category {
 export default function Footer() {
   const { hideHeaderFooter } = useLayout();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isPhone, setIsPhone] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -28,18 +29,28 @@ export default function Footer() {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsPhone(window.innerWidth < 450);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   if (hideHeaderFooter) return null;
 
   return (
     <footer
       className="gadget_footer footer_2 mt_55"
       style={{
-        backgroundImage: "url('/assets/images/slider/footerback.jpg')",
+        backgroundImage: `url('/assets/images/slider/${isPhone ? 'footerback_phone2' : 'footerback'}.jpg')`,
         height: "auto",
         width: "100%",
         backgroundSize: "cover",
         backgroundPosition: "center",
-        paddingTop: "460px",
+        paddingTop: isPhone ? "200px" : "460px",
       }}
     >
       <div className="container">

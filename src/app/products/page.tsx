@@ -107,7 +107,7 @@ function ProductsContent() {
         if (tempCategory) params.set("category", tempCategory);
         if (tempPriceRange) params.set("price", tempPriceRange);
         if (searchQuery) params.set("search", searchQuery);
-        
+
         const queryString = params.toString();
         router.push(`/products${queryString ? `?${queryString}` : ""}`);
         setShowFilterModal(false);
@@ -186,13 +186,13 @@ function ProductsContent() {
             <div className="sidebar_category">
                 <h3>Categories</h3>
                 <ul>
-                    <li 
-                        className={(!isMobile ? !activeCategory : !tempCategory) ? "current" : ""} 
+                    <li
+                        className={(!isMobile ? !activeCategory : !tempCategory) ? "current" : ""}
                         style={{ color: (!isMobile ? !activeCategory : !tempCategory) ? "var(--primary)" : "inherit" }}
                     >
                         {isMobile ? (
-                            <a 
-                                href="#" 
+                            <a
+                                href="#"
                                 onClick={(e) => { e.preventDefault(); setTempCategory(""); }}
                                 style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
                             >
@@ -210,14 +210,14 @@ function ProductsContent() {
                         )}
                     </li>
                     {categories.map((cat) => (
-                        <li 
-                            key={cat._id} 
-                            className={(!isMobile ? cat.slug === activeCategory : cat.slug === tempCategory) ? "current" : ""} 
+                        <li
+                            key={cat._id}
+                            className={(!isMobile ? cat.slug === activeCategory : cat.slug === tempCategory) ? "current" : ""}
                             style={{ color: (!isMobile ? cat.slug === activeCategory : cat.slug === tempCategory) ? "var(--primary)" : "inherit" }}
                         >
                             {isMobile ? (
-                                <a 
-                                    href="#" 
+                                <a
+                                    href="#"
                                     onClick={(e) => { e.preventDefault(); setTempCategory(cat.slug); }}
                                     style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
                                 >
@@ -242,14 +242,14 @@ function ProductsContent() {
                 <h3>Price Range</h3>
                 <ul>
                     {priceRanges.map((range) => (
-                        <li 
-                            key={range.value || "all"} 
-                            className={(!isMobile ? priceRange === range.value : tempPriceRange === range.value) ? "current" : ""} 
+                        <li
+                            key={range.value || "all"}
+                            className={(!isMobile ? priceRange === range.value : tempPriceRange === range.value) ? "current" : ""}
                             style={{ color: (!isMobile ? priceRange === range.value : tempPriceRange === range.value) ? "var(--primary)" : "inherit" }}
                         >
                             {isMobile ? (
-                                <a 
-                                    href="#" 
+                                <a
+                                    href="#"
                                     onClick={(e) => { e.preventDefault(); setTempPriceRange(range.value); }}
                                     style={{ display: "flex", alignItems: "center", gap: "8px" }}
                                 >
@@ -270,9 +270,24 @@ function ProductsContent() {
 
     return (
         <>
+            {/* Page Banner */}
+            <section className="page_banner" style={{ background: "url('/assets/images/bannerOther.jpg')" }}>
+                <div className="page_banner_overlay">
+                    <div className="container">
+                        <div className="row">
+                            <div className="col-12">
+                                <div className="page_banner_text wow fadeInUp">
+                                    <h1>Our Products</h1>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Mobile Filter Modal */}
             {showFilterModal && (
-                <div 
+                <div
                     style={{
                         position: "fixed",
                         inset: 0,
@@ -283,7 +298,7 @@ function ProductsContent() {
                     }}
                 >
                     {/* Backdrop */}
-                    <div 
+                    <div
                         onClick={() => setShowFilterModal(false)}
                         style={{
                             position: "absolute",
@@ -292,7 +307,7 @@ function ProductsContent() {
                         }}
                     />
                     {/* Modal Content */}
-                    <div 
+                    <div
                         style={{
                             position: "relative",
                             background: "#fff",
@@ -305,7 +320,7 @@ function ProductsContent() {
                         }}
                     >
                         {/* Modal Header */}
-                        <div 
+                        <div
                             style={{
                                 display: "flex",
                                 justifyContent: "space-between",
@@ -323,7 +338,7 @@ function ProductsContent() {
                                     </p>
                                 )}
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setShowFilterModal(false)}
                                 style={{
                                     background: "none",
@@ -339,7 +354,7 @@ function ProductsContent() {
                         </div>
 
                         {/* Scrollable Filter Content */}
-                        <div 
+                        <div
                             style={{
                                 flex: 1,
                                 overflowY: "auto",
@@ -350,7 +365,7 @@ function ProductsContent() {
                         </div>
 
                         {/* Modal Footer */}
-                        <div 
+                        <div
                             style={{
                                 display: "flex",
                                 gap: "12px",
@@ -359,7 +374,7 @@ function ProductsContent() {
                                 background: "#fff",
                             }}
                         >
-                            <button 
+                            <button
                                 onClick={clearFilters}
                                 style={{
                                     flex: 1,
@@ -374,7 +389,7 @@ function ProductsContent() {
                             >
                                 Clear All
                             </button>
-                            <button 
+                            <button
                                 onClick={applyFilters}
                                 className="common_btn"
                                 style={{
@@ -393,268 +408,268 @@ function ProductsContent() {
             )}
 
             <section className="pt_55" style={{ paddingTop: "70px" }}>
-            <div className="container">
-                <div className="row">
-                    {/* Sidebar - Hidden on mobile */}
-                    <div className="col-lg-3 col-md-4 d-none d-md-block">
-                        <FilterContent isMobile={false} />
-                    </div>
-
-                    {/* Products Grid */}
-                    <div className="col-lg-9 col-md-8 col-12">
-                        {/* Page Header */}
-                        <div className="section_heading">
-                            <h3>
-                                {searchQuery
-                                    ? `Search Results for "${searchQuery}"`
-                                    : currentCategory
-                                        ? currentCategory.name
-                                        : "All Products"}
-                            </h3>
-                            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                                {/* Mobile Filter Button */}
-                                <button 
-                                    onClick={openFilterModal}
-                                    className="d-flex d-md-none"
-                                    style={{
-                                        alignItems: "center",
-                                        gap: "6px",
-                                        padding: "8px 12px",
-                                        border: "1px solid #ddd",
-                                        borderRadius: "6px",
-                                        background: "#fff",
-                                        fontSize: "14px",
-                                        fontWeight: 500,
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                                    </svg>
-                                    Filters
-                                    {(categorySlug || priceRange) && (
-                                        <span 
-                                            style={{
-                                                background: "var(--primary)",
-                                                color: "#fff",
-                                                borderRadius: "50%",
-                                                width: "18px",
-                                                height: "18px",
-                                                display: "inline-flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                fontSize: "11px",
-                                            }}
-                                        >
-                                            {(categorySlug ? 1 : 0) + (priceRange ? 1 : 0)}
-                                        </span>
-                                    )}
-                                </button>
-                                <label htmlFor="sort" className="d-none d-sm-inline" style={{ color: "#666", fontSize: 14 }}>Sort by:</label>
-                                <select
-                                    id="sort"
-                                    value={sort}
-                                    onChange={(e) => setSort(e.target.value)}
-                                    style={{
-                                        border: "1px solid #ddd",
-                                        borderRadius: 6,
-                                        padding: "8px 10px",
-                                        fontSize: 14,
-                                        background: "white",
-                                    }}
-                                >
-                                    <option value="featured">Featured</option>
-                                    <option value="price-asc">Price: Low to High</option>
-                                    <option value="price-desc">Price: High to Low</option>
-                                    <option value="newest">Newest</option>
-                                </select>
-                            </div>
+                <div className="container">
+                    <div className="row">
+                        {/* Sidebar - Hidden on mobile */}
+                        <div className="col-lg-3 col-md-4 d-none d-md-block">
+                            <FilterContent isMobile={false} />
                         </div>
 
-                        {loading && page === 1 ? (
-                            <div className="wd-load">
-                                <p>Loading products...</p>
+                        {/* Products Grid */}
+                        <div className="col-lg-9 col-md-8 col-12">
+                            {/* Page Header */}
+                            <div className="section_heading">
+                                <h3>
+                                    {searchQuery
+                                        ? `Search Results for "${searchQuery}"`
+                                        : currentCategory
+                                            ? currentCategory.name
+                                            : "All Products"}
+                                </h3>
+                                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                                    {/* Mobile Filter Button */}
+                                    <button
+                                        onClick={openFilterModal}
+                                        className="d-flex d-md-none"
+                                        style={{
+                                            alignItems: "center",
+                                            gap: "6px",
+                                            padding: "8px 12px",
+                                            border: "1px solid #ddd",
+                                            borderRadius: "6px",
+                                            background: "#fff",
+                                            fontSize: "14px",
+                                            fontWeight: 500,
+                                            cursor: "pointer",
+                                        }}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                        </svg>
+                                        Filters
+                                        {(categorySlug || priceRange) && (
+                                            <span
+                                                style={{
+                                                    background: "var(--primary)",
+                                                    color: "#fff",
+                                                    borderRadius: "50%",
+                                                    width: "18px",
+                                                    height: "18px",
+                                                    display: "inline-flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    fontSize: "11px",
+                                                }}
+                                            >
+                                                {(categorySlug ? 1 : 0) + (priceRange ? 1 : 0)}
+                                            </span>
+                                        )}
+                                    </button>
+                                    <label htmlFor="sort" className="d-none d-sm-inline" style={{ color: "#666", fontSize: 14 }}>Sort by:</label>
+                                    <select
+                                        id="sort"
+                                        value={sort}
+                                        onChange={(e) => setSort(e.target.value)}
+                                        style={{
+                                            border: "1px solid #ddd",
+                                            borderRadius: 6,
+                                            padding: "8px 10px",
+                                            fontSize: 14,
+                                            background: "white",
+                                        }}
+                                    >
+                                        <option value="featured">Featured</option>
+                                        <option value="price-asc">Price: Low to High</option>
+                                        <option value="price-desc">Price: High to Low</option>
+                                        <option value="newest">Newest</option>
+                                    </select>
+                                </div>
                             </div>
-                        ) : (
-                            <>
-                                <div className="row">
-                                    {products.length > 0 ? (
-                                        [...products]
-                                            // Filter by category
-                                            .filter((product) => {
-                                                if (!categorySlug) return true;
-                                                return product.categoryId?.slug === categorySlug;
-                                            })
-                                            // Filter by price range
-                                            .filter((product) => {
-                                                if (!priceRange) return true;
-                                                const productPrice = product.discountPrice ?? product.discountedPrice ?? product.salePrice ?? product.price ?? 0;
-                                                const [minStr, maxStr] = priceRange.split("-");
-                                                const min = minStr ? parseFloat(minStr) : 0;
-                                                const max = maxStr ? parseFloat(maxStr) : Infinity;
-                                                return productPrice >= min && productPrice <= max;
-                                            })
-                                            // Sort products
-                                            .sort((a, b) => {
-                                                const priceA = (a.discountPrice ?? a.discountedPrice ?? a.salePrice ?? a.price ?? 0);
-                                                const priceB = (b.discountPrice ?? b.discountedPrice ?? b.salePrice ?? b.price ?? 0);
-                                                if (sort === "price-asc") return priceA - priceB;
-                                                if (sort === "price-desc") return priceB - priceA;
-                                                if (sort === "newest") return (b as any)._id.localeCompare((a as any)._id);
-                                                return 0;
-                                            })
-                                            .map((product) => {
-                                                const basePrice = product.price ?? 0;
-                                                const discounted = product.discountPrice ?? product.discountedPrice ?? product.salePrice;
-                                                const hasDiscount = typeof discounted === "number" && discounted < basePrice && basePrice > 0;
-                                                const discountPercent = hasDiscount ? calculateDiscountPercent(basePrice, discounted as number) : 0;
-                                                const finalPrice = hasDiscount ? (discounted as number) : basePrice;
-                                                const imageSrc = product.image?.startsWith('/') ? product.image : `/${product.image}`;
 
-                                                return (
-                                                    <div
-                                                        key={product._id}
-                                                        className="col-lg-4 col-md-6 col-sm-6 col-6"
-                                                        style={{ marginBottom: "30px" }}
-                                                    >
+                            {loading && page === 1 ? (
+                                <div className="wd-load">
+                                    <p>Loading products...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="row">
+                                        {products.length > 0 ? (
+                                            [...products]
+                                                // Filter by category
+                                                .filter((product) => {
+                                                    if (!categorySlug) return true;
+                                                    return product.categoryId?.slug === categorySlug;
+                                                })
+                                                // Filter by price range
+                                                .filter((product) => {
+                                                    if (!priceRange) return true;
+                                                    const productPrice = product.discountPrice ?? product.discountedPrice ?? product.salePrice ?? product.price ?? 0;
+                                                    const [minStr, maxStr] = priceRange.split("-");
+                                                    const min = minStr ? parseFloat(minStr) : 0;
+                                                    const max = maxStr ? parseFloat(maxStr) : Infinity;
+                                                    return productPrice >= min && productPrice <= max;
+                                                })
+                                                // Sort products
+                                                .sort((a, b) => {
+                                                    const priceA = (a.discountPrice ?? a.discountedPrice ?? a.salePrice ?? a.price ?? 0);
+                                                    const priceB = (b.discountPrice ?? b.discountedPrice ?? b.salePrice ?? b.price ?? 0);
+                                                    if (sort === "price-asc") return priceA - priceB;
+                                                    if (sort === "price-desc") return priceB - priceA;
+                                                    if (sort === "newest") return (b as any)._id.localeCompare((a as any)._id);
+                                                    return 0;
+                                                })
+                                                .map((product) => {
+                                                    const basePrice = product.price ?? 0;
+                                                    const discounted = product.discountPrice ?? product.discountedPrice ?? product.salePrice;
+                                                    const hasDiscount = typeof discounted === "number" && discounted < basePrice && basePrice > 0;
+                                                    const discountPercent = hasDiscount ? calculateDiscountPercent(basePrice, discounted as number) : 0;
+                                                    const finalPrice = hasDiscount ? (discounted as number) : basePrice;
+                                                    const imageSrc = product.image?.startsWith('/') ? product.image : `/${product.image}`;
+
+                                                    return (
                                                         <div
-                                                            className="gadget_product_item wow fadeInUp"
-                                                            style={{
-                                                                background: "linear-gradient(145deg, #ffffff 0%, #f7f9ff 100%)",
-                                                                borderRadius: "18px",
-                                                                padding: "14px",
-                                                                boxShadow: "0 14px 34px rgba(0,0,0,0.08)",
-                                                                display: "flex",
-                                                                flexDirection: "column",
-                                                                gap: "12px",
-                                                                height: "100%",
-                                                            }}
+                                                            key={product._id}
+                                                            className="col-lg-4 col-md-6 col-sm-6 col-6"
+                                                            style={{ marginBottom: "30px" }}
                                                         >
-                                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
-                                                                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                                                                    {product.isRecentLaunch && (
-                                                                        <span className="product-badge product-badge-launch">
-                                                                            New Launch
-                                                                        </span>
-                                                                    )}
-                                                                    {product.isCombo && (
-                                                                        <span className="product-badge product-badge-combo">
-                                                                            Healthy Hamper
-                                                                        </span>
-                                                                    )}
-                                                                    {hasDiscount && (
-                                                                        <span className="product-badge product-badge-discount">
-                                                                            {discountPercent}% Off
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                <p className="rating" style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px", color: "#0f172a" }}>
-                                                                    <span style={{ fontWeight: 700 }}>0.0</span>
-                                                                    <i className="fas fa-star" aria-hidden="true"></i>
-                                                                    <span style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
-                                                                </p>
-                                                            </div>
-
-                                                            <Link href={`/products/${product.slug}`} style={{ display: "block", borderRadius: "12px", overflow: "hidden", background: "#f8fafc" }}>
-                                                                <div className="img" style={{ position: "relative" }}>
-                                                                    <Image
-                                                                        src={imageSrc}
-                                                                        alt={product.name || product.title || 'Product'}
-                                                                        width={300}
-                                                                        height={250}
-                                                                        className="img-fluid w-100"
-                                                                        style={{ objectFit: "cover", width: "100%", height: "220px" }}
-                                                                    />
-                                                                </div>
-                                                            </Link>
-
-                                                            <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
-                                                                <div className="top_text" style={{ margin: 0 }}>
-                                                                    <Link href={`/products/${product.slug}`} className="title" style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", lineHeight: 1.35 }}>
-                                                                        {product.name || product.title}
-                                                                    </Link>
-                                                                </div>
-
-                                                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
-                                                                    <div>
-                                                                        {hasDiscount ? (
-                                                                            <p className="price-on-sale price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
-                                                                                ₹{Math.round(finalPrice)} <del style={{ color: "#94a3b8", marginLeft: "6px", fontWeight: 500 }}>₹{Math.round(basePrice)}</del>
-                                                                                <span style={{ color: "#f97316", marginLeft: "8px", fontWeight: 700 }}>{discountPercent}% Off</span>
-                                                                            </p>
-                                                                        ) : (
-                                                                            <p className="price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
-                                                                                ₹{Math.round(finalPrice)}
-                                                                            </p>
+                                                            <div
+                                                                className="gadget_product_item wow fadeInUp"
+                                                                style={{
+                                                                    background: "linear-gradient(145deg, #ffffff 0%, #f7f9ff 100%)",
+                                                                    borderRadius: "18px",
+                                                                    padding: "14px",
+                                                                    boxShadow: "0 14px 34px rgba(0,0,0,0.08)",
+                                                                    display: "flex",
+                                                                    flexDirection: "column",
+                                                                    gap: "12px",
+                                                                    height: "100%",
+                                                                }}
+                                                            >
+                                                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                                                                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                                                                        {product.isRecentLaunch && (
+                                                                            <span className="product-badge product-badge-launch">
+                                                                                New Launch
+                                                                            </span>
+                                                                        )}
+                                                                        {product.isCombo && (
+                                                                            <span className="product-badge product-badge-combo">
+                                                                                Healthy Hamper
+                                                                            </span>
+                                                                        )}
+                                                                        {hasDiscount && (
+                                                                            <span className="product-badge product-badge-discount">
+                                                                                {discountPercent}% Off
+                                                                            </span>
                                                                         )}
                                                                     </div>
-                                                                    <Link
-                                                                        href={`/products/${product.slug}`}
-                                                                        style={{
-                                                                            background: "#0f172a",
-                                                                            color: "#fff",
-                                                                            padding: "10px 14px",
-                                                                            borderRadius: "12px",
-                                                                            fontSize: "13px",
-                                                                            fontWeight: 700,
-                                                                            textTransform: "uppercase",
-                                                                            letterSpacing: "0.4px",
-                                                                        }}
-                                                                    >
-                                                                        View
-                                                                    </Link>
+                                                                    <p className="rating" style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px", color: "#0f172a" }}>
+                                                                        <span style={{ fontWeight: 700 }}>0.0</span>
+                                                                        <i className="fas fa-star" aria-hidden="true"></i>
+                                                                        <span style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
+                                                                    </p>
+                                                                </div>
+
+                                                                <Link href={`/products/${product.slug}`} style={{ display: "block", borderRadius: "12px", overflow: "hidden", background: "#f8fafc" }}>
+                                                                    <div className="img" style={{ position: "relative" }}>
+                                                                        <Image
+                                                                            src={imageSrc}
+                                                                            alt={product.name || product.title || 'Product'}
+                                                                            width={300}
+                                                                            height={250}
+                                                                            className="img-fluid w-100"
+                                                                            style={{ objectFit: "cover", width: "100%", height: "220px" }}
+                                                                        />
+                                                                    </div>
+                                                                </Link>
+
+                                                                <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
+                                                                    <div className="top_text" style={{ margin: 0 }}>
+                                                                        <Link href={`/products/${product.slug}`} className="title" style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", lineHeight: 1.35 }}>
+                                                                            {product.name || product.title}
+                                                                        </Link>
+                                                                    </div>
+
+                                                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+                                                                        <div>
+                                                                            {hasDiscount ? (
+                                                                                <p className="price-on-sale price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
+                                                                                    ₹{Math.round(finalPrice)} <del style={{ color: "#94a3b8", marginLeft: "6px", fontWeight: 500 }}>₹{Math.round(basePrice)}</del>
+                                                                                    <span style={{ color: "#f97316", marginLeft: "8px", fontWeight: 700 }}>{discountPercent}% Off</span>
+                                                                                </p>
+                                                                            ) : (
+                                                                                <p className="price" style={{ margin: 0, fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
+                                                                                    ₹{Math.round(finalPrice)}
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+                                                                        <Link
+                                                                            href={`/products/${product.slug}`}
+                                                                            style={{
+                                                                                background: "#0f172a",
+                                                                                color: "#fff",
+                                                                                padding: "10px 14px",
+                                                                                borderRadius: "12px",
+                                                                                fontSize: "13px",
+                                                                                fontWeight: 700,
+                                                                                textTransform: "uppercase",
+                                                                                letterSpacing: "0.4px",
+                                                                            }}
+                                                                        >
+                                                                            View
+                                                                        </Link>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                );
-                                            })
-                                    ) : (
-                                        <div className="col-12">
-                                            <p
+                                                    );
+                                                })
+                                        ) : (
+                                            <div className="col-12">
+                                                <p
+                                                    style={{
+                                                        textAlign: "center",
+                                                        padding: "60px 0",
+                                                        color: "var(--text-2)",
+                                                        fontSize: "18px",
+                                                    }}
+                                                >
+                                                    No products found
+                                                    {(categorySlug || searchQuery) && (
+                                                        <>
+                                                            {" "}
+                                                            <Link href="/products" style={{ color: "var(--primary)" }}>
+                                                                View all products
+                                                            </Link>
+                                                        </>
+                                                    )}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Load More Button */}
+                                    {hasMore && products.length > 0 && (
+                                        <div style={{ textAlign: "center", marginTop: "40px" }}>
+                                            <button
+                                                onClick={loadMore}
+                                                disabled={loading}
+                                                className="common_btn"
                                                 style={{
-                                                    textAlign: "center",
-                                                    padding: "60px 0",
-                                                    color: "var(--text-2)",
-                                                    fontSize: "18px",
+                                                    opacity: loading ? 0.6 : 1,
+                                                    cursor: loading ? "not-allowed" : "pointer",
                                                 }}
                                             >
-                                                No products found
-                                                {(categorySlug || searchQuery) && (
-                                                    <>
-                                                        {" "}
-                                                        <Link href="/products" style={{ color: "var(--primary)" }}>
-                                                            View all products
-                                                        </Link>
-                                                    </>
-                                                )}
-                                            </p>
+                                                {loading ? "Loading..." : "Load More"}
+                                            </button>
                                         </div>
                                     )}
-                                </div>
-
-                                {/* Load More Button */}
-                                {hasMore && products.length > 0 && (
-                                    <div style={{ textAlign: "center", marginTop: "40px" }}>
-                                        <button
-                                            onClick={loadMore}
-                                            disabled={loading}
-                                            className="common_btn"
-                                            style={{
-                                                opacity: loading ? 0.6 : 1,
-                                                cursor: loading ? "not-allowed" : "pointer",
-                                            }}
-                                        >
-                                            {loading ? "Loading..." : "Load More"}
-                                        </button>
-                                    </div>
-                                )}
-                            </>
-                        )}
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section></>
+            </section></>
     );
 }
 
