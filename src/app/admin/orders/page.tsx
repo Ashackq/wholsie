@@ -58,29 +58,42 @@ export default function AdminOrdersPage() {
     const [formData, setFormData] = useState({
         status: "pending",
     });
+    const [page, setPage] = useState(1);
+    const [total, setTotal] = useState(0);
+    const pageSize = 4;
     const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
     useEffect(() => {
         if (!isAdmin || authLoading) return;
 
         async function load() {
+            setLoading(true);
             try {
-                const res = await fetch(`${API}/admin/orders`, {
+                const offset = (page - 1) * pageSize;
+                const res = await fetch(`${API}/admin/orders?offset=${offset}&limit=${pageSize}`, {
                     credentials: "include",
                     cache: "no-store",
                     headers: { "Cache-Control": "no-cache" },
                 });
                 if (!res.ok) throw new Error("Failed to fetch orders");
                 const json = await res.json();
-                setItems(json.data || []);
-                setLoading(false);
+                const list = json.data || [];
+                const totalCount = json.pagination?.total ?? (Array.isArray(list) ? offset + list.length : 0);
+                setItems(list);
+                setTotal(totalCount);
             } catch (e: any) {
                 setError(e?.message || "Failed to load orders");
+            } finally {
                 setLoading(false);
             }
         }
         load();
-    }, [isAdmin, authLoading, API]);
+    }, [isAdmin, authLoading, API, page]);
+
+    const goToPage = (nextPage: number) => {
+        setPage(nextPage);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
 
     const handleEdit = async (order: Order) => {
         setLoadingDetails(true);
@@ -504,8 +517,11 @@ export default function AdminOrdersPage() {
             )}
 
             <div className="admin-table-container">
-                <div className="admin-table-header">
-                    <h3>All Orders ({items.length})</h3>
+                <div className="admin-table-header" style={{ alignItems: "center", justifyContent: "space-between" }}>
+                    <h3>All Orders ({total || items.length})</h3>
+                    <div style={{ fontSize: 13, color: "var(--text-2)" }}>
+                        Page {page} · Showing {items.length} of {total || items.length}
+                    </div>
                 </div>
                 <table className="admin-table">
                     <thead>
@@ -651,6 +667,41 @@ export default function AdminOrdersPage() {
                         )}
                     </tbody>
                 </table>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, flexWrap: "wrap", gap: 10 }}>
+                    <button
+                        onClick={() => goToPage(Math.max(1, page - 1))}
+                        disabled={page === 1 || loading}
+                        style={{
+                            padding: "8px 12px",
+                            borderRadius: 6,
+                            border: "1px solid #d1d5db",
+                            background: page === 1 || loading ? "#f3f4f6" : "#fff",
+                            cursor: page === 1 || loading ? "not-allowed" : "pointer",
+                        }}
+                    >
+                        Prev
+                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13 }}>
+                        <span>Page {page}</span>
+                        <span style={{ color: "var(--text-2)" }}>
+                            {Math.min((page - 1) * pageSize + 1, total || 0)} - {Math.min(page * pageSize, total || (page * pageSize))}
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => goToPage(page + 1)}
+                        disabled={loading || ((page * pageSize) >= total && items.length < pageSize)}
+                        style={{
+                            padding: "8px 12px",
+                            borderRadius: 6,
+                            border: "1px solid #d1d5db",
+                            background: loading || ((page * pageSize) >= total && items.length < pageSize) ? "#f3f4f6" : "#fff",
+                            cursor: loading || ((page * pageSize) >= total && items.length < pageSize) ? "not-allowed" : "pointer",
+                        }}
+                    >
+                        Next
+                    </button>
+                </div>
             </div>
         </div>
     );

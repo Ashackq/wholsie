@@ -55,7 +55,6 @@ interface Product {
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
     const [product, setProduct] = useState<Product | null>(null);
-    console.log(product);
 
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(true);
@@ -177,6 +176,16 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     const imageList = (product.images && product.images.length > 0)
         ? [product.image, ...product.images]
         : [product.image];
+
+    const highlightStyle = {
+        // width: "100%",
+        // maxHeight: "120px",
+        // objectFit: "contain" as const,
+        // margin: "12px 0",
+        // borderRadius: "12px",
+        // background: "#f8fafc",
+        // padding: "10px",
+    };
 
 
     return (
@@ -332,26 +341,22 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                         </p>
 
                                         {product.categoryId && product.categoryId.slug.includes("puff") && (
-
                                             <img
                                                 className="highlight"
-
                                                 src="/assets/images/puffhighlight.jpg"
                                                 alt="Puff Highlight"
-
+                                                loading="lazy"
+                                                style={highlightStyle}
                                             />
-
                                         )}
                                         {product.categoryId && product.categoryId.slug === 'makhana' && (
-
                                             <img
                                                 className="highlight"
-
                                                 src="/assets/images/makhanahighlight.jpg"
                                                 alt="Makhana Highlight"
+                                                loading="lazy"
+                                                style={highlightStyle}
                                             />
-
-
                                         )}
                                         {/* Variants Selection */}
                                         {product.variants && product.variants.length > 0 && (

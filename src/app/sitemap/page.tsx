@@ -22,7 +22,7 @@ const links = [
 
 export default function SitemapPage() {
     return (
-        <><section className="page_banner" style={{ background: "url('/assets/images/banners.jpg')" }}>
+        <><section className="page_banner" style={{ background: "url('/assets/images/bannerOther.jpg')" }}>
             <div className="page_banner_overlay">
                 <div className="container">
                     <div className="row">

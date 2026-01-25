@@ -45,7 +45,7 @@ export default function Footer() {
     <footer
       className="gadget_footer footer_2 mt_55"
       style={{
-        backgroundImage: `url('/assets/images/slider/${isPhone ? 'footerback_phone2' : 'footerback'}.jpg')`,
+        backgroundImage: `url('/assets/images/slider/${isPhone ? 'footerback_phone' : 'footerback'}.jpg')`,
         height: "auto",
         width: "100%",
         backgroundSize: "cover",
@@ -70,17 +70,7 @@ export default function Footer() {
                   <span>Follow :</span>
                 </li>
                 <li>
-                  <a href="#" target="_blank" rel="noreferrer">
-                    <i className="fab fa-facebook-f"></i>
-                  </a>
-                </li>
-                <li>
-                  <a href="#" target="_blank" rel="noreferrer">
-                    <i className="fab fa-twitter"></i>
-                  </a>
-                </li>
-                <li>
-                  <a href="#" target="_blank" rel="noreferrer">
+                  <a href="https://www.instagram.com/wholesiiifoods" target="_blank" rel="noreferrer">
                     <i className="fab fa-instagram"></i>
                   </a>
                 </li>

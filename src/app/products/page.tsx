@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense, useCallback } from "react";
+import { useEffect, useState, Suspense, useCallback, useMemo, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -38,7 +38,6 @@ function ProductsContent() {
     const router = useRouter();
     const categorySlug = searchParams?.get("category") || "";
     const searchQuery = searchParams?.get("search") || "";
-    const priceRange = searchParams?.get("price") || "";
 
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -51,18 +50,17 @@ function ProductsContent() {
     const [totalCount, setTotalCount] = useState(0);
     const [allProductsCount, setAllProductsCount] = useState(0);
     const [activeCategory, setActiveCategory] = useState("");
+    const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
     // Mobile filter modal state
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [tempCategory, setTempCategory] = useState("");
-    const [tempPriceRange, setTempPriceRange] = useState("");
 
     // Update active category when URL changes
     useEffect(() => {
         const newSlug = searchParams?.get("category") || "";
         setActiveCategory(newSlug);
         setTempCategory(newSlug);
-        setTempPriceRange(searchParams?.get("price") || "");
     }, [searchParams]);
 
     // Compute total all products count from categories
@@ -92,12 +90,11 @@ function ProductsContent() {
         setProducts([]);
         setIsFetching(false);
         fetchProducts(1, true);
-    }, [categorySlug, searchQuery, priceRange]);
+    }, [categorySlug, searchQuery]);
 
     // Open filter modal with current values
     const openFilterModal = () => {
         setTempCategory(activeCategory);
-        setTempPriceRange(priceRange);
         setShowFilterModal(true);
     };
 
@@ -105,7 +102,6 @@ function ProductsContent() {
     const applyFilters = () => {
         const params = new URLSearchParams();
         if (tempCategory) params.set("category", tempCategory);
-        if (tempPriceRange) params.set("price", tempPriceRange);
         if (searchQuery) params.set("search", searchQuery);
 
         const queryString = params.toString();
@@ -116,7 +112,6 @@ function ProductsContent() {
     // Clear all filters
     const clearFilters = () => {
         setTempCategory("");
-        setTempPriceRange("");
     };
 
     const fetchProducts = useCallback((pageNum: number, reset = false) => {
@@ -138,7 +133,7 @@ function ProductsContent() {
             .then((res) => res.json())
             .then((data) => {
                 const newProducts = data.data || [];
-                const total = data.pagination?.total || newProducts.length;
+                const total = data.pagination?.total ?? newProducts.length;
 
                 if (reset) {
                     setProducts(newProducts);
@@ -151,7 +146,9 @@ function ProductsContent() {
                         return [...prev, ...filtered];
                     });
                 }
-                setHasMore(newProducts.length === 12);
+
+                const moreAvailable = offset + newProducts.length < total;
+                setHasMore(moreAvailable || newProducts.length === 12);
                 setLoading(false);
                 setIsFetching(false);
             })
@@ -162,23 +159,53 @@ function ProductsContent() {
             });
     }, [isFetching, categorySlug, searchQuery]);
 
-    const loadMore = () => {
-        const nextPage = page + 1;
-        setPage(nextPage);
-        fetchProducts(nextPage, false);
-    };
+    const loadMore = useCallback(() => {
+        setPage((prev) => {
+            const nextPage = prev + 1;
+            fetchProducts(nextPage, false);
+            return nextPage;
+        });
+    }, [fetchProducts]);
+
+    useEffect(() => {
+        const target = loadMoreRef.current;
+        if (!target || !hasMore) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const first = entries[0];
+                if (first?.isIntersecting && !loading && !isFetching) {
+                    loadMore();
+                }
+            },
+            { rootMargin: "200px" }
+        );
+
+        observer.observe(target);
+        return () => observer.disconnect();
+    }, [hasMore, loadMore, loading, isFetching]);
 
     const currentCategory = categories.find((cat) => cat.slug === categorySlug);
 
-    // Price range options
-    const priceRanges = [
-        { value: "", label: "All Prices" },
-        { value: "0-100", label: "Under ₹100" },
-        { value: "100-200", label: "₹100 - ₹200" },
-        { value: "200-500", label: "₹200 - ₹500" },
-        { value: "500-1000", label: "₹500 - ₹1000" },
-        { value: "1000-", label: "Above ₹1000" },
-    ];
+    const { puffCategories, makhanaCategory, otherCategories, puffTotalCount, mainPuffSlug } = useMemo(() => {
+        const puffCats = categories.filter((cat) => cat.name?.toLowerCase().includes("puff") || cat.slug?.toLowerCase().includes("puff"));
+        const makhanaCat = categories.find((cat) => cat.name?.toLowerCase().includes("makhana") || cat.slug?.toLowerCase().includes("makhana")) || null;
+        const excludedIds = new Set<string>();
+        puffCats.forEach((c) => excludedIds.add(c._id));
+        if (makhanaCat) excludedIds.add(makhanaCat._id);
+        const remaining = categories.filter((cat) => !excludedIds.has(cat._id));
+
+        const puffCount = puffCats.reduce((sum, cat) => sum + (cat.productCount || 0), 0);
+        const primaryPuffSlug = puffCats[0]?.slug || "";
+
+        return {
+            puffCategories: puffCats,
+            makhanaCategory: makhanaCat,
+            otherCategories: remaining,
+            puffTotalCount: puffCount,
+            mainPuffSlug: primaryPuffSlug,
+        };
+    }, [categories]);
 
     // Filter sidebar content (reused in desktop and modal)
     const FilterContent = ({ isMobile = false }: { isMobile?: boolean }) => (
@@ -209,7 +236,87 @@ function ProductsContent() {
                             </Link>
                         )}
                     </li>
-                    {categories.map((cat) => (
+
+                    {puffCategories.length > 0 && (
+                        <li
+                            className={(!isMobile ? puffCategories.some((cat) => cat.slug === activeCategory) : puffCategories.some((cat) => cat.slug === tempCategory)) ? "current" : ""}
+                            style={{ color: (!isMobile ? puffCategories.some((cat) => cat.slug === activeCategory) : puffCategories.some((cat) => cat.slug === tempCategory)) ? "var(--primary)" : "inherit" }}
+                        >
+                            {isMobile ? (
+                                <a
+                                    href="#"
+                                    onClick={(e) => { e.preventDefault(); if (mainPuffSlug) setTempCategory(mainPuffSlug); }}
+                                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                >
+                                    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        {tempCategory && puffCategories.some((cat) => cat.slug === tempCategory) && (
+                                            <i className="fa-solid fa-check" style={{ color: "var(--primary)", fontSize: "12px" }}></i>
+                                        )}
+                                        Puffs
+                                    </span>
+                                    <span>({puffTotalCount || puffCategories.length})</span>
+                                </a>
+                            ) : (
+                                <Link href={mainPuffSlug ? `/products?category=${mainPuffSlug}` : "/products"}>
+                                    <span>Puffs</span>
+                                    <span>({puffTotalCount || puffCategories.length})</span>
+                                </Link>
+                            )}
+                            <ul style={{ listStyle: "none", paddingLeft: "16px", marginTop: "8px" }}>
+                                {puffCategories.map((cat) => (
+                                    <li
+                                        key={`puff-${cat._id}`}
+                                        className={(!isMobile ? cat.slug === activeCategory : cat.slug === tempCategory) ? "current" : ""}
+                                        style={{ color: (!isMobile ? cat.slug === activeCategory : cat.slug === tempCategory) ? "var(--primary)" : "inherit", fontSize: "14px" }}
+                                    >
+                                        {isMobile ? (
+                                            <a
+                                                href="#"
+                                                onClick={(e) => { e.preventDefault(); setTempCategory(cat.slug); }}
+                                                style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                            >
+                                                <span>{cat.name}</span>
+                                                <span>({cat.productCount ?? 0})</span>
+                                            </a>
+                                        ) : (
+                                            <Link href={`/products?category=${cat.slug}`}>
+                                                <span>{cat.name}</span>
+                                                <span>({cat.productCount ?? 0})</span>
+                                            </Link>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </li>
+                    )}
+
+                    {makhanaCategory && (
+                        <li
+                            className={(!isMobile ? makhanaCategory.slug === activeCategory : makhanaCategory.slug === tempCategory) ? "current" : ""}
+                            style={{ color: (!isMobile ? makhanaCategory.slug === activeCategory : makhanaCategory.slug === tempCategory) ? "var(--primary)" : "inherit" }}
+                        >
+                            {isMobile ? (
+                                <a
+                                    href="#"
+                                    onClick={(e) => { e.preventDefault(); setTempCategory(makhanaCategory.slug); }}
+                                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                >
+                                    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        {tempCategory === makhanaCategory.slug && <i className="fa-solid fa-check" style={{ color: "var(--primary)", fontSize: "12px" }}></i>}
+                                        Makhana
+                                    </span>
+                                    <span>({makhanaCategory.productCount ?? 0})</span>
+                                </a>
+                            ) : (
+                                <Link href={`/products?category=${makhanaCategory.slug}`}>
+                                    <span>Makhana</span>
+                                    <span>({makhanaCategory.productCount ?? 0})</span>
+                                </Link>
+                            )}
+                        </li>
+                    )}
+
+                    {otherCategories.map((cat) => (
                         <li
                             key={cat._id}
                             className={(!isMobile ? cat.slug === activeCategory : cat.slug === tempCategory) ? "current" : ""}
@@ -228,37 +335,9 @@ function ProductsContent() {
                                     <span>({cat.productCount ?? 0})</span>
                                 </a>
                             ) : (
-                                <Link href={`/products?category=${cat.slug}${priceRange ? `&price=${priceRange}` : ""}`}>
+                                <Link href={`/products?category=${cat.slug}`}>
                                     <span>{cat.name}</span>
                                     <span>({cat.productCount ?? 0})</span>
-                                </Link>
-                            )}
-                        </li>
-                    ))}
-                </ul>
-            </div>
-
-            <div className="sidebar_category">
-                <h3>Price Range</h3>
-                <ul>
-                    {priceRanges.map((range) => (
-                        <li
-                            key={range.value || "all"}
-                            className={(!isMobile ? priceRange === range.value : tempPriceRange === range.value) ? "current" : ""}
-                            style={{ color: (!isMobile ? priceRange === range.value : tempPriceRange === range.value) ? "var(--primary)" : "inherit" }}
-                        >
-                            {isMobile ? (
-                                <a
-                                    href="#"
-                                    onClick={(e) => { e.preventDefault(); setTempPriceRange(range.value); }}
-                                    style={{ display: "flex", alignItems: "center", gap: "8px" }}
-                                >
-                                    {tempPriceRange === range.value && <i className="fa-solid fa-check" style={{ color: "var(--primary)", fontSize: "12px" }}></i>}
-                                    <span>{range.label}</span>
-                                </a>
-                            ) : (
-                                <Link href={`/products${categorySlug ? `?category=${categorySlug}` : ""}${range.value ? `${categorySlug ? "&" : "?"}price=${range.value}` : ""}`}>
-                                    <span>{range.label}</span>
                                 </Link>
                             )}
                         </li>
@@ -276,7 +355,7 @@ function ProductsContent() {
                     <div className="container">
                         <div className="row">
                             <div className="col-12">
-                                <div className="page_banner_text wow fadeInUp">
+                                <div className="page_banner_text">
                                     <h1>Our Products</h1>
                                 </div>
                             </div>
@@ -331,10 +410,9 @@ function ProductsContent() {
                         >
                             <div>
                                 <h4 style={{ margin: 0, fontWeight: 600 }}>Filters</h4>
-                                {(tempCategory || tempPriceRange) && (
+                                {tempCategory && (
                                     <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#666" }}>
-                                        {tempCategory && <span style={{ background: "#f0f0f0", padding: "2px 8px", borderRadius: "4px", marginRight: "6px" }}>{categories.find(c => c.slug === tempCategory)?.name || tempCategory}</span>}
-                                        {tempPriceRange && <span style={{ background: "#f0f0f0", padding: "2px 8px", borderRadius: "4px" }}>{priceRanges.find(p => p.value === tempPriceRange)?.label || tempPriceRange}</span>}
+                                        <span style={{ background: "#f0f0f0", padding: "2px 8px", borderRadius: "4px", marginRight: "6px" }}>{categories.find(c => c.slug === tempCategory)?.name || tempCategory}</span>
                                     </p>
                                 )}
                             </div>
@@ -447,7 +525,7 @@ function ProductsContent() {
                                             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                                         </svg>
                                         Filters
-                                        {(categorySlug || priceRange) && (
+                                        {categorySlug && (
                                             <span
                                                 style={{
                                                     background: "var(--primary)",
@@ -461,7 +539,7 @@ function ProductsContent() {
                                                     fontSize: "11px",
                                                 }}
                                             >
-                                                {(categorySlug ? 1 : 0) + (priceRange ? 1 : 0)}
+                                                1
                                             </span>
                                         )}
                                     </button>
@@ -500,17 +578,10 @@ function ProductsContent() {
                                                     if (!categorySlug) return true;
                                                     return product.categoryId?.slug === categorySlug;
                                                 })
-                                                // Filter by price range
-                                                .filter((product) => {
-                                                    if (!priceRange) return true;
-                                                    const productPrice = product.discountPrice ?? product.discountedPrice ?? product.salePrice ?? product.price ?? 0;
-                                                    const [minStr, maxStr] = priceRange.split("-");
-                                                    const min = minStr ? parseFloat(minStr) : 0;
-                                                    const max = maxStr ? parseFloat(maxStr) : Infinity;
-                                                    return productPrice >= min && productPrice <= max;
-                                                })
                                                 // Sort products
                                                 .sort((a, b) => {
+                                                    const comboOrder = Number(!!b.isCombo) - Number(!!a.isCombo);
+                                                    if (comboOrder !== 0) return comboOrder;
                                                     const priceA = (a.discountPrice ?? a.discountedPrice ?? a.salePrice ?? a.price ?? 0);
                                                     const priceB = (b.discountPrice ?? b.discountedPrice ?? b.salePrice ?? b.price ?? 0);
                                                     if (sort === "price-asc") return priceA - priceB;
@@ -650,14 +721,14 @@ function ProductsContent() {
 
                                     {/* Load More Button */}
                                     {hasMore && products.length > 0 && (
-                                        <div style={{ textAlign: "center", marginTop: "40px" }}>
+                                        <div ref={loadMoreRef} style={{ textAlign: "center", marginTop: "40px" }}>
                                             <button
                                                 onClick={loadMore}
-                                                disabled={loading}
+                                                disabled={loading || isFetching}
                                                 className="common_btn"
                                                 style={{
-                                                    opacity: loading ? 0.6 : 1,
-                                                    cursor: loading ? "not-allowed" : "pointer",
+                                                    opacity: loading || isFetching ? 0.6 : 1,
+                                                    cursor: loading || isFetching ? "not-allowed" : "pointer",
                                                 }}
                                             >
                                                 {loading ? "Loading..." : "Load More"}

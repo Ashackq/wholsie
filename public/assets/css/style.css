@@ -41,24 +41,24 @@ CSS INDEX
 }
 
 :root {
-        --headingFont: "Albert Sans", "Segoe UI", Arial, sans-serif;
-        --bodyFont: "Albert Sans", "Segoe UI", Arial, sans-serif;
-        --cursiveFont: "Albert Sans", "Segoe UI", Arial, sans-serif;
+    --headingFont: "Albert Sans", "Segoe UI", Arial, sans-serif;
+    --bodyFont: "Albert Sans", "Segoe UI", Arial, sans-serif;
+    --cursiveFont: "Albert Sans", "Segoe UI", Arial, sans-serif;
     --colorPrimary: #F05F22;
     --red_1: #db1215;
     --backdrop: rgba(0, 0, 0, 0.5);
     --yellow: #ffb321;
-            font-size: 15px;
+    font-size: 15px;
     --main-rgba-2: rgba(0, 0, 0, 0.15);
     --text: #545454;
     --text-2: #909090;
-        font-size: 16px;
+    font-size: 16px;
     --line: #f3efef;
     --line-3: #dedada;
-        font-family: var(--headingFont);
+    font-family: var(--headingFont);
     --bg-1: #fcfbf9;
     --bg-2: #f6f6f6;
-        font-family: var(--headingFont);
+    font-family: var(--headingFont);
     --bg-4: #c9f4aa;
     --bg-5: #ff7b54;
     --bg-6: #8054ff;
@@ -13772,6 +13772,6 @@ img {
 }
 
 .highlight {
-    width: 600px !important;
+    width: 450px !important;
     height: auto;
 }

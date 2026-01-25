@@ -16,7 +16,7 @@ export default function ResetPasswordPage() {
       {/* Page Banner */}
       <section
         className="page_banner"
-        style={{ background: "url(/assets/images/banners.jpg)" }}
+        style={{ background: "url(/assets/images/bannerOther.jpg)" }}
       >
         <div className="page_banner_overlay">
           <div className="container">

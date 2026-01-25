@@ -40,6 +40,7 @@ export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [slidesPerView, setSlidesPerView] = useState(2);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,14 +78,16 @@ export default function Home() {
       return 2;
     };
 
-    const updateSlides = () => setSlidesPerView(calculateSlides());
+    const updateSlides = () => {
+      setSlidesPerView(calculateSlides());
+      setIsMobile(window.innerWidth < 576);
+    };
     updateSlides();
     window.addEventListener("resize", updateSlides);
     return () => window.removeEventListener("resize", updateSlides);
   }, []);
 
   const shouldShowCombosNav = combos.length > slidesPerView;
-  const shouldShowHotNav = products.length > slidesPerView;
   const shouldShowRecentNav = recentLaunches.length > slidesPerView;
 
   return (
@@ -209,11 +212,11 @@ export default function Home() {
           <>
             {combos.length > 0 ? (
               <div style={{ width: '100vw', position: 'relative', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw' }}>
-                <div className="row flash_sell_2_slider" style={{ margin: '0 40px' }}>
+                <div className="row flash_sell_2_slider" style={{ margin: isMobile ? '0 12px' : '0 40px' }}>
                   <Swiper
                     modules={[Autoplay, Navigation]}
-                    spaceBetween={16}
-                    slidesPerView={2}
+                    spaceBetween={isMobile ? 12 : 16}
+                    slidesPerView={slidesPerView}
                     autoplay={{ delay: 4000, disableOnInteraction: false }}
                     navigation={
                       shouldShowCombosNav
@@ -223,12 +226,14 @@ export default function Home() {
                         }
                         : undefined
                     }
+                    centeredSlides={false}
                     loop={combos.length > slidesPerView}
                     breakpoints={{
-                      576: { slidesPerView: 2 },
-                      768: { slidesPerView: 3 },
-                      992: { slidesPerView: 4 },
-                      1200: { slidesPerView: 5 },
+                      0: { slidesPerView: 2, spaceBetween: 12 },
+                      576: { slidesPerView: 2, spaceBetween: 14 },
+                      768: { slidesPerView: 3, spaceBetween: 16 },
+                      992: { slidesPerView: 4, spaceBetween: 16 },
+                      1200: { slidesPerView: 5, spaceBetween: 16 },
                     }}
                   >
                     {combos.map((product) => {
@@ -259,12 +264,8 @@ export default function Home() {
                                   background: "#0ea5e9",
                                   color: "#fff",
                                   borderRadius: "999px",
-                                  padding: "4px 10px",
-                                  fontSize: "12px",
-                                  letterSpacing: "0.4px",
-                                  textTransform: "uppercase",
-                                  fontWeight: 700,
-                                }}>
+
+                                }} className="product-badge product-badge-launch">
                                   Healthy Hamper
                                 </span>
 
@@ -283,9 +284,11 @@ export default function Home() {
                                 )}
                               </div>
                               <p className="rating" style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px", color: "#0f172a" }}>
-                                <span style={{ fontWeight: 700 }}>0.0</span>
+                                <span style={{ fontWeight: 700, marginRight: "-4px" }}>0.0</span>
                                 <i className="fas fa-star" aria-hidden="true"></i>
-                                <span style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
+                                {isMobile ?
+                                  "" : <span style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
+                                }
                               </p>
                             </div>
 
@@ -383,11 +386,11 @@ export default function Home() {
           <>
             {recentLaunches.length > 0 ? (
               <div style={{ width: '100vw', position: 'relative', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw' }}>
-                <div className="row flash_sell_2_slider" style={{ margin: '0 40px' }}>
+                <div className="row flash_sell_2_slider" style={{ margin: isMobile ? '0 12px' : '0 40px' }}>
                   <Swiper
                     modules={[Autoplay, Navigation]}
-                    spaceBetween={16}
-                    slidesPerView={2}
+                    spaceBetween={isMobile ? 12 : 16}
+                    slidesPerView={slidesPerView}
                     autoplay={{ delay: 4000, disableOnInteraction: false }}
                     navigation={
                       shouldShowRecentNav
@@ -397,12 +400,14 @@ export default function Home() {
                         }
                         : undefined
                     }
+                    centeredSlides={false}
                     loop={recentLaunches.length > slidesPerView}
                     breakpoints={{
-                      576: { slidesPerView: 2 },
-                      768: { slidesPerView: 3 },
-                      992: { slidesPerView: 4 },
-                      1200: { slidesPerView: 5 },
+                      0: { slidesPerView: 2, spaceBetween: 12 },
+                      576: { slidesPerView: 2, spaceBetween: 14 },
+                      768: { slidesPerView: 3, spaceBetween: 16 },
+                      992: { slidesPerView: 4, spaceBetween: 16 },
+                      1200: { slidesPerView: 5, spaceBetween: 16 },
                     }}
                   >
                     {recentLaunches.map((product) => {
@@ -446,9 +451,11 @@ export default function Home() {
                                 )}
                               </div>
                               <p className="rating" style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px", color: "#0f172a" }}>
-                                <span style={{ fontWeight: 700 }}>0.0</span>
+                                <span style={{ fontWeight: 700, marginRight: "-4px" }}>0.0</span>
                                 <i className="fas fa-star" aria-hidden="true"></i>
-                                <span style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
+                                {isMobile ?
+                                  "" : <span style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
+                                }
                               </p>
                             </div>
 
