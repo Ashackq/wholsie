@@ -32,6 +32,7 @@ interface InvoiceData {
   subtotal: number;
   tax: number;
   shippingCost: number;
+  platformFee?: number;
   discount: number;
   total: number;
   paymentMethod?: string;
@@ -130,8 +131,6 @@ export default function InvoicePage() {
   return (
     <div className="invoice-page invisible print:visible">
       <div className="invoice-sheet">
-
-
         {/* Header */}
         <div className="mb-8 border-b-2 border-gray-300 pb-6">
           <div className="flex items-start justify-between">
@@ -161,13 +160,15 @@ export default function InvoicePage() {
             <div className="text-right invoice-header-right">
               <h2 className="text-2xl font-bold text-blue-600">INVOICE</h2>
               <p className="mt-2 text-sm text-gray-600">
-                Invoice #: <span className="font-semibold">{invoice.invoiceNumber}</span>
+                Invoice #:{" "}
+                <span className="font-semibold">{invoice.invoiceNumber}</span>
               </p>
               <p className="text-sm text-gray-600">
                 Date: {new Date(invoice.invoiceDate).toLocaleDateString()}
               </p>
               <p className="text-sm text-gray-600">
-                Order #: <span className="font-semibold">{invoice.orderNumber}</span>
+                Order #:{" "}
+                <span className="font-semibold">{invoice.orderNumber}</span>
               </p>
               <span
                 className={`mt-2 inline-block rounded px-3 py-1 text-xs font-semibold ${
@@ -261,11 +262,17 @@ export default function InvoicePage() {
             </div>
             {invoice.shippingCost > 0 && (
               <div className="flex justify-between border-b border-gray-200 py-2">
-                <span className="text-sm text-gray-600">
-                  Shipping Charges:
-                </span>
+                <span className="text-sm text-gray-600">Shipping Charges:</span>
                 <span className="text-sm font-semibold">
                   ₹{invoice.shippingCost.toFixed(2)}
+                </span>
+              </div>
+            )}
+            {invoice.platformFee && invoice.platformFee > 0 && (
+              <div className="flex justify-between border-b border-gray-200 py-2">
+                <span className="text-sm text-gray-600">Platform Fee:</span>
+                <span className="text-sm font-semibold">
+                  ₹{invoice.platformFee.toFixed(2)}
                 </span>
               </div>
             )}

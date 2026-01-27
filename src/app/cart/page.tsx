@@ -260,13 +260,7 @@ export default function CartPage() {
 
     const summary = useMemo(() => {
         const subtotal = groups.reduce((sum, g) => sum + g.unitPrice * g.quantity, 0);
-        const tax = groups.reduce((sum, g) => {
-            const rate = g.product?.tax ?? 0;
-            return sum + g.unitPrice * g.quantity * (rate / 100);
-        }, 0);
-        const shipping = 0;
-        const total = subtotal + tax + shipping;
-        return { subtotal, tax, shipping, total };
+        return { subtotal, total: subtotal };
     }, [groups]);
 
     if (loading) {
@@ -463,9 +457,10 @@ export default function CartPage() {
                                         </ul>
 
                                         <h6 className="total-item">Subtotal <span>{formatCurrency(summary.subtotal)}</span></h6>
-                                        <h6>Tax <span>{formatCurrency(summary.tax)}</span></h6>
-                                        <h6>Shipping <span>{summary.shipping === 0 ? "Free" : formatCurrency(summary.shipping)}</span></h6>
-                                        <h4>Grand Total <span>{formatCurrency(summary.total)}</span></h4>
+                                        <h4>Total <span>{formatCurrency(summary.total)}</span></h4>
+                                        <p style={{ fontSize: '13px', color: '#666', marginTop: '10px', fontStyle: 'italic' }}>
+                                            Tax, shipping & platform fees calculated at checkout
+                                        </p>
                                     </div>
                                 </div>
                             </div>

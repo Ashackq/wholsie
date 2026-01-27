@@ -138,7 +138,7 @@ export async function checkPincodeServiceability(pincode: string): Promise<{
     }
 
     try {
-        const url = `${DELHIVERY_API_BASE}/c/api/pin-codes/json/?filter_codes=${encodeURIComponent(pincode)}`;
+        const url = `${DELHIVERY_TRACK_BASE}/c/api/pin-codes/json/?filter_codes=${encodeURIComponent(pincode)}`;
         const response = await fetch(url, {
             method: "GET",
             headers: {
@@ -646,7 +646,7 @@ export async function calculateShippingCost(params: {
         const { originPin, destinationPin, weight, paymentMode, codAmount } = params;
         const paymentType = paymentMode === "Prepaid" ? "Pre-paid" : "COD";
 
-        const url = `${DELHIVERY_API_BASE}/api/kinko/v1/invoice/charges/.json?md=S&ss=Delivered&d_pin=${destinationPin}&o_pin=${originPin}&cgm=${weight}&pt=${paymentType}${codAmount ? `&cod=${codAmount}` : ""}`;
+        const url = `${DELHIVERY_TRACK_BASE}/api/kinko/v1/invoice/charges/.json?md=S&ss=Delivered&d_pin=${destinationPin}&o_pin=${originPin}&cgm=${weight}&pt=${paymentType}${codAmount ? `&cod=${codAmount}` : ""}`;
 
         const response = await fetch(url, {
             method: "GET",

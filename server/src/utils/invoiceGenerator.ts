@@ -26,6 +26,7 @@ interface OrderDocument extends Document {
   subtotal: number;
   tax: number;
   shippingCost: number;
+  platformFee?: number;
   discount: number;
   total: number;
   paymentMethod?: string;
@@ -89,6 +90,7 @@ export async function createInvoiceFromOrder(
     subtotal: order.subtotal || 0,
     tax: order.tax || 0,
     shippingCost: order.shippingCost || 0,
+    platformFee: order.platformFee || 0,
     discount: order.discount || 0,
     total: order.total,
 

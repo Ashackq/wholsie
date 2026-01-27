@@ -5,6 +5,7 @@ const orderItemSchema = new Schema({
   name: String,
   price: Number,
   quantity: Number,
+  weight: Number, // Product weight in grams (snapshot at order creation)
   image: String,
 });
 
@@ -44,6 +45,7 @@ const orderSchema = new Schema(
     subtotal: Number,
     tax: Number,
     shippingCost: Number,
+    platformFee: Number, // 2% platform fee
     discount: Number,
     total: Number,
     // Delhivery shipment tracking

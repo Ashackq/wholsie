@@ -216,6 +216,8 @@ paymentRouter.post("/payments/webhook", async (req, res, next) => {
             );
 
             const { createShipment } = await import("../utils/delhivery.js");
+            const { calculateOrderWeightFromObject } =
+              await import("../utils/orderWeightCalculator.js");
             const { User } = await import("../models/User.js");
 
             const user = await User.findById(order.userId);
@@ -223,6 +225,10 @@ paymentRouter.post("/payments/webhook", async (req, res, next) => {
               console.error("User not found for auto-shipment");
               return;
             }
+
+            // Calculate shipment weight using order weight calculator
+            const weightCalculation = calculateOrderWeightFromObject(order);
+            const shipmentWeight = weightCalculation.shipmentWeight || 100;
 
             // Calculate total quantity and prepare product description
             const totalQuantity = order.items.reduce(
@@ -254,7 +260,7 @@ paymentRouter.post("/payments/webhook", async (req, res, next) => {
                   order_date: order.createdAt.toISOString().split("T")[0],
                   total_amount: (order.total || 0).toString(),
                   quantity: totalQuantity.toString(),
-                  weight: "500", // Default 500g
+                  weight: shipmentWeight.toString(),
                 },
               ],
               pickup_location: {

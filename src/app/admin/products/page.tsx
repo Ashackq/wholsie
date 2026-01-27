@@ -782,16 +782,32 @@ export default function AdminProductsPage() {
                     </tbody>
                 </table>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, flexWrap: "wrap", gap: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, padding: "0 20px 20px", flexWrap: "wrap", gap: 16 }}>
                     <button
                         onClick={() => goToPage(Math.max(1, page - 1))}
                         disabled={page === 1 || loading}
                         style={{
-                            padding: "8px 12px",
-                            borderRadius: 6,
-                            border: "1px solid #d1d5db",
-                            background: page === 1 || loading ? "#f3f4f6" : "#fff",
+                            padding: "10px 20px",
+                            borderRadius: 20,
+                            border: "none",
+                            background: page === 1 || loading ? "#e5e7eb" : "#FF6600",
+                            color: page === 1 || loading ? "#9ca3af" : "#fff",
                             cursor: page === 1 || loading ? "not-allowed" : "pointer",
+                            fontWeight: 500,
+                            fontSize: 14,
+                            transition: "all 0.3s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                            if (page !== 1 && !loading) {
+                                e.currentTarget.style.backgroundColor = "#E55B00";
+                                e.currentTarget.style.transform = "translateY(-2px)";
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (page !== 1 && !loading) {
+                                e.currentTarget.style.backgroundColor = "#FF6600";
+                                e.currentTarget.style.transform = "translateY(0)";
+                            }
                         }}
                     >
                         Prev
@@ -806,11 +822,27 @@ export default function AdminProductsPage() {
                         onClick={() => goToPage(page + 1)}
                         disabled={loading || ((page * pageSize) >= total && items.length < pageSize)}
                         style={{
-                            padding: "8px 12px",
-                            borderRadius: 6,
-                            border: "1px solid #d1d5db",
-                            background: loading || ((page * pageSize) >= total && items.length < pageSize) ? "#f3f4f6" : "#fff",
+                            padding: "10px 20px",
+                            borderRadius: 20,
+                            border: "none",
+                            background: loading || ((page * pageSize) >= total && items.length < pageSize) ? "#e5e7eb" : "#FF6600",
+                            color: loading || ((page * pageSize) >= total && items.length < pageSize) ? "#9ca3af" : "#fff",
                             cursor: loading || ((page * pageSize) >= total && items.length < pageSize) ? "not-allowed" : "pointer",
+                            fontWeight: 500,
+                            fontSize: 14,
+                            transition: "all 0.3s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                            if (!loading && !((page * pageSize) >= total && items.length < pageSize)) {
+                                e.currentTarget.style.backgroundColor = "#E55B00";
+                                e.currentTarget.style.transform = "translateY(-2px)";
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!loading && !((page * pageSize) >= total && items.length < pageSize)) {
+                                e.currentTarget.style.backgroundColor = "#FF6600";
+                                e.currentTarget.style.transform = "translateY(0)";
+                            }
                         }}
                     >
                         Next

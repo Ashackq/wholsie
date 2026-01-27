@@ -37,6 +37,7 @@ export interface IInvoice extends Document {
   subtotal: number;
   tax: number;
   shippingCost: number;
+  platformFee?: number;
   discount: number;
   total: number;
 
@@ -128,6 +129,10 @@ const InvoiceSchema = new Schema<IInvoice>(
       default: 0,
     },
     shippingCost: {
+      type: Number,
+      default: 0,
+    },
+    platformFee: {
       type: Number,
       default: 0,
     },

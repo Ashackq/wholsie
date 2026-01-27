@@ -410,34 +410,51 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (summary.subtotal > 500) {
-      setShippingCharge(0);
-      setShippingNote("Free shipping on orders above ₹500");
-      return;
-    }
-
     let cancelled = false;
     const run = async () => {
       setShippingLoading(true);
-      setShippingNote("Fetching live shipping quote...");
+      setShippingNote("Calculating shipping...");
       try {
-        const resp = await api.getShippingCharges({
-          destinationPin: selectedAddress.pincode,
-          weight: Math.max(500, Math.round(totalWeight)),
-          paymentMode: paymentMethod === "2" ? "COD" : "Pre-paid",
+        // Prepare cart items with productId and quantity
+        const items =
+          cart?.items?.map((item: any) => ({
+            productId: item.productId?._id || item.productId,
+            quantity: item.quantity || 1,
+          })) || [];
+
+        // Call our new shipping calculator endpoint
+        const resp = await fetch(`${API_BASE}/shipping/calculate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            destinationPin: selectedAddress.pincode,
+            cartTotal: summary.subtotal,
+            items,
+          }),
         });
 
+        const result = await resp.json();
+
         if (cancelled) return;
-        const quote = resp.data;
-        const amount = Number(
-          quote?.total_amount ?? quote?.delivery_charges ?? 0,
-        );
-        const shippingValue =
-          Number.isFinite(amount) && amount >= 0 ? amount : 0;
-        setShippingCharge(shippingValue);
-        setShippingNote("Live shipping quote applied");
+
+        if (!result.success) {
+          throw new Error(result.error || "Failed to calculate shipping");
+        }
+
+        if (result.data.freeShipping) {
+          setShippingCharge(0);
+          setShippingNote("Free shipping on orders above ₹500");
+        } else {
+          const shippingCost = result.data.shippingCost || 0;
+          setShippingCharge(shippingCost);
+          setShippingNote(`Shipping: ₹${shippingCost}`);
+        }
       } catch (err) {
         if (cancelled) return;
+        console.error("Shipping calculation error:", err);
         setShippingCharge(50);
         setShippingNote("Using fallback shipping ₹50");
       } finally {
@@ -452,8 +469,7 @@ export default function CheckoutPage() {
   }, [
     selectedAddress?.pincode,
     summary.subtotal,
-    totalWeight,
-    paymentMethod,
+    cart?.items,
     serviceability?.serviceable,
   ]);
 
@@ -678,11 +694,12 @@ export default function CheckoutPage() {
 
       const total = calculateTotal();
 
-      // Create order
+      // Create order with shipping cost
       const orderRes = await createOrder({
         addressId: selectedAddress._id || selectedAddress.id || "",
         paymentMethod,
         couponCode: couponCode || undefined,
+        shippingCost: shippingCharge, // Pass the calculated shipping cost
       });
 
       const orderId = orderRes.data?.orderId || orderRes.data?._id;
@@ -1257,15 +1274,15 @@ export default function CheckoutPage() {
                     </p>
                   )}
 
-                  {tatInfo?.expected_delivery_date && (
-                    <p style={{ color: "#333", margin: "8px 0 0" }}>
-                      Estimated delivery: {tatInfo.expected_delivery_date}
-                    </p>
-                  )}
-
-                  {shippingNote && (
-                    <p style={{ color: "#555", margin: "8px 0 0" }}>
-                      {shippingNote}
+                  {tatInfo?.data?.expected_delivery_date && tatInfo?.data?.tat && (
+                    <p style={{ color: "#333", margin: "8px 0 0", fontWeight: "500" }}>
+                      {(() => {
+                        const deliveryDate = new Date(tatInfo.data.expected_delivery_date);
+                        const days = tatInfo.data.tat;
+                        const dayName = deliveryDate.toLocaleDateString('en-US', { weekday: 'long' });
+                        const dateStr = deliveryDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                        return `Arrives in ${days} day${days !== 1 ? 's' : ''}, ${dayName} ${dateStr}`;
+                      })()}
                     </p>
                   )}
                 </div>

@@ -259,6 +259,7 @@ export async function createOrder(data: {
   addressId: string;
   paymentMethod?: string;
   couponCode?: string;
+  shippingCost?: number;
 }): Promise<ApiResponse<Order>> {
   return apiCall<ApiResponse<Order>>("/orders", {
     method: "POST",
