@@ -36,7 +36,6 @@ interface Product {
     image: string;
     images?: ProductImage[];
     unit: string;
-    weight?: string;
     minOrderQty: number;
     maxOrderQty?: number;
     taxPercentage: number;
@@ -45,6 +44,7 @@ interface Product {
         _id: string;
         name: string;
     };
+    weight?: number;
     variants?: ProductVariant[];
     specs?: {
         [key: string]: string;
@@ -346,9 +346,9 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                             )}
                                         </h3>
 
-                                        {product.weight && (
+                                        {product.weight !== undefined && product.weight !== null && (
                                             <p style={{ marginBottom: '12px', fontWeight: 600, color: '#111' }}>
-                                                Weight: {product.weight}
+                                                Weight: {product.weight} g
                                             </p>
                                         )}
 
@@ -577,10 +577,10 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                                 <th style={{ width: '30%', fontWeight: 'bold' }}>Unit</th>
                                                                 <td>{product.unit}</td>
                                                             </tr>
-                                                            {product.weight && (
+                                                            {product.weight !== undefined && product.weight !== null && (
                                                                 <tr>
                                                                     <th style={{ width: '30%', fontWeight: 'bold' }}>Weight</th>
-                                                                    <td>{product.weight}</td>
+                                                                    <td>{product.weight} g</td>
                                                                 </tr>
                                                             )}
                                                             <tr>

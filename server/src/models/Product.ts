@@ -24,7 +24,7 @@ const productSchema = new Schema(
         // Product details for specs table
         material: String,
         style: String,
-        weight: String,
+        weight: Number, // grams
         shelfLife: String,
         features: String,
         dietType: String,

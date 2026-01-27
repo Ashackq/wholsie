@@ -117,6 +117,9 @@ export async function createProduct(
         ? Math.round(((price - finalSalePrice) / price) * 100)
         : 0;
 
+    const parsedWeightRaw = weight !== undefined && weight !== null && weight !== "" ? Number(weight) : undefined;
+    const parsedWeight = Number.isFinite(parsedWeightRaw) ? parsedWeightRaw : undefined;
+
     const product = new Product({
       name: name.trim(),
       title: name.trim(),
@@ -137,7 +140,7 @@ export async function createProduct(
       status: status || "active",
       isRecentLaunch: isRecentLaunch || false,
       isCombo: isCombo || false,
-      weight,
+      weight: parsedWeight,
       rating: 0,
       reviewCount: 0,
     });
@@ -210,7 +213,10 @@ export async function updateProduct(
     if (isRecentLaunch !== undefined)
       updateData.isRecentLaunch = isRecentLaunch;
     if (isCombo !== undefined) updateData.isCombo = isCombo;
-    if (weight !== undefined) updateData.weight = weight;
+    if (weight !== undefined) {
+      const parsed = weight === "" ? undefined : Number(weight);
+      updateData.weight = Number.isFinite(parsed) ? parsed : undefined;
+    }
 
     if (price !== undefined) {
       updateData.price = price;

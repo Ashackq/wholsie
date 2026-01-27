@@ -27,7 +27,7 @@ type Product = {
     reviewCount?: number;
     material?: string;
     style?: string;
-    weight?: string;
+    weight?: number;
     shelfLife?: string;
     features?: string;
     dietType?: string;
@@ -133,7 +133,7 @@ export default function AdminProductsPage() {
                 price: String(fullProduct.price || 0),
                 discountPrice: String(fullProduct.discountPrice || 0),
                 stock: String(fullProduct.stock || fullProduct.quantity || 0),
-                weight: fullProduct.weight || "",
+                weight: fullProduct.weight !== undefined && fullProduct.weight !== null ? String(fullProduct.weight) : "",
                 status: fullProduct.status === "active" || fullProduct.status === 1 ? "active" : "inactive",
                 isRecentLaunch: !!fullProduct.isRecentLaunch,
                 isCombo: !!fullProduct.isCombo,
@@ -151,7 +151,7 @@ export default function AdminProductsPage() {
                 price: String(product.price || 0),
                 discountPrice: String(product.discountPrice || 0),
                 stock: String(product.stock || 0),
-                weight: product.weight || "",
+                weight: product.weight !== undefined && product.weight !== null ? String(product.weight) : "",
                 status: product.status === "active" || product.status === 1 ? "active" : "inactive",
                 isRecentLaunch: !!product.isRecentLaunch,
                 isCombo: !!product.isCombo,
@@ -195,7 +195,7 @@ export default function AdminProductsPage() {
                     price: parseFloat(formData.price),
                     discountPrice: formData.discountPrice ? parseFloat(formData.discountPrice) : undefined,
                     stock: parseInt(formData.stock),
-                    weight: formData.weight.trim() || undefined,
+                    weight: formData.weight.trim() ? parseInt(formData.weight.trim(), 10) : undefined,
                     status: formData.status,
                     isRecentLaunch: formData.isRecentLaunch,
                     isCombo: formData.isCombo,
@@ -542,8 +542,10 @@ export default function AdminProductsPage() {
                                         style={{ padding: 10, border: "1px solid var(--text-2)", borderRadius: 6 }}
                                     />
                                     <input
-                                        type="text"
-                                        placeholder="Weight (e.g., 500g)"
+                                        type="number"
+                                        min={0}
+                                        step={1}
+                                        placeholder="Weight in grams (e.g., 500)"
                                         value={formData.weight}
                                         onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
                                         style={{ padding: 10, border: "1px solid var(--text-2)", borderRadius: 6 }}
