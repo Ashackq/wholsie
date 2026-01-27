@@ -174,7 +174,7 @@ export default function AdminOrdersPage() {
         setError(null);
 
         try {
-            const res = await fetch(`${API}/delhivery/create-shipment`, {
+            const res = await fetch(`${API}/admin/delhivery/create-shipment`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -220,7 +220,7 @@ export default function AdminOrdersPage() {
         setError(null);
 
         try {
-            const res = await fetch(`${API}/delhivery/cancel-shipment`, {
+            const res = await fetch(`${API}/admin/delhivery/cancel-shipment`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -360,7 +360,7 @@ export default function AdminOrdersPage() {
                                                 <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, background: idx % 2 === 0 ? "#fff" : "#f9fafb", fontSize: 14 }}>
                                                     <div style={{ display: "flex", gap: 12, alignItems: "center", flex: 1 }}>
                                                         {((item as any).image || item.productId?.image) && (
-                                                            <img src={`/assets/uploaded/item/${(item as any).image || item.productId?.image}`} alt="" style={{ width: 50, height: 50, objectFit: "cover", borderRadius: 6 }} />
+                                                            <img src={`/${(item as any).image || item.productId?.image}`} alt="" className="orderimg" />
                                                         )}
                                                         <div>
                                                             <strong>{(item as any).name || item.productId?.name || "Product"}</strong>

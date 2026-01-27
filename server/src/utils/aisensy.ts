@@ -1,72 +1,109 @@
-// Aisensy integration for WhatsApp/SMS customer communication
-// https://www.aisensy.com/
-// Requires: API key and phone ID
+// Aisensy Campaign API integration
+// Endpoint: https://backend.aisensy.com/campaign/t1/api/v2
 
-const AISENSY_API_BASE = "https://api.aisensy.com/v1/";
+const AISENSY_API_BASE = process.env.AISENSY_API_URL || "https://backend.aisensy.com/campaign/t1/api/v2";
 
 interface AisensyRequest {
-    apiKey: string;
-    endpoint: string;
     method?: string;
     data?: Record<string, unknown>;
 }
 
-export async function aisensyRequest(req: AisensyRequest): Promise<Record<string, unknown>> {
-    const headers: HeadersInit = {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${req.apiKey}`,
-    };
+/**
+ * Core Aisensy request handler (Campaign API)
+ * - apiKey goes in request body
+ * - Used for template campaigns (text or media)
+ */
+export async function aisensyRequest(
+    req: AisensyRequest,
+): Promise<Record<string, unknown>> {
+    const response = await fetch(AISENSY_API_BASE, {
+        method: req.method || "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(req.data || {}),
+    });
 
-    try {
-        const response = await fetch(`${AISENSY_API_BASE}${req.endpoint}`, {
-            method: req.method || "POST",
-            headers,
-            body: JSON.stringify(req.data || {}),
-        });
-
-        if (!response.ok) {
-            throw new Error(`Aisensy API error: ${response.statusText}`);
-        }
-
-        return response.json();
-    } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error("Aisensy request error:", err);
-        throw err;
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Aisensy API error ${response.status}: ${errText}`);
     }
+
+    return response.json();
 }
 
-export async function sendWhatsAppMessage(
+/* =========================================================
+   TRACKING LINK CAMPAIGN
+   Template: "Track your order here: {{1}}"
+========================================================= */
+export async function sendTrackingLinkCampaign(
     apiKey: string,
-    phoneId: string,
-    to: string,
-    message: string,
+    phone: string,
+    trackingUrl: string,
 ): Promise<Record<string, unknown>> {
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+
     return aisensyRequest({
-        apiKey,
-        endpoint: "message/send",
         data: {
-            phoneId,
-            to: `91${to.replace(/\D/g, "").slice(-10)}`, // Ensure +91 format
-            message,
-            messageType: "text",
+            apiKey,
+            campaignName: "tracking_link_camp",
+            destination: cleanPhone,
+            userName: "Wholesiii",
+            templateParams: [trackingUrl],
+            source: "order-system",
+            media: {},
+            buttons: [],
+            carouselCards: [],
+            location: {},
+            attributes: {},
         },
     });
 }
 
-export async function sendOrderUpdate(
+export async function sendOrderShippedWithTracking(
     apiKey: string,
-    phoneId: string,
     phone: string,
-    orderId: string,
-    status: string,
+    trackingNumber: string,
 ): Promise<Record<string, unknown>> {
-    const messages: Record<string, string> = {
-        confirmed: `Your order #${orderId} has been confirmed. We're preparing for shipment.`,
-        shipped: `Your order #${orderId} has been shipped and is on its way!`,
-        delivered: `Your order #${orderId} has been delivered. Thank you for shopping with Wholesii!`,
-        cancelled: `Your order #${orderId} has been cancelled.`,
-    };
+    const trackingUrl = `https://track.delhivery.com/${trackingNumber}`;
 
-    return sendWhatsAppMessage(apiKey, phoneId, phone, messages[status] || `Update: Order #${orderId}`);
+    return sendTrackingLinkCampaign(apiKey, phone, trackingUrl);
+}
+
+/* =========================================================
+   INVOICE PDF CAMPAIGN
+   Template Example:
+   "Your invoice is attached."
+   (No template params required unless you add them)
+========================================================= */
+export async function sendInvoiceCampaign(
+    apiKey: string,
+    phone: string,
+    invoicePdfUrl: string,
+    fileName = "Invoice.pdf",
+): Promise<Record<string, unknown>> {
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+
+    return aisensyRequest({
+        data: {
+            apiKey,
+            campaignName: "invoice_pdf_camp", // <-- Create this in Aisensy
+            destination: cleanPhone,
+            userName: "Wholesiii",
+            templateParams: [], // keep empty if template has no variables
+            source: "order-system",
+
+            // MEDIA OBJECT FOR DOCUMENT
+            media: {
+                url: invoicePdfUrl,      // Public HTTPS PDF URL
+                filename: fileName,      // What user sees in WhatsApp
+                type: "document",        // Required for PDF
+            },
+
+            buttons: [],
+            carouselCards: [],
+            location: {},
+            attributes: {},
+        },
+    });
 }

@@ -1,0 +1,225 @@
+import { Request, Response } from 'express';
+import * as delhiveryUtils from '../utils/delhivery.js';
+import { Order } from '../models/Order.js';
+import { env } from '../config/env.js';
+
+/**
+ * Create a shipment with Delhivery
+ */
+export async function createShipment(req: Request, res: Response) {
+    try {
+        const { orderId, weight } = req.body;
+
+        if (!orderId || !weight) {
+            return res.status(400).json({
+                error: 'Order ID and weight are required',
+            });
+        }
+
+        // Find the order in database
+        const order = await Order.findOne({
+            $or: [
+                { _id: orderId },
+                { orderId: orderId },
+                { orderNo: orderId },
+            ],
+        }).populate('userId shippingAddress');
+
+        if (!order) {
+            return res.status(404).json({
+                error: 'Order not found',
+            });
+        }
+
+        if (order.delhiveryTrackingId) {
+            return res.status(400).json({
+                error: 'Shipment already created for this order',
+            });
+        }
+
+        if (order.paymentStatus !== 'completed') {
+            return res.status(400).json({
+                error: 'Payment must be completed before creating shipment',
+            });
+        }
+
+        // Check if destination pincode is serviceable
+        const shippingPin = (order.shippingAddress as any)?.pincode || (order as any)?.shippingPin;
+        if (shippingPin) {
+            const serviceability = await delhiveryUtils.checkPincodeServiceability(shippingPin);
+            if (!serviceability.serviceable) {
+                return res.status(400).json({
+                    error: 'Delivery not available for this pincode',
+                    details: serviceability.remark || 'Non-serviceable zone',
+                });
+            }
+        }
+
+        // Prepare shipment data
+        const user = (order as any).userId as any;
+        const shippingAddr = (order as any).shippingAddress as any;
+
+        const shipmentData = {
+            shipments: [
+                {
+                    name: shippingAddr?.name || user?.name || user?.firstName + ' ' + user?.lastName,
+                    add: shippingAddr?.address || '',
+                    pin: shippingAddr?.pincode || '',
+                    city: shippingAddr?.city || '',
+                    state: shippingAddr?.state || '',
+                    country: 'India',
+                    phone: shippingAddr?.phone || user?.phone || '',
+                    order: order.orderId || order.orderNo || order._id.toString(),
+                    payment_mode: order.paymentStatus === 'completed' ? 'Prepaid' : 'COD',
+                    order_date: order.createdAt?.toISOString() || new Date().toISOString(),
+                    total_amount: order.total?.toString() || order.netAmount?.toString() || '0',
+                    products_desc: `${order.items?.length || 1} item(s)`,
+                    quantity: (order.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 1).toString(),
+                    weight: weight || '500',
+                    seller_add: env.SELLER_ADDRESS || 'Warehouse',
+                    seller_name: env.SELLER_NAME || 'Wholesiii',
+                },
+            ],
+            pickup_location: {
+                name: env.SELLER_NAME || 'Wholesiii',
+                pin: env.SELLER_PINCODE || '',
+            },
+        };
+
+        // Create shipment with Delhivery
+        const result = await delhiveryUtils.createShipment(shipmentData);
+
+        if (!result.success || !result.waybill) {
+            return res.status(400).json({
+                error: 'Failed to create shipment',
+                details: result.rmk || result.error,
+            });
+        }
+
+        // Update order with tracking ID
+        (order as any).delhiveryTrackingId = result.waybill;
+        (order as any).status = 'processing';
+        await order.save();
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                waybill: result.waybill,
+                packages: result.packages,
+                orderId: order._id,
+            },
+        });
+    } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error('Delhivery create shipment error:', error);
+        return res.status(500).json({
+            error: error.message || 'Failed to create shipment',
+        });
+    }
+}
+
+/**
+ * Cancel a shipment
+ */
+export async function cancelShipment(req: Request, res: Response) {
+    try {
+        const { waybill } = req.body;
+
+        if (!waybill) {
+            return res.status(400).json({
+                error: 'Waybill number is required',
+            });
+        }
+
+        // Find order by tracking ID
+        const order = await Order.findOne({ delhiveryTrackingId: waybill });
+
+        if (!order) {
+            return res.status(404).json({
+                error: 'Order with this tracking ID not found',
+            });
+        }
+
+        // Cancel with Delhivery
+        const result = await delhiveryUtils.cancelShipment(waybill);
+
+        if (!result.success) {
+            return res.status(400).json({
+                error: 'Failed to cancel shipment',
+                message: result.message,
+            });
+        }
+
+        // Update order status
+        (order as any).status = 'cancelled';
+        (order as any).delhiveryTrackingId = undefined;
+        await order.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Shipment cancelled successfully',
+        });
+    } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error('Delhivery cancel shipment error:', error);
+        return res.status(500).json({
+            error: error.message || 'Failed to cancel shipment',
+        });
+    }
+}
+
+/**
+ * Check pincode serviceability
+ */
+export async function checkPincode(req: Request, res: Response) {
+    try {
+        const { pincode } = req.body;
+
+        if (!pincode) {
+            return res.status(400).json({
+                error: 'Pincode is required',
+            });
+        }
+
+        const result = await delhiveryUtils.checkPincodeServiceability(pincode);
+
+        return res.status(200).json({
+            success: true,
+            data: result,
+        });
+    } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error('Delhivery pincode check error:', error);
+        return res.status(500).json({
+            error: error.message || 'Failed to check pincode serviceability',
+        });
+    }
+}
+
+/**
+ * Get tracking status
+ */
+export async function getTracking(req: Request, res: Response) {
+    try {
+        const { waybill } = req.params;
+
+        if (!waybill) {
+            return res.status(400).json({
+                error: 'Waybill number is required',
+            });
+        }
+
+        const result = await delhiveryUtils.getTrackingStatus(waybill);
+
+        return res.status(200).json({
+            success: true,
+            data: result,
+        });
+    } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error('Delhivery tracking error:', error);
+        return res.status(500).json({
+            error: error.message || 'Failed to get tracking status',
+        });
+    }
+}

@@ -3,6 +3,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import * as categoryController from '../controllers/category.controller.js';
 import * as productController from '../controllers/product.controller.js';
 import * as orderController from '../controllers/order.controller.js';
+import * as delhiveryController from '../controllers/delhivery.controller.js';
 
 const router = Router();
 
@@ -35,5 +36,11 @@ router.delete('/products/:productId', requireAuth, requireAdmin, productControll
 router.get('/orders', requireAuth, requireAdmin, orderController.getOrders);
 router.get('/orders/:orderId', requireAuth, requireAdmin, orderController.getOrder);
 router.put('/orders/:orderId/status', requireAuth, requireAdmin, orderController.updateOrderStatus);
+
+// ==================== DELHIVERY ====================
+router.post('/delhivery/create-shipment', requireAuth, requireAdmin, delhiveryController.createShipment);
+router.post('/delhivery/cancel-shipment', requireAuth, requireAdmin, delhiveryController.cancelShipment);
+router.post('/delhivery/check-pincode', requireAuth, requireAdmin, delhiveryController.checkPincode);
+router.get('/delhivery/tracking/:waybill', requireAuth, requireAdmin, delhiveryController.getTracking);
 
 export default router;
