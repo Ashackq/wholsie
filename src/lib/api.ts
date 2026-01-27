@@ -280,6 +280,21 @@ export interface PincodeServiceability {
     remark?: string; // "Embargo" indicates temporary non-serviceability
 }
 
+export interface ExpectedTat {
+    expectedTat?: number;
+    expected_delivery_date?: string;
+    remarks?: string;
+    [key: string]: any;
+}
+
+export interface ShippingCharges {
+    total_amount?: number;
+    delivery_charges?: number;
+    cod_charges?: number;
+    weight?: number;
+    [key: string]: any;
+}
+
 export interface TrackingStatus {
     ShipmentData: Array<{
         Shipment: {
@@ -329,6 +344,34 @@ export async function trackShipment(waybill: string): Promise<ApiResponse<Tracki
 
 export async function trackOrderShipment(orderId: string): Promise<ApiResponse<TrackingStatus & { order: { orderId: string; status: string } }>> {
     return apiCall<ApiResponse<TrackingStatus & { order: { orderId: string; status: string } }>>(`/delhivery/track-order/${orderId}`);
+}
+
+export async function getExpectedTat(params: {
+    originPin?: string;
+    destinationPin: string;
+    mot?: string;
+    pdt?: string;
+    expectedPickupDate?: string;
+}): Promise<ApiResponse<ExpectedTat>> {
+    return apiCall<ApiResponse<ExpectedTat>>('/delhivery/expected-tat', {
+        method: 'POST',
+        body: JSON.stringify(params),
+        skipAuth: true,
+    });
+}
+
+export async function getShippingCharges(params: {
+    originPin?: string;
+    destinationPin: string;
+    weight: number;
+    paymentMode?: 'Pre-paid' | 'COD';
+    codAmount?: number;
+}): Promise<ApiResponse<ShippingCharges>> {
+    return apiCall<ApiResponse<ShippingCharges>>('/delhivery/shipping-charges', {
+        method: 'POST',
+        body: JSON.stringify(params),
+        skipAuth: true,
+    });
 }
 
 // Admin Delhivery API
@@ -445,6 +488,8 @@ export const api = {
     checkPincodeServiceability,
     trackShipment,
     trackOrderShipment,
+    getExpectedTat,
+    getShippingCharges,
     createShipment,
     cancelShipment,
     getPickupLocations,

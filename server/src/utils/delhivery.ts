@@ -5,6 +5,7 @@
 import { env } from "../config/env.js";
 
 const DELHIVERY_API_BASE = env.DELHIVERY_API_URL || "https://staging-express.delhivery.com";
+const DELHIVERY_TRACK_BASE = env.DELHIVERY_TRACK_API_URL || "https://track.delhivery.com";
 
 interface DelhiveryShipmentData {
     shipments: Array<{
@@ -101,6 +102,21 @@ interface TrackingData {
     }>;
 }
 
+interface ExpectedTatResponse {
+    expectedTat?: number;
+    expected_delivery_date?: string;
+    remarks?: string;
+    [key: string]: any;
+}
+
+interface ShippingChargeResponse {
+    total_amount?: number;
+    delivery_charges?: number;
+    cod_charges?: number;
+    weight?: number;
+    [key: string]: any;
+}
+
 /**
  * Check if Delhivery delivers to a specific pincode
  * As per Delhivery docs: https://one.delhivery.com/developer-portal/document/b2c/detail/pincode-serviceability
@@ -166,6 +182,87 @@ export async function checkPincodeServiceability(pincode: string): Promise<{
         console.error("Delhivery pincode check error:", err);
         throw err;
     }
+}
+
+function ensureToken() {
+    const token = env.DELHIVERY_TOKEN;
+    if (!token) {
+        throw new Error("DELHIVERY_TOKEN not configured");
+    }
+    return token;
+}
+
+/**
+ * Get expected TAT (turnaround time) between two pincodes
+ */
+export async function getExpectedTat(params: {
+    originPin: string;
+    destinationPin: string;
+    mot?: string; // mode of transport, default Surface "S"
+    pdt?: string; // product type, default "B2C"
+    expectedPickupDate?: string; // format "YYYY-MM-DD HH:mm"
+}): Promise<ExpectedTatResponse> {
+    const token = ensureToken();
+
+    const {
+        originPin,
+        destinationPin,
+        mot = "S",
+        pdt = "B2C",
+        expectedPickupDate,
+    } = params;
+
+    const pickup = expectedPickupDate
+        || `${new Date().toISOString().slice(0, 10)} 06:30`;
+
+    const url = `${DELHIVERY_TRACK_BASE}/api/dc/expected_tat?origin_pin=${encodeURIComponent(originPin)}&destination_pin=${encodeURIComponent(destinationPin)}&mot=${encodeURIComponent(mot)}&pdt=${encodeURIComponent(pdt)}&expected_pickup_date=${encodeURIComponent(pickup)}`;
+
+    const response = await fetch(url, {
+        method: "GET",
+        headers: {
+            Accept: "application/json",
+            Authorization: `Token ${token}`,
+            "Content-Type": "application/json",
+        },
+    });
+
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Delhivery expected TAT error: ${response.status} - ${text}`);
+    }
+
+    return (await response.json()) as ExpectedTatResponse;
+}
+
+/**
+ * Get shipping charges quote from Delhivery
+ */
+export async function getShippingCharges(params: {
+    originPin: string;
+    destinationPin: string;
+    weight: number; // grams
+    paymentMode: "Pre-paid" | "COD";
+    codAmount?: number;
+}): Promise<ShippingChargeResponse> {
+    const token = ensureToken();
+
+    const { originPin, destinationPin, weight, paymentMode, codAmount } = params;
+    const url = `${DELHIVERY_TRACK_BASE}/api/kinko/v1/invoice/charges/.json?md=E&ss=Delivered&d_pin=${encodeURIComponent(destinationPin)}&o_pin=${encodeURIComponent(originPin)}&cgm=${encodeURIComponent(weight.toString())}&pt=${encodeURIComponent(paymentMode)}${codAmount ? `&cod=${encodeURIComponent(codAmount.toString())}` : ""}`;
+
+    const response = await fetch(url, {
+        method: "GET",
+        headers: {
+            Authorization: `Token ${token}`,
+            "Content-Type": "application/json",
+        },
+    });
+
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Delhivery shipping charge error: ${response.status} - ${text}`);
+    }
+
+    return (await response.json()) as ShippingChargeResponse;
 }
 
 /**

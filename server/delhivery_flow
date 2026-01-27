@@ -1,0 +1,21 @@
+This is TAT (we calculate this when user adds the address)
+
+curl --location 'https://track.delhivery.com/api/dc/expected_tat?origin_pin=415519&destination_pin=411038&mot=S&pdt=B2C&expected_pickup_date=2024-05-31%2006%3A30' \
+--header 'Accept: application/json' \
+--header 'Authorization: Token f4673f9fcfbaf8207c7bb3900f0ece24ca058138' \
+--header 'Content-Type: application/json'
+
+
+this is serviceablity (we calculate this when user adds the address)
+
+curl --location 'https://track.delhivery.com/c/api/pin-codes/json/?filter_codes=390007' \
+--header 'Authorization: Token f4673f9fcfbaf8207c7bb3900f0ece24ca058138'
+
+
+this is done when checkout section is reached and when payment is initiated  this is shippping charges
+(happens for frontend display in shipping charges and happens for razorpay for payment for the products amout with shipping below 500 rupees)
+if product amount above 500 rupees then free shipping for them and we will do the shipping flow as it is
+
+curl --location 'https://track.delhivery.com/api/kinko/v1/invoice/charges/.json?md=E&ss=Delivered&d_pin=411038&o_pin=415519&cgm=10&pt=Pre-paid' \
+--header 'Authorization: Token f4673f9fcfbaf8207c7bb3900f0ece24ca058138' \
+--header 'Content-Type: application/json'

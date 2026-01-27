@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { getCart, createOrder, createPaymentOrder, removeFromCart, getProduct } from "@/lib/api";
+import { getCart, createOrder, createPaymentOrder, removeFromCart, getProduct, api } from "@/lib/api";
 import AddressModals from "@/components/AddressModals";
 
 declare global {
@@ -64,6 +64,11 @@ export default function CheckoutPage() {
     const [packagingCharges, setPackagingCharges] = useState(0);
     const [platformFee, setPlatformFee] = useState(0);
     const [groups, setGroups] = useState<GroupedItem[]>([]);
+    const [serviceability, setServiceability] = useState<any>(null);
+    const [tatInfo, setTatInfo] = useState<any>(null);
+    const [shippingLoading, setShippingLoading] = useState(false);
+    const [serviceabilityLoading, setServiceabilityLoading] = useState(false);
+    const [shippingNote, setShippingNote] = useState<string>("");
 
     const cacheUser = (u: any) => {
         if (!u) return;
@@ -266,17 +271,133 @@ export default function CheckoutPage() {
     const summary = useMemo(() => {
         const subtotalCalc = groups.reduce((sum, g) => sum + (g.unitPrice || 0) * (g.quantity || 0), 0);
         const taxCalc = subtotalCalc * 0.05;
-        const shippingCalc = subtotalCalc > 500 ? 0 : 50;
         const platformFeeCalc = subtotalCalc * 0.02;
-        return { subtotal: subtotalCalc, tax: taxCalc, shipping: shippingCalc, platformFee: platformFeeCalc };
+        return { subtotal: subtotalCalc, tax: taxCalc, platformFee: platformFeeCalc };
+    }, [groups]);
+
+    const totalWeight = useMemo(() => {
+        return groups.reduce((sum, g) => {
+            const weight = Number((g.product as any)?.weight) || 0;
+            const perItemWeight = weight > 0 ? weight : 500; // fallback 500g per product if missing
+            return sum + perItemWeight * (g.quantity || 1);
+        }, 0);
     }, [groups]);
 
     useEffect(() => {
         setSubtotal(summary.subtotal);
         setTax(summary.tax);
-        setShippingCharge(summary.shipping);
         setPlatformFee(summary.platformFee);
-    }, [summary.subtotal, summary.tax, summary.shipping, summary.platformFee]);
+    }, [summary.subtotal, summary.tax, summary.platformFee]);
+
+    // Check serviceability when address changes
+    useEffect(() => {
+        if (!selectedAddress?.pincode) {
+            setServiceability(null);
+            setTatInfo(null);
+            setShippingNote("");
+            return;
+        }
+
+        let cancelled = false;
+        const run = async () => {
+            setServiceabilityLoading(true);
+            try {
+                const resp = await api.checkPincodeServiceability(selectedAddress.pincode);
+                if (cancelled) return;
+                setServiceability(resp.data);
+                if (!resp.data?.serviceable) {
+                    setError("Delivery is not available for this pincode");
+                } else {
+                    setError("");
+                }
+            } catch (err: any) {
+                if (!cancelled) {
+                    setServiceability(null);
+                    setError(err?.message || "Failed to check delivery availability");
+                }
+            } finally {
+                if (!cancelled) setServiceabilityLoading(false);
+            }
+        };
+        run();
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedAddress?.pincode]);
+
+    // Fetch expected TAT once serviceability is confirmed
+    useEffect(() => {
+        if (!serviceability?.serviceable || !selectedAddress?.pincode) {
+            setTatInfo(null);
+            return;
+        }
+
+        let cancelled = false;
+        const run = async () => {
+            try {
+                const resp = await api.getExpectedTat({ destinationPin: selectedAddress.pincode });
+                if (!cancelled) setTatInfo(resp.data);
+            } catch {
+                if (!cancelled) setTatInfo(null);
+            }
+        };
+        run();
+        return () => {
+            cancelled = true;
+        };
+    }, [serviceability?.serviceable, selectedAddress?.pincode]);
+
+    // Fetch live shipping charges based on address, subtotal, and weight
+    useEffect(() => {
+        if (!selectedAddress?.pincode) {
+            setShippingCharge(0);
+            setShippingNote("");
+            return;
+        }
+
+        if (!serviceability?.serviceable) {
+            setShippingCharge(0);
+            setShippingNote("Delivery not available for this address");
+            return;
+        }
+
+        if (summary.subtotal > 500) {
+            setShippingCharge(0);
+            setShippingNote("Free shipping on orders above ₹500");
+            return;
+        }
+
+        let cancelled = false;
+        const run = async () => {
+            setShippingLoading(true);
+            setShippingNote("Fetching live shipping quote...");
+            try {
+                const resp = await api.getShippingCharges({
+                    destinationPin: selectedAddress.pincode,
+                    weight: Math.max(500, Math.round(totalWeight)),
+                    paymentMode: paymentMethod === "2" ? "COD" : "Pre-paid",
+                });
+
+                if (cancelled) return;
+                const quote = resp.data;
+                const amount = Number(quote?.total_amount ?? quote?.delivery_charges ?? 0);
+                const shippingValue = Number.isFinite(amount) && amount >= 0 ? amount : 0;
+                setShippingCharge(shippingValue);
+                setShippingNote("Live shipping quote applied");
+            } catch (err) {
+                if (cancelled) return;
+                setShippingCharge(50);
+                setShippingNote("Using fallback shipping ₹50");
+            } finally {
+                if (!cancelled) setShippingLoading(false);
+            }
+        };
+
+        run();
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedAddress?.pincode, summary.subtotal, totalWeight, paymentMethod, serviceability?.serviceable]);
 
     const calculateTotal = () => {
         let total = subtotal + tax + shippingCharge + packagingCharges + platformFee;
@@ -292,7 +413,7 @@ export default function CheckoutPage() {
 
     const calculateWalletDeduction = () => {
         if (!useWallet || walletBalance <= 0) return 0;
-        const total = summary.subtotal + summary.tax + summary.shipping + packagingCharges + summary.platformFee - couponDiscount;
+        const total = summary.subtotal + summary.tax + shippingCharge + packagingCharges + summary.platformFee - couponDiscount;
         return Math.min(walletBalance, total);
     };
 
@@ -453,6 +574,12 @@ export default function CheckoutPage() {
 
             if (!cart?.items?.length) {
                 setError("Your cart is empty");
+                setLoading(false);
+                return;
+            }
+
+            if (serviceability && serviceability.serviceable === false) {
+                setError("Delivery is not available for the selected address");
                 setLoading(false);
                 return;
             }
@@ -881,6 +1008,34 @@ export default function CheckoutPage() {
                                     )}
                                 </div>
 
+                                {/* Delivery Checks */}
+                                <div className="checkout_header" style={{ marginTop: '20px' }}>
+                                    <h4 style={{ marginBottom: '10px' }}>Delivery Status</h4>
+                                    {serviceabilityLoading ? (
+                                        <p style={{ color: '#555', margin: 0 }}>Checking delivery availability…</p>
+                                    ) : serviceability ? (
+                                        serviceability.serviceable ? (
+                                            <p style={{ color: 'green', margin: 0 }}>✓ Delivery available to this address</p>
+                                        ) : (
+                                            <p style={{ color: 'red', margin: 0 }}>✗ Delivery not available for this pincode</p>
+                                        )
+                                    ) : selectedAddress?.pincode ? (
+                                        <p style={{ color: '#a00', margin: 0 }}>Unable to verify serviceability right now</p>
+                                    ) : (
+                                        <p style={{ color: '#777', margin: 0 }}>Add an address to check delivery</p>
+                                    )}
+
+                                    {tatInfo?.expected_delivery_date && (
+                                        <p style={{ color: '#333', margin: '8px 0 0' }}>
+                                            Estimated delivery: {tatInfo.expected_delivery_date}
+                                        </p>
+                                    )}
+
+                                    {shippingNote && (
+                                        <p style={{ color: '#555', margin: '8px 0 0' }}>{shippingNote}</p>
+                                    )}
+                                </div>
+
                                 {/* Order Notes */}
                                 <div className="checkout_header" style={{ marginTop: '35px' }}>
                                     <div style={{ marginBottom: '15px' }}>
@@ -977,7 +1132,9 @@ export default function CheckoutPage() {
                                     </h6>
                                     <h6>
                                         <span>Shipping Charge</span>
-                                        <div><span>{formatCurrency(summary.shipping)}</span></div>
+                                        <div>
+                                            <span>{shippingLoading ? 'Calculating…' : formatCurrency(shippingCharge)}</span>
+                                        </div>
                                     </h6>
                                     {couponDiscount > 0 && (
                                         <h6 style={{ color: '#31A56D' }}>
@@ -999,7 +1156,7 @@ export default function CheckoutPage() {
                                     )}
                                     <h4>
                                         <span>Grand Total</span>
-                                        <div style={{ color: '#F05F22' }}><span>{formatCurrency(summary.subtotal + summary.tax + summary.shipping + packagingCharges + summary.platformFee - couponDiscount)}</span></div>
+                                        <div style={{ color: '#F05F22' }}><span>{formatCurrency(summary.subtotal + summary.tax + shippingCharge + packagingCharges + summary.platformFee - couponDiscount)}</span></div>
                                     </h4>
 
                                     {/* Wallet */}

@@ -20,6 +20,10 @@ const envSchema = z.object({
     DELHIVERY_TOKEN: z.string().optional(),
     DELHIVERY_API_URL: z.string().url().default("https://staging-express.delhivery.com"),
     TEST_PINCODE: z.string().optional(),
+    SELLER_NAME: z.string().optional(),
+    SELLER_ADDRESS: z.string().optional(),
+    SELLER_PINCODE: z.string().optional(),
+    DELHIVERY_TRACK_API_URL: z.string().url().default("https://track.delhivery.com"),
     // Aisensy Integration (placeholders)
     AISENSY_API_KEY: z.string().optional(),
     AISENSY_API_URL: z.string().optional(),

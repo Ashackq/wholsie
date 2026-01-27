@@ -197,6 +197,67 @@ export async function checkPincode(req: Request, res: Response) {
 }
 
 /**
+ * Get expected TAT between origin and destination pincodes
+ */
+export async function getExpectedTat(req: Request, res: Response) {
+    try {
+        const { destinationPin, mot, pdt, expectedPickupDate } = req.body;
+        const originPin = req.body.originPin || env.SELLER_PINCODE || env.TEST_PINCODE;
+
+        if (!destinationPin) {
+            return res.status(400).json({ error: 'destinationPin is required' });
+        }
+
+        const data = await delhiveryUtils.getExpectedTat({
+            originPin,
+            destinationPin,
+            mot,
+            pdt,
+            expectedPickupDate,
+        });
+
+        return res.status(200).json({ success: true, data });
+    } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error('Delhivery TAT error:', error);
+        return res.status(500).json({ error: error.message || 'Failed to fetch expected TAT' });
+    }
+}
+
+/**
+ * Get shipping charges quote
+ */
+export async function getShippingCharges(req: Request, res: Response) {
+    try {
+        const { destinationPin, weight, paymentMode = 'Pre-paid', codAmount } = req.body;
+        const originPin = req.body.originPin || env.SELLER_PINCODE || env.TEST_PINCODE;
+
+        if (!originPin || !destinationPin || weight === undefined || weight === null) {
+            return res.status(400).json({ error: 'originPin, destinationPin, and weight are required' });
+        }
+
+        const numericWeight = Number(weight);
+        if (!Number.isFinite(numericWeight) || numericWeight <= 0) {
+            return res.status(400).json({ error: 'weight must be a positive number (grams)' });
+        }
+
+        const data = await delhiveryUtils.getShippingCharges({
+            originPin,
+            destinationPin,
+            weight: numericWeight,
+            paymentMode,
+            codAmount,
+        });
+
+        return res.status(200).json({ success: true, data });
+    } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error('Delhivery shipping charge error:', error);
+        return res.status(500).json({ error: error.message || 'Failed to fetch shipping charges' });
+    }
+}
+
+/**
  * Get tracking status
  */
 export async function getTracking(req: Request, res: Response) {

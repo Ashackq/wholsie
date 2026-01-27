@@ -5,6 +5,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import authRouter from './auth.js';
 import { paymentRouter } from './payment.js';
 import { healthRouter } from './health.js';
+import * as delhiveryController from '../controllers/delhivery.controller.js';
 
 // Public controllers
 import * as publicProductController from '../controllers/public-product.controller.js';
@@ -40,6 +41,12 @@ router.get('/search', publicProductController.searchProducts);
 router.get('/categories', publicCategoryController.getCategories);
 router.get('/categories/slug/:slug', publicCategoryController.getCategoryBySlug);
 router.get('/categories/:categoryId/products', publicCategoryController.getProductsByCategory);
+
+// Delhivery (public)
+router.post('/delhivery/check-pincode', delhiveryController.checkPincode);
+router.post('/delhivery/expected-tat', delhiveryController.getExpectedTat);
+router.post('/delhivery/shipping-charges', delhiveryController.getShippingCharges);
+router.get('/delhivery/track/:waybill', delhiveryController.getTracking);
 
 // Reviews (public read)
 router.get('/products/:productId/reviews', reviewController.getProductReviews);
