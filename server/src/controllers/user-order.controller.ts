@@ -4,6 +4,7 @@ import { Cart } from '../models/Cart.js';
 import { Product } from '../models/Product.js';
 import { User } from '../models/User.js';
 import { Address } from '../models/Address.js';
+import { getInvoiceUrl } from '../utils/invoiceGenerator.js';
 
 /**
  * Create order from cart
@@ -119,15 +120,28 @@ export async function getUserOrders(req: Request, res: Response, next: NextFunct
 
         const orders = await Order
             .find({ userId })
+            .populate('invoiceId', 'invoiceNumber invoiceDate')
             .sort({ createdAt: -1 })
             .limit(parseInt(limit as string))
             .skip(parseInt(offset as string));
 
         const total = await Order.countDocuments({ userId });
 
+        // Add invoice URL to each order
+        const ordersWithInvoiceUrl = orders.map(order => {
+            const orderObj = order.toObject();
+            if (orderObj.invoiceId) {
+                const invoiceId = typeof orderObj.invoiceId === 'object' && orderObj.invoiceId._id 
+                    ? orderObj.invoiceId._id.toString() 
+                    : orderObj.invoiceId.toString();
+                orderObj.invoiceUrl = getInvoiceUrl(invoiceId);
+            }
+            return orderObj;
+        });
+
         res.json({
             success: true,
-            data: orders,
+            data: ordersWithInvoiceUrl,
             pagination: {
                 limit: parseInt(limit as string),
                 offset: parseInt(offset as string),
@@ -147,14 +161,25 @@ export async function getOrderDetails(req: Request, res: Response, next: NextFun
         const userId = req.userId!;
         const { orderId } = req.params;
 
-        const order = await Order.findOne({ _id: orderId, userId });
+        const order = await Order.findOne({ _id: orderId, userId })
+            .populate('invoiceId', 'invoiceNumber invoiceDate');
         if (!order) {
             return res.status(404).json({ error: 'Order not found' });
         }
 
+        const orderObj = order.toObject();
+        
+        // Add invoice URL if invoice exists
+        if (orderObj.invoiceId) {
+            const invoiceId = typeof orderObj.invoiceId === 'object' && orderObj.invoiceId._id 
+                ? orderObj.invoiceId._id.toString() 
+                : orderObj.invoiceId.toString();
+            orderObj.invoiceUrl = getInvoiceUrl(invoiceId);
+        }
+
         res.json({
             success: true,
-            data: order
+            data: orderObj
         });
     } catch (error) {
         next(error);

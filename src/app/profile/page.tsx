@@ -27,6 +27,8 @@ interface Order {
     paymentStatus?: string;
     createdAt: string;
     orderDate?: string;
+    invoiceUrl?: string;
+    invoiceId?: any;
     items: Array<{
         name: string;
         quantity: number;
@@ -343,6 +345,7 @@ export default function ProfilePage() {
                                                     <th>Items</th>
                                                     <th>Total</th>
                                                     <th>Status</th>
+                                                    <th>Invoice</th>
                                                     <th>Action</th>
                                                 </tr>
                                             </thead>
@@ -365,12 +368,14 @@ export default function ProfilePage() {
                                                             <td>
                                                                 <strong>₹{typeof totalAmount === 'number' ? totalAmount.toFixed(2) : 'N/A'}</strong>
                                                             </td>
-                                                            <td>
+                                                            <td style={{ verticalAlign: "middle" }}>
                                                                 <span
                                                                     className="badge"
                                                                     style={{
                                                                         padding: "5px 12px",
                                                                         borderRadius: "20px",
+                                                                        display: "inline-block",
+                                                                        verticalAlign: "middle",
                                                                         backgroundColor:
                                                                             displayStatus === "delivered" ? "#d4edda" :
                                                                                 displayStatus === "shipped" ? "#d1ecf1" :
@@ -386,8 +391,44 @@ export default function ProfilePage() {
                                                                     {displayStatus.toUpperCase()}
                                                                 </span>
                                                             </td>
-                                                            <td>
-                                                                <Link href={`/orders/${order._id}`} className="common_btn" style={{ padding: "6px 16px", fontSize: "13px" }}>
+                                                            <td style={{ verticalAlign: "middle" }}>
+                                                                {(order as any).invoiceUrl ? (
+                                                                    <a 
+                                                                        href={(order as any).invoiceUrl}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="common_btn" 
+                                                                        style={{ 
+                                                                            padding: "5px 8px", 
+                                                                            fontSize: "11px", 
+                                                                            backgroundColor: "#28a745", 
+                                                                            color: "white", 
+                                                                            textDecoration: "none",
+                                                                            display: "inline-block",
+                                                                            verticalAlign: "middle",
+                                                                            borderRadius: "4px"
+                                                                        }}
+                                                                        title="Download Invoice PDF"
+                                                                    >
+                                                                        Invoice
+                                                                    </a>
+                                                                ) : (
+                                                                    <span style={{ color: "#999", fontSize: "11px" }}>N/A</span>
+                                                                )}
+                                                            </td>
+                                                            <td style={{ verticalAlign: "middle" }}>
+                                                                <Link 
+                                                                    href={`/orders/${order._id}`} 
+                                                                    className="common_btn" 
+                                                                    style={{ 
+                                                                        padding: "5px 16px", 
+                                                                        fontSize: "11px",
+                                                                        display: "inline-block",
+                                                                        verticalAlign: "middle",
+                                                                        textDecoration: "none",
+                                                                        borderRadius: "4px"
+                                                                    }}
+                                                                >
                                                                     View
                                                                 </Link>
                                                             </td>

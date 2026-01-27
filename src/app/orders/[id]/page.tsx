@@ -15,6 +15,8 @@ interface Order {
     customerEmail?: string;
     customerPhone?: string;
     addressId?: string;
+    invoiceUrl?: string;
+    invoiceId?: any;
     items: Array<{
         productId?: string;
         quantity: number;
@@ -235,24 +237,49 @@ export default function OrderDetailPage() {
                                         Placed on {new Date(order.createdAt).toLocaleDateString()}
                                     </p>
                                 </div>
-                                <span
-                                    className="badge"
-                                    style={{
-                                        padding: "8px 16px",
-                                        borderRadius: "20px",
-                                        fontSize: "14px",
-                                        backgroundColor:
-                                            order.status === "delivered" ? "#d4edda" :
-                                                order.status === "shipped" ? "#d1ecf1" :
-                                                    order.status === "processing" ? "#fff3cd" : "#f8d7da",
-                                        color:
-                                            order.status === "delivered" ? "#155724" :
-                                                order.status === "shipped" ? "#0c5460" :
-                                                    order.status === "processing" ? "#856404" : "#721c24"
-                                    }}
-                                >
-                                    {order.status?.toUpperCase() || 'PENDING'}
-                                </span>
+                                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                    {(order as any).invoiceUrl && (
+                                        <a 
+                                            href={(order as any).invoiceUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="common_btn" 
+                                            style={{ 
+                                                padding: "8px 16px", 
+                                                fontSize: "14px", 
+                                                backgroundColor: "#28a745", 
+                                                color: "white", 
+                                                textDecoration: "none",
+                                                borderRadius: "6px",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "6px"
+                                            }}
+                                            title="Download Invoice PDF"
+                                        >
+                                            <i className="fas fa-file-pdf"></i>
+                                            Download Invoice
+                                        </a>
+                                    )}
+                                    <span
+                                        className="badge"
+                                        style={{
+                                            padding: "8px 16px",
+                                            borderRadius: "20px",
+                                            fontSize: "14px",
+                                            backgroundColor:
+                                                order.status === "delivered" ? "#d4edda" :
+                                                    order.status === "shipped" ? "#d1ecf1" :
+                                                        order.status === "processing" ? "#fff3cd" : "#f8d7da",
+                                            color:
+                                                order.status === "delivered" ? "#155724" :
+                                                    order.status === "shipped" ? "#0c5460" :
+                                                        order.status === "processing" ? "#856404" : "#721c24"
+                                        }}
+                                    >
+                                        {order.status?.toUpperCase() || 'PENDING'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
