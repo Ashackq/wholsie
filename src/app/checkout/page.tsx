@@ -3,9 +3,8 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { getCart, createOrder, createPaymentOrder, updateCartItem, removeFromCart, getProduct } from "@/lib/api";
+import { getCart, createOrder, createPaymentOrder, removeFromCart, getProduct } from "@/lib/api";
 import AddressModals from "@/components/AddressModals";
-import { resolveProductImage } from "@/lib/product-utils";
 
 declare global {
     interface Window {
@@ -297,50 +296,6 @@ export default function CheckoutPage() {
         return Math.min(walletBalance, total);
     };
 
-    const handleQuantityChangeGroup = async (group: { mergedIds: string[] }, quantity: number) => {
-        const safeQuantity = Math.max(1, Number.isNaN(quantity) ? 1 : quantity);
-        try {
-            await updateCartItem(group.mergedIds[0], safeQuantity);
-            for (let i = 1; i < group.mergedIds.length; i++) {
-                await removeFromCart(group.mergedIds[i]);
-            }
-            const res = await getCart();
-            const normalized = attachProductDetails(res.data);
-            setCart(normalized);
-        } catch (err) {
-            setError("Failed to update cart");
-        }
-    };
-
-
-    const handleCreateAddress = async (newAddr: Address) => {
-        try {
-            const res = await fetch(`${API_BASE}/addresses`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify(newAddr)
-            });
-            const data = await res.json().catch(() => ({}));
-            const created = (data && (data.data || data)) || {};
-            const addressWithId: Address = {
-                ...newAddr,
-                ...(created || {}),
-                id: created.id || created._id || newAddr.id || Date.now().toString(),
-            };
-            let next = [...addresses, addressWithId];
-            if (newAddr.isDefault) {
-                next = next.map((a) => ({ ...a, isDefault: false }));
-                addressWithId.isDefault = true;
-                next = next.map((a) => (a.id === addressWithId.id || (a as any)._id === addressWithId.id ? addressWithId : a));
-            }
-            setAddresses(next);
-            setSelectedAddress(newAddr.isDefault ? addressWithId : addressWithId);
-            setShowCreateAddressModal(false);
-        } catch (err) {
-            setError("Failed to create address");
-        }
-    };
     const handleRemoveGroup = async (group: { mergedIds: string[] }) => {
         try {
             for (const id of group.mergedIds) {
@@ -1093,7 +1048,7 @@ export default function CheckoutPage() {
                                             onChange={(e) => setPaymentMethod(e.target.value)}
                                             style={{ margin: 0 }}
                                         />
-                                        <span>Direct Bank Transfer</span>
+                                        <span>RazorPay</span>
                                     </label>
                                 </div>
 

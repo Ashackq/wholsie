@@ -100,6 +100,7 @@ export async function createProduct(
       isRecentLaunch,
       isCombo,
       image,
+      weight,
     } = req.body;
 
     // Generate slug
@@ -136,6 +137,7 @@ export async function createProduct(
       status: status || "active",
       isRecentLaunch: isRecentLaunch || false,
       isCombo: isCombo || false,
+      weight,
       rating: 0,
       reviewCount: 0,
     });
@@ -180,6 +182,7 @@ export async function updateProduct(
       isRecentLaunch,
       isCombo,
       image,
+      weight,
     } = req.body;
 
     if (name) {
@@ -207,6 +210,7 @@ export async function updateProduct(
     if (isRecentLaunch !== undefined)
       updateData.isRecentLaunch = isRecentLaunch;
     if (isCombo !== undefined) updateData.isCombo = isCombo;
+    if (weight !== undefined) updateData.weight = weight;
 
     if (price !== undefined) {
       updateData.price = price;

@@ -20,6 +20,7 @@ interface Product {
     discountedPrice?: number;
     salePrice?: number;
     image: string;
+    weight?: string;
     metaTitle?: string;
     metaDescription?: string;
     variants?: Array<{

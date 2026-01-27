@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { addToCart } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 interface ProductImage {
     url: string;
@@ -35,6 +36,7 @@ interface Product {
     image: string;
     images?: ProductImage[];
     unit: string;
+    weight?: string;
     minOrderQty: number;
     maxOrderQty?: number;
     taxPercentage: number;
@@ -55,6 +57,7 @@ interface Product {
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
     const [product, setProduct] = useState<Product | null>(null);
+    const router = useRouter();
 
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(true);
@@ -88,7 +91,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             setTimeout(() => setCartMessage(""), 3000);
         } catch (err) {
             setCartMessage("✗ Failed to add to cart. Please login first.");
-            setTimeout(() => setCartMessage(""), 3000);
+            setTimeout(() => {
+                setCartMessage("")
+                router.push("/login");
+
+            }, 3000);
         }
     };
 
@@ -100,7 +107,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             const userString = localStorage.getItem("user");
             if (!userString) {
                 setCartMessage("✗ Please login first.");
-                setTimeout(() => setCartMessage(""), 3000);
+                setTimeout(() => {
+                    setCartMessage("")
+                    router.push("/login");
+
+                }, 3000);
                 return;
             }
 
@@ -121,14 +132,14 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             if (missingFields.length > 0) {
                 // Store the redirect message in localStorage
                 localStorage.setItem("profileMessage", `Please complete your profile to proceed with checkout. Missing: ${missingFields.join(", ")}`);
-                window.location.href = '/profile';
+                router.push("/profile");
                 return;
             }
 
             // Add to cart and wait for it to complete
             await addToCart(product._id, quantity);
             // Redirect to checkout immediately after cart is updated
-            window.location.href = '/checkout';
+            router.push("/checkout");
         } catch (err) {
             setCartMessage("✗ Failed to add to cart. Please login first.");
             setTimeout(() => setCartMessage(""), 3000);
@@ -334,6 +345,12 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                 </>
                                             )}
                                         </h3>
+
+                                        {product.weight && (
+                                            <p style={{ marginBottom: '12px', fontWeight: 600, color: '#111' }}>
+                                                Weight: {product.weight}
+                                            </p>
+                                        )}
 
                                         {/* Description */}
                                         <p className="short_description" style={{ marginBottom: '20px', lineHeight: '1.6' }}>
@@ -560,6 +577,12 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                                 <th style={{ width: '30%', fontWeight: 'bold' }}>Unit</th>
                                                                 <td>{product.unit}</td>
                                                             </tr>
+                                                            {product.weight && (
+                                                                <tr>
+                                                                    <th style={{ width: '30%', fontWeight: 'bold' }}>Weight</th>
+                                                                    <td>{product.weight}</td>
+                                                                </tr>
+                                                            )}
                                                             <tr>
                                                                 <th style={{ width: '30%', fontWeight: 'bold' }}>Tax Rate</th>
                                                                 <td>{product.taxPercentage}% GST</td>

@@ -58,11 +58,12 @@ export default function AdminProductsPage() {
     const [modalMode, setModalMode] = useState<"create" | "edit" | "view">("create");
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [loadingDetails, setLoadingDetails] = useState(false);
-    const [formData, setFormData] = useState({
+    const createEmptyForm = () => ({
         name: "",
         price: "",
         discountPrice: "",
         stock: "",
+        weight: "",
         status: "active",
         isRecentLaunch: false,
         isCombo: false,
@@ -71,6 +72,7 @@ export default function AdminProductsPage() {
         image: "",
         images: "",
     });
+    const [formData, setFormData] = useState(createEmptyForm());
     const [categories, setCategories] = useState<Category[]>([]);
     const [togglingId, setTogglingId] = useState<string | null>(null);
     const [page, setPage] = useState(1);
@@ -131,6 +133,7 @@ export default function AdminProductsPage() {
                 price: String(fullProduct.price || 0),
                 discountPrice: String(fullProduct.discountPrice || 0),
                 stock: String(fullProduct.stock || fullProduct.quantity || 0),
+                weight: fullProduct.weight || "",
                 status: fullProduct.status === "active" || fullProduct.status === 1 ? "active" : "inactive",
                 isRecentLaunch: !!fullProduct.isRecentLaunch,
                 isCombo: !!fullProduct.isCombo,
@@ -148,6 +151,7 @@ export default function AdminProductsPage() {
                 price: String(product.price || 0),
                 discountPrice: String(product.discountPrice || 0),
                 stock: String(product.stock || 0),
+                weight: product.weight || "",
                 status: product.status === "active" || product.status === 1 ? "active" : "inactive",
                 isRecentLaunch: !!product.isRecentLaunch,
                 isCombo: !!product.isCombo,
@@ -191,6 +195,7 @@ export default function AdminProductsPage() {
                     price: parseFloat(formData.price),
                     discountPrice: formData.discountPrice ? parseFloat(formData.discountPrice) : undefined,
                     stock: parseInt(formData.stock),
+                    weight: formData.weight.trim() || undefined,
                     status: formData.status,
                     isRecentLaunch: formData.isRecentLaunch,
                     isCombo: formData.isCombo,
@@ -212,7 +217,7 @@ export default function AdminProductsPage() {
             }
             setShowModal(false);
             setEditingId(null);
-            setFormData({ name: "", price: "", discountPrice: "", stock: "", status: "active", isRecentLaunch: false, isCombo: false, categoryId: "", description: "", image: "", images: "" });
+            setFormData(createEmptyForm());
             setSelectedProduct(null);
             setModalMode("create");
             setTimeout(() => setSuccess(null), 3000);
@@ -309,7 +314,7 @@ export default function AdminProductsPage() {
                         setModalMode("create");
                         setSelectedProduct(null);
                         setEditingId(null);
-                        setFormData({ name: "", price: "", discountPrice: "", stock: "", status: "active", isRecentLaunch: false, isCombo: false, categoryId: "", description: "", image: "", images: "" });
+                        setFormData(createEmptyForm());
                         setShowModal(true);
                     }}
                     style={{
@@ -374,7 +379,7 @@ export default function AdminProductsPage() {
                                         setSelectedProduct(null);
                                         setEditingId(null);
                                         setModalMode("create");
-                                        setFormData({ name: "", price: "", discountPrice: "", stock: "", status: "active", isRecentLaunch: false, isCombo: false, categoryId: "", description: "", image: "", images: "" });
+                                        setFormData(createEmptyForm());
                                     }}
                                     style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 24, lineHeight: 1 }}
                                     aria-label="Close product modal"
@@ -536,6 +541,13 @@ export default function AdminProductsPage() {
                                         required
                                         style={{ padding: 10, border: "1px solid var(--text-2)", borderRadius: 6 }}
                                     />
+                                    <input
+                                        type="text"
+                                        placeholder="Weight (e.g., 500g)"
+                                        value={formData.weight}
+                                        onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                                        style={{ padding: 10, border: "1px solid var(--text-2)", borderRadius: 6 }}
+                                    />
                                 </div>
                                 <div style={{ marginBottom: 15 }}>
                                     <textarea
@@ -611,7 +623,7 @@ export default function AdminProductsPage() {
                                             setSelectedProduct(null);
                                             setEditingId(null);
                                             setModalMode("create");
-                                            setFormData({ name: "", price: "", discountPrice: "", stock: "", status: "active", isRecentLaunch: false, isCombo: false, categoryId: "", description: "", image: "", images: "" });
+                                            setFormData(createEmptyForm());
                                         }}
                                         style={{
                                             padding: "10px 16px",

@@ -1,0 +1,281 @@
+{
+  "info": {
+    "_postman_id": "2a2716c2-aae3-4180-88f3-b60f1fb48c6a",
+    "name": "delhivery",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "29424439"
+  },
+  "item": [
+    {
+      "name": "pincode",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Token f4673f9fcfbaf8207c7bb3900f0ece24ca058138",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{url}}/c/api/pin-codes/json/?filter_codes=390007",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "c",
+            "api",
+            "pin-codes",
+            "json",
+            ""
+          ],
+          "query": [
+            {
+              "key": "filter_codes",
+              "value": "390007"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Shipment Creation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Token f4673f9fcfbaf8207c7bb3900f0ece24ca058138"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "format=json&data={\n  \"shipments\": [\n    {\n      \"name\": \"Consignee name\",\n      \"add\": \"Huda Market, Haryana\",\n      \"pin\": \"110042\",\n      \"city\": \"Gurugram\",\n      \"state\": \"Haryana\",\n      \"country\": \"India\",\n      \"phone\": \"9999999999\",\n      \"order\": \"Test Order 01\",\n      \"payment_mode\": \"Prepaid\",\n      \"return_pin\": \"\",\n      \"return_city\": \"\",\n      \"return_phone\": \"\",\n      \"return_add\": \"\",\n      \"return_state\": \"\",\n      \"return_country\": \"\",\n      \"products_desc\": \"\",\n      \"hsn_code\": \"\",\n      \"cod_amount\": \"\",\n      \"order_date\": null,\n      \"total_amount\": \"\",\n      \"seller_add\": \"\",\n      \"seller_name\": \"\",\n      \"seller_inv\": \"\",\n      \"quantity\": \"\",\n      \"waybill\": \"\",\n      \"shipment_width\": \"100\",\n      \"shipment_height\": \"100\",\n      \"weight\": \"\",\n      \"shipping_mode\": \"Surface\",\n      \"address_type\": \"\"\n    }\n  ],\n  \"pickup_location\": {\n    \"name\": \"warehouse_name\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/api/cmu/create.json",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "api",
+            "cmu",
+            "create.json"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "waybill",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{url}}/waybill/api/fetch/json/?token=f4673f9fcfbaf8207c7bb3900f0ece24ca058138",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "waybill",
+            "api",
+            "fetch",
+            "json",
+            ""
+          ],
+          "query": [
+            {
+              "key": "token",
+              "value": "f4673f9fcfbaf8207c7bb3900f0ece24ca058138"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "tracking",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Token f4673f9fcfbaf8207c7bb3900f0ece24ca058138"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{url}}/api/v1/packages/json/?waybill=1122345678722&ref_ids=",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "packages",
+            "json",
+            ""
+          ],
+          "query": [
+            {
+              "key": "waybill",
+              "value": "1122345678722"
+            },
+            {
+              "key": "ref_ids",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "cancelaion",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Token f4673f9fcfbaf8207c7bb3900f0ece24ca058138"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "\n{\n  \"waybill\": \"6945XXXXXXXX\",\n  \"cancellation\": \"true\"\n}\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{url}}/api/p/edit",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "api",
+            "p",
+            "edit"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "tat",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Token f4673f9fcfbaf8207c7bb3900f0ece24ca058138"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{url}}/api/dc/expected_tat?origin_pin=415519&destination_pin=411038&mot=S&pdt=B2C&expected_pickup_date=2024-05-31 06:30",
+          "host": [
+            "{{url}}"
+          ],
+          "path": [
+            "api",
+            "dc",
+            "expected_tat"
+          ],
+          "query": [
+            {
+              "key": "origin_pin",
+              "value": "415519"
+            },
+            {
+              "key": "destination_pin",
+              "value": "411038"
+            },
+            {
+              "key": "mot",
+              "value": "S"
+            },
+            {
+              "key": "pdt",
+              "value": "B2C"
+            },
+            {
+              "key": "expected_pickup_date",
+              "value": "2024-05-31 06:30"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "url",
+      "value": ""
+    }
+  ]
+}
