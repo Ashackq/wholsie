@@ -5,6 +5,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import authRouter from './auth.js';
 import { paymentRouter } from './payment.js';
 import { healthRouter } from './health.js';
+import invoiceRouter from './invoice.js';
 import * as delhiveryController from '../controllers/delhivery.controller.js';
 
 // Public controllers
@@ -28,6 +29,9 @@ router.use(authRouter);
 
 // ==================== PAYMENT ====================
 router.use(paymentRouter);
+
+// ==================== INVOICES (PUBLIC) ====================
+router.use('/invoices', invoiceRouter);
 
 // ==================== PUBLIC ROUTES ====================
 

@@ -166,13 +166,34 @@ paymentRouter.post("/payments/webhook", async (req, res, next) => {
         });
         await payment.save();
 
-        // 🎉 Send payment confirmation email with invoice
+        // 🎉 Create invoice and send payment confirmation email
         try {
+          const { createInvoiceFromOrder, getInvoiceUrl } =
+            await import("../utils/invoiceGenerator.js");
+
+          // Create invoice document
+          const invoice = await createInvoiceFromOrder(order);
+
+          // Update order with invoice ID
+          await Order.updateOne(
+            { _id: order._id },
+            { $set: { invoiceId: invoice._id } },
+          );
+
+          // Send email with invoice link
+          const invoiceUrl = getInvoiceUrl(invoice._id.toString());
           const invoiceData = await prepareInvoiceData(order);
-          await sendPaymentConfirmationEmail(invoiceData);
+          await sendPaymentConfirmationEmail({
+            ...invoiceData,
+            invoiceUrl,
+          });
+
+          console.log(
+            `✅ Invoice created: ${invoice.invoiceNumber} - URL: ${invoiceUrl}`,
+          );
         } catch (emailErr) {
           console.error(
-            `⚠️  Failed to send payment confirmation email for order ${order.orderId || order._id}:`,
+            `⚠️  Failed to create invoice or send email for order ${order.orderId || order._id}:`,
             emailErr,
           );
           // Don't fail the payment webhook if email fails
@@ -335,13 +356,38 @@ paymentRouter.post("/payments/verify", async (req, res, next) => {
     if (isValid && orderId) {
       // Update order status
       const { Order } = await import("../models/Order.js");
-      const order = await Order.findById(orderId);
+      const order = await Order.findById(orderId).populate("userId");
 
       if (order) {
         order.paymentStatus = "completed";
         order.status = "confirmed";
         order.razorpayPaymentId = razorpay_payment_id;
         await order.save();
+
+        // Create invoice
+        try {
+          const { createInvoiceFromOrder, getInvoiceUrl } =
+            await import("../utils/invoiceGenerator.js");
+
+          // Create invoice document
+          const invoice = await createInvoiceFromOrder(order);
+
+          // Update order with invoice ID
+          await Order.updateOne(
+            { _id: order._id },
+            { $set: { invoiceId: invoice._id } },
+          );
+
+          const invoiceUrl = getInvoiceUrl(invoice._id.toString());
+          console.log(
+            `✅ Invoice created: ${invoice.invoiceNumber} - URL: ${invoiceUrl}`,
+          );
+        } catch (invoiceErr) {
+          console.error(
+            `⚠️  Failed to create invoice for order ${order.orderId || order._id}:`,
+            invoiceErr,
+          );
+        }
       }
     }
 

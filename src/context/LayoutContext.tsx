@@ -14,8 +14,9 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     const [hideHeaderFooter, setHideHeaderFooter] = useState(false);
 
     useEffect(() => {
-        // Hide header/footer on admin routes
-        setHideHeaderFooter(pathname?.startsWith("/admin") || false);
+        // Hide header/footer on admin and invoice routes
+        const shouldHide = pathname?.startsWith("/admin") || pathname?.startsWith("/invoice");
+        setHideHeaderFooter(shouldHide || false);
     }, [pathname]);
 
     return (
