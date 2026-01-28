@@ -414,7 +414,7 @@ button {
 .section_heading h3,
 .section_heading h3 span {
     font-weight: 600;
-    font-size: 36px;
+    font-size: 28px;
     color: var(--colorBlack);
     position: relative;
     text-transform: capitalize;

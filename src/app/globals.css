@@ -1,8 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 
+/* stylelint-disable at-rule-no-unknown */
+/* Tailwind directives - handled by PostCSS/Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
 
 :root {
   --white: #ffffff;

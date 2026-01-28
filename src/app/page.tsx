@@ -540,7 +540,7 @@ export default function Home() {
                 </div>
                 <div className="text">
                   <h3>Free Shipping</h3>
-                  <p>Free shipping over ₹500</p>
+                  <p>Get Free shipping over ₹500</p>
                 </div>
               </div>
             </div>
