@@ -21,7 +21,7 @@ export async function createShipment(req: Request, res: Response) {
     // If orderId looks like MongoDB ObjectId (24 hex chars), search by _id, otherwise by orderId field
     const isObjectId = /^[0-9a-fA-F]{24}$/.test(orderId);
     const order = await Order.findOne(
-      isObjectId 
+      isObjectId
         ? { $or: [{ _id: orderId }, { orderId: orderId }, { orderNo: orderId }] }
         : { $or: [{ orderId: orderId }, { orderNo: orderId }] }
     ).populate("userId shippingAddress");
@@ -89,7 +89,7 @@ export async function createShipment(req: Request, res: Response) {
     }
 
     // Build order ID string
-    const orderIdString = order.orderId || order.orderNo || (order._id ? order._id.toString() : "UNKNOWN");
+    const orderIdString = order.orderId || (order._id ? order._id.toString() : "UNKNOWN");
 
     const shipmentData = {
       shipments: [
@@ -106,7 +106,7 @@ export async function createShipment(req: Request, res: Response) {
           order_date:
             order.createdAt?.toISOString() || new Date().toISOString(),
           total_amount:
-            (order.total || order.netAmount || 0).toString(),
+            (order.total || 0).toString(),
           products_desc: order.items?.map((item: any) => item.name || item.productName).filter(Boolean).join(", ") || `${order.items?.length || 1} item(s)`,
           quantity: (
             order.items?.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0) ||
@@ -119,7 +119,7 @@ export async function createShipment(req: Request, res: Response) {
           seller_add: env.SELLER_ADDRESS || "Warehouse",
           seller_name: env.SELLER_NAME || "Wholesiii",
           shipping_mode: "Surface",
-          cod_amount: order.paymentStatus === "completed" ? "" : (order.total || order.netAmount || 0).toString(),
+          cod_amount: order.paymentStatus === "completed" ? "" : (order.total || 0).toString(),
         },
       ],
       pickup_location: {

@@ -38,6 +38,7 @@ export interface PdfInvoiceData {
     storePhone?: string;
     storeAddress?: string;
     gstNumber?: string;
+    invoiceUrl?: string;
 }
 
 /**

@@ -84,13 +84,13 @@ export async function createOrder(
       (sum: number, item: any) => sum + item.total,
       0,
     );
-    
+
     // Tax: 5% on subtotal
     const taxAmount = subtotal * 0.05;
-    
+
     // Platform fee: 2% on subtotal
     const platformFee = subtotal * 0.02;
-    
+
     // Use shipping cost from frontend if provided, otherwise calculate
     let deliveryCharge = 0;
     if (frontendShippingCost !== undefined) {
@@ -99,7 +99,7 @@ export async function createOrder(
       // Fallback: free shipping above 500, else 50
       deliveryCharge = subtotal >= 500 ? 0 : 50;
     }
-    
+
     const couponAmount = 0; // TODO: Apply coupon logic
     const netAmount = subtotal + taxAmount + platformFee + deliveryCharge - couponAmount;
 
@@ -160,7 +160,7 @@ export async function getUserOrders(
 
     // Add invoice URL to each order
     const ordersWithInvoiceUrl = orders.map((order) => {
-      const orderObj = order.toObject();
+      const orderObj: any = order.toObject();
       if (orderObj.invoiceId) {
         const invoiceId =
           typeof orderObj.invoiceId === "object" && orderObj.invoiceId._id
@@ -205,7 +205,7 @@ export async function getOrderDetails(
       return res.status(404).json({ error: "Order not found" });
     }
 
-    const orderObj = order.toObject();
+    const orderObj: any = order.toObject();
 
     // Add invoice URL if invoice exists
     if (orderObj.invoiceId) {

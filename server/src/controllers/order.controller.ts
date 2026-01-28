@@ -29,7 +29,7 @@ export async function getOrders(
 
     // Add invoice URL to each order
     const ordersWithInvoiceUrl = orders.map((order) => {
-      const orderObj = order.toObject();
+      const orderObj: any = order.toObject();
       if (orderObj.invoiceId) {
         const invoiceId =
           typeof orderObj.invoiceId === "object" && orderObj.invoiceId._id
@@ -85,7 +85,7 @@ export async function getOrder(
       return res.status(404).json({ error: "Order not found" });
     }
 
-    const orderObj = order.toObject();
+    const orderObj: any = order.toObject();
     if (orderObj.invoiceId) {
       const invoiceId =
         typeof orderObj.invoiceId === "object" && orderObj.invoiceId._id

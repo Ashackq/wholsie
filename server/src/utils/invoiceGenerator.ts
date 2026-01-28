@@ -3,18 +3,18 @@ import type { Document } from "mongoose";
 
 interface OrderItem {
   productId?: any;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
+  name?: string | null;
+  price?: number | null;
+  quantity?: number | null;
+  image?: string | null;
 }
 
 interface ShippingAddress {
-  street?: string;
-  city?: string;
-  state?: string;
-  postalCode?: string;
-  country?: string;
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
 }
 
 interface OrderDocument extends Document {
@@ -22,16 +22,16 @@ interface OrderDocument extends Document {
   orderId: string;
   userId: any;
   items: OrderItem[];
-  shippingAddress: ShippingAddress;
-  subtotal: number;
-  tax: number;
-  shippingCost: number;
-  platformFee?: number;
-  discount: number;
-  total: number;
-  paymentMethod?: string;
+  shippingAddress?: ShippingAddress | null;
+  subtotal?: number | null;
+  tax?: number | null;
+  shippingCost?: number | null;
+  platformFee?: number | null;
+  discount?: number | null;
+  total?: number | null;
+  paymentMethod?: string | null;
   paymentStatus: string;
-  notes?: string;
+  notes?: string | null;
   createdAt: Date;
 }
 
@@ -80,10 +80,10 @@ export async function createInvoiceFromOrder(
 
     // Items
     items: order.items.map((item) => ({
-      name: item.name,
-      quantity: item.quantity,
-      price: item.price,
-      amount: item.price * item.quantity,
+      name: item.name || "Product",
+      quantity: item.quantity || 1,
+      price: item.price || 0,
+      amount: (item.price || 0) * (item.quantity || 1),
     })),
 
     // Amounts
