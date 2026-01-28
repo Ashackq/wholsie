@@ -281,11 +281,14 @@ export async function createShipment(shipmentData: DelhiveryShipmentData): Promi
     }
 
     try {
-        const url = `${DELHIVERY_API_BASE}/api/cmu/create.json`;
+        // Use TRACK URL for shipment creation (production endpoint that works)
+        const url = `${DELHIVERY_TRACK_BASE}/api/cmu/create.json`;
 
         const formData = new URLSearchParams();
         formData.append("format", "json");
         formData.append("data", JSON.stringify(shipmentData));
+
+        console.log("Calling Delhivery API:", url);
 
         const response = await fetch(url, {
             method: "POST",
@@ -296,15 +299,23 @@ export async function createShipment(shipmentData: DelhiveryShipmentData): Promi
             body: formData.toString(),
         });
 
+        const responseText = await response.text();
+        console.log("Delhivery Response Status:", response.status);
+        console.log("Delhivery Response Body:", responseText);
+
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Delhivery API error: ${response.status} - ${errorText}`);
+            throw new Error(`Delhivery API error: ${response.status} - ${responseText}`);
         }
 
-        const data = await response.json();
+        const data = JSON.parse(responseText);
+        console.log("Parsed Delhivery Response:", JSON.stringify(data, null, 2));
+
+        // Extract waybill from packages array if not at top level
+        const waybill = data.waybill || (data.packages && data.packages[0]?.waybill);
+
         return {
             success: data.success || false,
-            waybill: data.waybill,
+            waybill: waybill,
             packages: data.packages,
             error: data.error,
             rmk: data.rmk,

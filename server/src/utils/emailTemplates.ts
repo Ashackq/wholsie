@@ -430,14 +430,14 @@ export function generateOrderConfirmationInvoiceTemplate(
                 <!-- Shipping Address -->
                 <div class="address-section">
                     <div class="address-box">
-                        <h4>📍 Shipping Address</h4>
+                        <h4>Shipping Address</h4>
                         <p>${data.shippingAddress.street || "N/A"}</p>
                         <p>${data.shippingAddress.city || ""}, ${data.shippingAddress.state || ""}</p>
                         <p>${data.shippingAddress.postalCode || ""}, ${data.shippingAddress.country || "India"}</p>
                         ${data.customerPhone ? `<p>Phone: ${data.customerPhone}</p>` : ""}
                     </div>
                     <div class="address-box">
-                        <h4>💳 Payment Information</h4>
+                        <h4>Payment Information</h4>
                         <p><strong>Method:</strong> ${data.paymentMethod || "Online Payment"}</p>
                         <p><strong>Status:</strong> <span class="payment-status">${data.paymentStatus || "Confirmed"}</span></p>
                         <p style="margin-top: 10px; font-size: 12px; color: #666;">
@@ -448,7 +448,7 @@ export function generateOrderConfirmationInvoiceTemplate(
 
                 <!-- Next Steps -->
                 <div class="next-steps">
-                    <h4>📋 What Happens Next?</h4>
+                    <h4>What Happens Next?</h4>
                     <ol>
                         <li><strong>Preparation:</strong> Your items are being carefully prepared for shipment (1-2 business days)</li>
                         <li><strong>Shipment:</strong> You'll receive a shipping notification with tracking details</li>
@@ -737,7 +737,7 @@ export function generateOrderShippedTemplate(data: ShippedTemplateData): string 
         <div class="email-container">
             <!-- Header -->
             <div class="header">
-                <h1>📦 Order Shipped!</h1>
+                <h1>Order Shipped!</h1>
                 <p>Your order is on its way to you</p>
             </div>
 
@@ -758,7 +758,7 @@ export function generateOrderShippedTemplate(data: ShippedTemplateData): string 
 
                 <!-- Estimated Delivery -->
                 <div class="delivery-estimate">
-                    <h4>📅 Estimated Delivery</h4>
+                    <h4>Estimated Delivery</h4>
                     <p><strong>${deliveryInfo}</strong></p>
                     <p style="font-size: 12px; margin-top: 10px;">
                         Delivery times are estimates and may vary based on location and unforeseen circumstances.
@@ -782,7 +782,7 @@ export function generateOrderShippedTemplate(data: ShippedTemplateData): string 
                         </div>
                     </div>
                     <div class="timeline-step current">
-                        <div class="timeline-icon">📦</div>
+                        <div class="timeline-icon">•</div>
                         <div class="timeline-content">
                             <div class="timeline-title">Shipped</div>
                             <div class="timeline-description">Your package is on its way!</div>
@@ -806,7 +806,7 @@ export function generateOrderShippedTemplate(data: ShippedTemplateData): string 
 
                 <!-- Courier Info -->
                 <div class="courier-info">
-                    <strong>📍 Courier Partner: ${data.courierName || "Delhivery"}</strong>
+                    <strong>Courier Partner: ${data.courierName || "Delhivery"}</strong>
                     <p>
                         Your package is being delivered by ${data.courierName || "Delhivery"}. You can track your shipment in real-time using the tracking number provided above.
                     </p>
@@ -815,7 +815,7 @@ export function generateOrderShippedTemplate(data: ShippedTemplateData): string 
                 <!-- Helpful Info -->
                 <div class="info-box">
                     <p>
-                        <strong>💡 Tracking Tip:</strong> Visit the ${data.courierName || "Delhivery"} website and enter your tracking number to get real-time updates on your package location.
+                        <strong>Tracking Tip:</strong> Visit the ${data.courierName || "Delhivery"} website and enter your tracking number to get real-time updates on your package location.
                     </p>
                 </div>
 
@@ -1145,7 +1145,7 @@ export function generateOrderCancelledTemplate(data: CancelledTemplateData): str
 
                 <!-- Refund Information -->
                 <div class="refund-box">
-                    <h3>💰 Refund Information</h3>
+                    <h3>Refund Information</h3>
                     <div class="refund-amount">₹${data.refundAmount.toFixed(2)}</div>
                     <div class="refund-details">
                         <p><strong>Refund Amount:</strong> ₹${data.refundAmount.toFixed(2)}</p>
@@ -1178,7 +1178,7 @@ export function generateOrderCancelledTemplate(data: CancelledTemplateData): str
                         </div>
                     </div>
                     <div class="timeline-item current">
-                        <div class="timeline-icon">💰</div>
+                        <div class="timeline-icon">•</div>
                         <div class="timeline-content">
                             <h4>Refund Processing</h4>
                             <p>Your refund is being processed and will be credited soon</p>
@@ -1195,7 +1195,7 @@ export function generateOrderCancelledTemplate(data: CancelledTemplateData): str
 
                 <!-- Important Notes -->
                 <div class="next-steps">
-                    <h4>📋 Important Information</h4>
+                    <h4>Important Information</h4>
                     <ol>
                         <li>Your refund will be processed within ${data.refundTimeline || "5-7 business days"}</li>
                         <li>Refunds are credited to the original payment method</li>

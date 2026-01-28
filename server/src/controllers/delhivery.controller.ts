@@ -47,6 +47,7 @@ export async function createShipment(req: Request, res: Response) {
     // Calculate shipment weight using order weight calculator
     const weightCalculation = calculateOrderWeightFromObject(order);
     const shipmentWeight = weightCalculation.shipmentWeight || 100; // Fallback to 100g if undefined
+    const boxDimensions = weightCalculation.dimensions; // Box dimensions from weight calculator
 
     // Check if destination pincode is serviceable
     const shippingPin =
@@ -112,6 +113,9 @@ export async function createShipment(req: Request, res: Response) {
             1
           ).toString(),
           weight: shipmentWeight.toString(),
+          shipment_length: boxDimensions.length.toString(),
+          shipment_width: boxDimensions.breadth.toString(),
+          shipment_height: boxDimensions.height.toString(),
           seller_add: env.SELLER_ADDRESS || "Warehouse",
           seller_name: env.SELLER_NAME || "Wholesiii",
           shipping_mode: "Surface",

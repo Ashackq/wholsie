@@ -109,10 +109,10 @@ export async function verifyEmailConnection(): Promise<boolean> {
     try {
         const transporter = initializeTransporter();
         await transporter.verify();
-        console.log("✅ Email service ready");
+        console.log("Email service ready");
         return true;
     } catch (error) {
-        console.error("❌ Email service failed:", error);
+        console.error("Email service failed:", error);
         return false;
     }
 }

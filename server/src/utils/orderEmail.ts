@@ -325,11 +325,11 @@ export async function sendPaymentConfirmationEmail(invoiceData: PdfInvoiceData):
         });
 
         if (success) {
-            console.log(`✅ Payment confirmation email sent to ${invoiceData.customerEmail} for order ${invoiceData.orderId}`);
+            console.log(`Payment confirmation email sent to ${invoiceData.customerEmail} for order ${invoiceData.orderId}`);
         }
         return success;
     } catch (error) {
-        console.error(`❌ Failed to send payment confirmation email for order ${invoiceData.orderId}:`, error);
+        console.error(`Failed to send payment confirmation email for order ${invoiceData.orderId}:`, error);
         return false;
     }
 }

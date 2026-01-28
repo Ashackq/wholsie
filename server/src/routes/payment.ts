@@ -166,7 +166,7 @@ paymentRouter.post("/payments/webhook", async (req, res, next) => {
         });
         await payment.save();
 
-        // 🎉 Create invoice and send payment confirmation email
+        // Create invoice and send payment confirmation email
         try {
           const { createInvoiceFromOrder, getInvoiceUrl } =
             await import("../utils/invoiceGenerator.js");
