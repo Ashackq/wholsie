@@ -16,7 +16,12 @@ export async function createOrder(
 ) {
   try {
     const userId = req.userId!;
-    const { addressId, paymentMethod, couponCode, shippingCost: frontendShippingCost } = req.body;
+    const {
+      addressId,
+      paymentMethod,
+      couponCode,
+      shippingCost: frontendShippingCost,
+    } = req.body;
 
     if (!addressId) {
       return res.status(400).json({ error: "Address ID is required" });
@@ -101,7 +106,8 @@ export async function createOrder(
     }
 
     const couponAmount = 0; // TODO: Apply coupon logic
-    const netAmount = subtotal + taxAmount + platformFee + deliveryCharge - couponAmount;
+    const netAmount =
+      subtotal + taxAmount + platformFee + deliveryCharge - couponAmount;
 
     // Create order
     const order = new Order({

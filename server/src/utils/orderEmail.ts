@@ -1,6 +1,13 @@
 import { sendEmail, sendEmailWithTemplate } from "./email.js";
-import { generateInvoiceHTML, generateOrderConfirmationHTML, type InvoiceData } from "./invoice.js";
-import { generateInvoiceHTML as generatePdfInvoiceHTML, type PdfInvoiceData } from "./pdfInvoice.js";
+import {
+  generateInvoiceHTML,
+  generateOrderConfirmationHTML,
+  type InvoiceData,
+} from "./invoice.js";
+import {
+  generateInvoiceHTML as generatePdfInvoiceHTML,
+  type PdfInvoiceData,
+} from "./pdfInvoice.js";
 import { EmailTemplate } from "../models/EmailTemplate.js";
 
 /**
@@ -8,19 +15,21 @@ import { EmailTemplate } from "../models/EmailTemplate.js";
  * @param orderData Order information including customer email and items
  * @returns true if email sent successfully
  */
-export async function sendOrderConfirmationEmail(orderData: InvoiceData): Promise<boolean> {
-    try {
-        const htmlContent = generateOrderConfirmationHTML(orderData);
+export async function sendOrderConfirmationEmail(
+  orderData: InvoiceData,
+): Promise<boolean> {
+  try {
+    const htmlContent = generateOrderConfirmationHTML(orderData);
 
-        return await sendEmail({
-            to: orderData.customerEmail,
-            subject: `Order Confirmation - ${orderData.orderId}`,
-            html: htmlContent,
-        });
-    } catch (error) {
-        console.error("Failed to send order confirmation email:", error);
-        return false;
-    }
+    return await sendEmail({
+      to: orderData.customerEmail,
+      subject: `Order Confirmation - ${orderData.orderId}`,
+      html: htmlContent,
+    });
+  } catch (error) {
+    console.error("Failed to send order confirmation email:", error);
+    return false;
+  }
 }
 
 /**
@@ -28,19 +37,21 @@ export async function sendOrderConfirmationEmail(orderData: InvoiceData): Promis
  * @param orderData Order information
  * @returns true if email sent successfully
  */
-export async function sendInvoiceEmail(orderData: InvoiceData): Promise<boolean> {
-    try {
-        const htmlContent = generateInvoiceHTML(orderData);
+export async function sendInvoiceEmail(
+  orderData: InvoiceData,
+): Promise<boolean> {
+  try {
+    const htmlContent = generateInvoiceHTML(orderData);
 
-        return await sendEmail({
-            to: orderData.customerEmail,
-            subject: `Invoice - ${orderData.orderId}`,
-            html: htmlContent,
-        });
-    } catch (error) {
-        console.error("Failed to send invoice email:", error);
-        return false;
-    }
+    return await sendEmail({
+      to: orderData.customerEmail,
+      subject: `Invoice - ${orderData.orderId}`,
+      html: htmlContent,
+    });
+  } catch (error) {
+    console.error("Failed to send invoice email:", error);
+    return false;
+  }
 }
 
 /**
@@ -52,13 +63,13 @@ export async function sendInvoiceEmail(orderData: InvoiceData): Promise<boolean>
  * @returns true if email sent successfully
  */
 export async function sendShipmentEmail(
-    customerEmail: string,
-    orderId: string,
-    trackingNumber: string,
-    estimatedDelivery?: string,
+  customerEmail: string,
+  orderId: string,
+  trackingNumber: string,
+  estimatedDelivery?: string,
 ): Promise<boolean> {
-    try {
-        const html = `
+  try {
+    const html = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -95,15 +106,15 @@ export async function sendShipmentEmail(
         </html>
         `;
 
-        return await sendEmail({
-            to: customerEmail,
-            subject: `Your Order ${orderId} is on the Way!`,
-            html,
-        });
-    } catch (error) {
-        console.error("Failed to send shipment email:", error);
-        return false;
-    }
+    return await sendEmail({
+      to: customerEmail,
+      subject: `Your Order ${orderId} is on the Way!`,
+      html,
+    });
+  } catch (error) {
+    console.error("Failed to send shipment email:", error);
+    return false;
+  }
 }
 
 /**
@@ -114,12 +125,12 @@ export async function sendShipmentEmail(
  * @returns true if email sent successfully
  */
 export async function sendPasswordResetEmail(
-    email: string,
-    resetLink: string,
-    expiryMinutes: number = 30,
+  email: string,
+  resetLink: string,
+  expiryMinutes: number = 30,
 ): Promise<boolean> {
-    try {
-        const html = `
+  try {
+    const html = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -154,15 +165,15 @@ export async function sendPasswordResetEmail(
         </html>
         `;
 
-        return await sendEmail({
-            to: email,
-            subject: "Password Reset Request - Wholesiii",
-            html,
-        });
-    } catch (error) {
-        console.error("Failed to send password reset email:", error);
-        return false;
-    }
+    return await sendEmail({
+      to: email,
+      subject: "Password Reset Request - Wholesiii",
+      html,
+    });
+  } catch (error) {
+    console.error("Failed to send password reset email:", error);
+    return false;
+  }
 }
 
 /**
@@ -172,9 +183,13 @@ export async function sendPasswordResetEmail(
  * @param expiryMinutes OTP expiry in minutes
  * @returns true if email sent successfully
  */
-export async function sendOTPEmail(email: string, otp: string, expiryMinutes: number = 10): Promise<boolean> {
-    try {
-        const html = `
+export async function sendOTPEmail(
+  email: string,
+  otp: string,
+  expiryMinutes: number = 10,
+): Promise<boolean> {
+  try {
+    const html = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -211,15 +226,15 @@ export async function sendOTPEmail(email: string, otp: string, expiryMinutes: nu
         </html>
         `;
 
-        return await sendEmail({
-            to: email,
-            subject: "Your OTP Code - Wholesiii",
-            html,
-        });
-    } catch (error) {
-        console.error("Failed to send OTP email:", error);
-        return false;
-    }
+    return await sendEmail({
+      to: email,
+      subject: "Your OTP Code - Wholesiii",
+      html,
+    });
+  } catch (error) {
+    console.error("Failed to send OTP email:", error);
+    return false;
+  }
 }
 
 /**
@@ -230,23 +245,31 @@ export async function sendOTPEmail(email: string, otp: string, expiryMinutes: nu
  * @returns true if email sent successfully
  */
 export async function sendEmailUsingTemplate(
-    templateId: string,
-    toEmail: string,
-    replacements: Record<string, string | number>,
+  templateId: string,
+  toEmail: string,
+  replacements: Record<string, string | number>,
 ): Promise<boolean> {
-    try {
-        const template = await EmailTemplate.findOne({ templateId, isActive: true });
+  try {
+    const template = await EmailTemplate.findOne({
+      templateId,
+      isActive: true,
+    });
 
-        if (!template) {
-            console.error(`Email template not found: ${templateId}`);
-            return false;
-        }
-
-        return await sendEmailWithTemplate(toEmail, template.subject, template.message, replacements);
-    } catch (error) {
-        console.error("Failed to send template email:", error);
-        return false;
+    if (!template) {
+      console.error(`Email template not found: ${templateId}`);
+      return false;
     }
+
+    return await sendEmailWithTemplate(
+      toEmail,
+      template.subject,
+      template.message,
+      replacements,
+    );
+  } catch (error) {
+    console.error("Failed to send template email:", error);
+    return false;
+  }
 }
 
 /**
@@ -255,9 +278,12 @@ export async function sendEmailUsingTemplate(
  * @param name Customer name
  * @returns true if email sent successfully
  */
-export async function sendWelcomeEmail(email: string, name: string): Promise<boolean> {
-    try {
-        const html = `
+export async function sendWelcomeEmail(
+  email: string,
+  name: string,
+): Promise<boolean> {
+  try {
+    const html = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -296,15 +322,15 @@ export async function sendWelcomeEmail(email: string, name: string): Promise<boo
         </html>
         `;
 
-        return await sendEmail({
-            to: email,
-            subject: "Welcome to Wholesiii!",
-            html,
-        });
-    } catch (error) {
-        console.error("Failed to send welcome email:", error);
-        return false;
-    }
+    return await sendEmail({
+      to: email,
+      subject: "Welcome to Wholesiii!",
+      html,
+    });
+  } catch (error) {
+    console.error("Failed to send welcome email:", error);
+    return false;
+  }
 }
 
 /**
@@ -313,25 +339,32 @@ export async function sendWelcomeEmail(email: string, name: string): Promise<boo
  * @param invoiceData Complete order and payment information
  * @returns true if email sent successfully
  */
-export async function sendPaymentConfirmationEmail(invoiceData: PdfInvoiceData): Promise<boolean> {
-    try {
-        const htmlContent = generatePdfInvoiceHTML(invoiceData);
+export async function sendPaymentConfirmationEmail(
+  invoiceData: PdfInvoiceData,
+): Promise<boolean> {
+  try {
+    const htmlContent = generatePdfInvoiceHTML(invoiceData);
 
-        // Create email with professional invoice
-        const success = await sendEmail({
-            to: invoiceData.customerEmail,
-            subject: `Payment Received & Invoice - Order #${invoiceData.orderId}`,
-            html: htmlContent,
-        });
+    // Create email with professional invoice
+    const success = await sendEmail({
+      to: invoiceData.customerEmail,
+      subject: `Payment Received & Invoice - Order #${invoiceData.orderId}`,
+      html: htmlContent,
+    });
 
-        if (success) {
-            console.log(`Payment confirmation email sent to ${invoiceData.customerEmail} for order ${invoiceData.orderId}`);
-        }
-        return success;
-    } catch (error) {
-        console.error(`Failed to send payment confirmation email for order ${invoiceData.orderId}:`, error);
-        return false;
+    if (success) {
+      console.log(
+        `Payment confirmation email sent to ${invoiceData.customerEmail} for order ${invoiceData.orderId}`,
+      );
     }
+    return success;
+  } catch (error) {
+    console.error(
+      `Failed to send payment confirmation email for order ${invoiceData.orderId}:`,
+      error,
+    );
+    return false;
+  }
 }
 
 /**
@@ -339,47 +372,49 @@ export async function sendPaymentConfirmationEmail(invoiceData: PdfInvoiceData):
  * Converts database order format to invoice format
  */
 export async function prepareInvoiceData(order: any): Promise<PdfInvoiceData> {
-    const { User } = await import("../models/User.js");
+  const { User } = await import("../models/User.js");
 
-    const user = await User.findById(order.userId);
-    if (!user) {
-        throw new Error(`User not found for order ${order._id}`);
-    }
+  const user = await User.findById(order.userId);
+  if (!user) {
+    throw new Error(`User not found for order ${order._id}`);
+  }
 
-    return {
-        orderId: order.orderId || order._id.toString(),
-        orderNo: order.orderNo,
-        orderDate: order.createdAt || new Date(),
-        customerName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Customer",
-        customerEmail: user.email,
-        customerPhone: user.phone || undefined,
-        shippingAddress: order.shippingAddress || {},
-        billingAddress: user.address ? {
-            street: user.address.street || undefined,
-            city: user.address.city || undefined,
-            state: user.address.state || undefined,
-            postalCode: user.address.postalCode || undefined,
-            country: user.address.country || undefined,
-        } : undefined,
-        items: (order.items || []).map((item: any) => ({
-            name: item.name,
-            quantity: item.quantity || 1,
-            price: item.price || 0,
-            amount: (item.price || 0) * (item.quantity || 1),
-        })),
-        subtotal: order.subtotal || 0,
-        tax: order.tax || 0,
-        shippingCost: order.shippingCost || 0,
-        discount: order.discount || 0,
-        total: order.total || 0,
-        paymentMethod: order.paymentMethod || "Razorpay",
-        paymentStatus: "Completed",
-        notes: order.notes || "",
-        storeName: "Wholesiii",
-        storeEmail: process.env.MAIL_FROM || "support@wholesiii.com",
-        storePhone: process.env.STORE_PHONE || "+91-1234567890",
-        storeAddress: process.env.STORE_ADDRESS || "India",
-        gstNumber: process.env.GST_NUMBER,
-    };
+  return {
+    orderId: order.orderId || order._id.toString(),
+    orderNo: order.orderNo,
+    orderDate: order.createdAt || new Date(),
+    customerName:
+      `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Customer",
+    customerEmail: user.email,
+    customerPhone: user.phone || undefined,
+    shippingAddress: order.shippingAddress || {},
+    billingAddress: user.address
+      ? {
+          street: user.address.street || undefined,
+          city: user.address.city || undefined,
+          state: user.address.state || undefined,
+          postalCode: user.address.postalCode || undefined,
+          country: user.address.country || undefined,
+        }
+      : undefined,
+    items: (order.items || []).map((item: any) => ({
+      name: item.name,
+      quantity: item.quantity || 1,
+      price: item.price || 0,
+      amount: (item.price || 0) * (item.quantity || 1),
+    })),
+    subtotal: order.subtotal || 0,
+    tax: order.tax || 0,
+    shippingCost: order.shippingCost || 0,
+    discount: order.discount || 0,
+    total: order.total || 0,
+    paymentMethod: order.paymentMethod || "Razorpay",
+    paymentStatus: "Completed",
+    notes: order.notes || "",
+    storeName: "Wholesiii",
+    storeEmail: process.env.MAIL_FROM || "support@wholesiii.com",
+    storePhone: process.env.STORE_PHONE || "+91-1234567890",
+    storeAddress: process.env.STORE_ADDRESS || "India",
+    gstNumber: process.env.GST_NUMBER,
+  };
 }
-
