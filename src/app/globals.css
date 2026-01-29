@@ -32,7 +32,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   overflow-x: hidden;
   width: 100%;
 }
@@ -76,9 +77,9 @@ body {
     position: sticky;
     top: 0;
   }
-  
+
   /* Add margin to first content section after header */
-  main > section:first-child,
+  main>section:first-child,
   .breadcrumb,
   .breadcrumb_area {
     margin-top: 15px;
@@ -253,25 +254,25 @@ body {
   .gadget_footer {
     padding: 40px 0 20px;
   }
-  
+
   .gadget_footer .container {
     padding-left: 15px;
     padding-right: 15px;
   }
-  
+
   .footer_link {
     margin-bottom: 20px;
   }
-  
+
   .footer_link h3 {
     font-size: 16px;
     margin-bottom: 10px;
   }
-  
+
   .footer_link ul li {
     margin-bottom: 5px;
   }
-  
+
   .footer_2_logo_area {
     margin-bottom: 25px;
   }
@@ -480,7 +481,7 @@ body {
     white-space: nowrap;
     flex-direction: row;
   }
-  
+
   .add_banner_item_text .common_btn i {
     font-size: 12px;
   }
@@ -2198,33 +2199,33 @@ body {
     font-size: 8px;
     letter-spacing: 0.1px;
   }
-  
+
   /* Hide reviews text on mobile */
   .reviews-text {
     display: none !important;
   }
-  
+
   /* Smaller price on mobile */
   .product-price {
     font-size: 14px !important;
   }
-  
+
   /* Smaller view button on mobile */
   .view-btn {
     padding: 6px 10px !important;
     font-size: 11px !important;
   }
-  
+
   /* Hide discount text on mobile for space */
   .discount-text {
     display: none !important;
   }
-  
+
   /* Smaller product rating */
   .product-rating {
     font-size: 12px !important;
   }
-  
+
   /* Remove top padding from add banner on mobile */
   .add_banner.pt_55 {
     padding-top: 0 !important;
@@ -2247,15 +2248,15 @@ body {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .checkout-shipping {
     order: 1;
   }
-  
+
   .checkout-summary {
     order: 2;
   }
-  
+
   .checkout-summary .cart_page_summary {
     position: static !important;
   }
