@@ -53,23 +53,23 @@ export function calculateOrderWeightFromObject(
 
     // Use product data if available (populating items.productId is recommended)
     const product = (item as any).productId;
-    if (product && typeof product === 'object') {
-        if (product.weight) productWeight = product.weight;
-        if (product.packetCount) packetCount = product.packetCount;
-    } 
+    if (product && typeof product === "object") {
+      if (product.weight) productWeight = product.weight;
+      if (product.packetCount) packetCount = product.packetCount;
+    }
     // Fallback: If weight looks low (<=150) but name implies combo (legacy/safety)
     else {
-        // ... (Optional: keep regex heuristics if you want robust fallback, 
-        // but user asked for SCHEMA reliance. 
-        // Since we migrated, we should rely on product fields if possible.
-        // Assuming the controller ALWAYS populates productId now).
-        // If not populated, we default to item data.
-        productWeight = productWeight || 100;
+      // ... (Optional: keep regex heuristics if you want robust fallback,
+      // but user asked for SCHEMA reliance.
+      // Since we migrated, we should rely on product fields if possible.
+      // Assuming the controller ALWAYS populates productId now).
+      // If not populated, we default to item data.
+      productWeight = productWeight || 100;
     }
 
     // Safety: If migration ran, weight should be correct (e.g. 400).
     // If not, we trust the DB value.
-    
+
     totalProductWeight += productWeight * quantity;
     // Count total PACKETS (units) for box selection
     totalQuantity += quantity * packetCount;

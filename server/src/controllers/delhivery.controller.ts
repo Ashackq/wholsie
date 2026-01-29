@@ -26,7 +26,9 @@ export async function createShipment(req: Request, res: Response) {
             $or: [{ _id: orderId }, { orderId: orderId }, { orderNo: orderId }],
           }
         : { $or: [{ orderId: orderId }, { orderNo: orderId }] },
-    ).populate("userId shippingAddress").populate("items.productId");
+    )
+      .populate("userId shippingAddress")
+      .populate("items.productId");
 
     if (!order) {
       return res.status(404).json({
@@ -106,7 +108,9 @@ export async function createShipment(req: Request, res: Response) {
     let shipmentData: any;
     let masterWaybill: string | undefined;
 
-    console.log(`Debug MPS Check: Order=${orderIdString}, Qty=${weightCalculation.totalQuantity}, MPS=${requiresMPS}, Max Mps Threshold=6`);
+    console.log(
+      `Debug MPS Check: Order=${orderIdString}, Qty=${weightCalculation.totalQuantity}, MPS=${requiresMPS}, Max Mps Threshold=6`,
+    );
 
     let fetchedWaybills: string[] = [];
     if (requiresMPS) {
@@ -507,9 +511,9 @@ export async function getTracking(req: Request, res: Response) {
 
     // Check if this is an MPS order by finding the order with this master waybill
     const order = await Order.findOne({ delhiveryTrackingId: waybill });
-    
+
     let waybillsToTrack: string | string[] = waybill;
-    
+
     // If order has MPS waybills, track all of them
     if (order && order.mpsWaybills && order.mpsWaybills.length > 0) {
       // Track master waybill + all child waybills
