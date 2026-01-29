@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useAdminAuth } from "../../../hooks/useAdminAuth";
 import { useSearchParams } from "next/navigation";
 
@@ -44,7 +44,7 @@ type Order = {
   razorpayPaymentId?: string;
 };
 
-export default function AdminOrdersPage() {
+function AdminOrdersContent() {
   const { isAdmin, loading: authLoading, error: authError } = useAdminAuth();
   const [items, setItems] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,7 +144,7 @@ export default function AdminOrdersPage() {
       setFormData({
         status: orderData?.status || order.status || "pending",
       });
-      
+
       // Fetch tracking details if waybill exists
       if (orderData.delhiveryTrackingId) {
         setLoadingTrackingDetails(true);
@@ -241,7 +241,7 @@ export default function AdminOrdersPage() {
         const details = errorData?.details || errorData?.rmk;
         throw new Error(
           (errorData.error || "Failed to create shipment") +
-            (details ? `: ${details}` : ""),
+          (details ? `: ${details}` : ""),
         );
       }
 
@@ -252,10 +252,10 @@ export default function AdminOrdersPage() {
         items.map((o) =>
           o._id === order._id
             ? {
-                ...o,
-                delhiveryTrackingId: data.data.waybill,
-                status: "processing",
-              }
+              ...o,
+              delhiveryTrackingId: data.data.waybill,
+              status: "processing",
+            }
             : o,
         ),
       );
@@ -595,30 +595,30 @@ export default function AdminOrdersPage() {
                           )}
                           {((selectedOrder as any).shippingAddress.city ||
                             (selectedOrder as any).shippingAddress.state) && (
-                            <div>
-                              {(selectedOrder as any).shippingAddress.city}
-                              {(selectedOrder as any).shippingAddress.city &&
-                              (selectedOrder as any).shippingAddress.state
-                                ? ", "
-                                : ""}
-                              {(selectedOrder as any).shippingAddress.state}
-                            </div>
-                          )}
+                              <div>
+                                {(selectedOrder as any).shippingAddress.city}
+                                {(selectedOrder as any).shippingAddress.city &&
+                                  (selectedOrder as any).shippingAddress.state
+                                  ? ", "
+                                  : ""}
+                                {(selectedOrder as any).shippingAddress.state}
+                              </div>
+                            )}
                           {((selectedOrder as any).shippingAddress.postalCode ||
                             (selectedOrder as any).shippingAddress.country) && (
-                            <div>
-                              {
-                                (selectedOrder as any).shippingAddress
-                                  .postalCode
-                              }
-                              {(selectedOrder as any).shippingAddress
-                                .postalCode &&
-                              (selectedOrder as any).shippingAddress.country
-                                ? ", "
-                                : ""}
-                              {(selectedOrder as any).shippingAddress.country}
-                            </div>
-                          )}
+                              <div>
+                                {
+                                  (selectedOrder as any).shippingAddress
+                                    .postalCode
+                                }
+                                {(selectedOrder as any).shippingAddress
+                                  .postalCode &&
+                                  (selectedOrder as any).shippingAddress.country
+                                  ? ", "
+                                  : ""}
+                                {(selectedOrder as any).shippingAddress.country}
+                              </div>
+                            )}
                         </div>
                       </div>
                     )}
@@ -651,27 +651,27 @@ export default function AdminOrdersPage() {
                           )}
                           {((selectedOrder.userId as any).address.city ||
                             (selectedOrder.userId as any).address.state) && (
-                            <div>
-                              {(selectedOrder.userId as any).address.city}
-                              {(selectedOrder.userId as any).address.city &&
-                              (selectedOrder.userId as any).address.state
-                                ? ", "
-                                : ""}
-                              {(selectedOrder.userId as any).address.state}
-                            </div>
-                          )}
+                              <div>
+                                {(selectedOrder.userId as any).address.city}
+                                {(selectedOrder.userId as any).address.city &&
+                                  (selectedOrder.userId as any).address.state
+                                  ? ", "
+                                  : ""}
+                                {(selectedOrder.userId as any).address.state}
+                              </div>
+                            )}
                           {((selectedOrder.userId as any).address.postalCode ||
                             (selectedOrder.userId as any).address.country) && (
-                            <div>
-                              {(selectedOrder.userId as any).address.postalCode}
-                              {(selectedOrder.userId as any).address
-                                .postalCode &&
-                              (selectedOrder.userId as any).address.country
-                                ? ", "
-                                : ""}
-                              {(selectedOrder.userId as any).address.country}
-                            </div>
-                          )}
+                              <div>
+                                {(selectedOrder.userId as any).address.postalCode}
+                                {(selectedOrder.userId as any).address
+                                  .postalCode &&
+                                  (selectedOrder.userId as any).address.country
+                                  ? ", "
+                                  : ""}
+                                {(selectedOrder.userId as any).address.country}
+                              </div>
+                            )}
                         </div>
                       </div>
                     )}
@@ -701,7 +701,7 @@ export default function AdminOrdersPage() {
                       const discount = selectedOrder.discount || 0;
                       const platformFee = (selectedOrder as any).platformFee || 0;
                       const tax = (selectedOrder as any).tax || 0;
-                      
+
                       // Use order.total directly - it's already calculated correctly in backend
                       const total = selectedOrder.total || selectedOrder.netAmount || 0;
 
@@ -851,7 +851,7 @@ export default function AdminOrdersPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Tracking Details */}
                   {selectedOrder.delhiveryTrackingId && (
                     <div style={{ marginTop: 16 }}>
@@ -881,7 +881,7 @@ export default function AdminOrdersPage() {
                           const shipment = trackingDetails.ShipmentData[0].Shipment;
                           const status = shipment.Status;
                           const scans = shipment.Scans || [];
-                          
+
                           return (
                             <div
                               style={{
@@ -1503,9 +1503,9 @@ export default function AdminOrdersPage() {
                         >
                           <div style={{ fontSize: 24 }}>
                             {scan.ScanDetail?.Scan === "UD" ? "📦" :
-                             scan.ScanDetail?.Scan === "OP" ? "🚚" :
-                             scan.ScanDetail?.Scan === "IT" ? "🔄" :
-                             scan.ScanDetail?.Scan === "DL" ? "✅" : "📍"}
+                              scan.ScanDetail?.Scan === "OP" ? "🚚" :
+                                scan.ScanDetail?.Scan === "IT" ? "🔄" :
+                                  scan.ScanDetail?.Scan === "DL" ? "✅" : "📍"}
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: 600, fontSize: 14, color: "#1f2937", marginBottom: 5 }}>
@@ -1529,5 +1529,13 @@ export default function AdminOrdersPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminOrdersPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, textAlign: "center" }}>Loading...</div>}>
+      <AdminOrdersContent />
+    </Suspense>
   );
 }
