@@ -4,6 +4,7 @@ import * as categoryController from '../controllers/category.controller.js';
 import * as productController from '../controllers/product.controller.js';
 import * as orderController from '../controllers/order.controller.js';
 import * as delhiveryController from '../controllers/delhivery.controller.js';
+import * as userController from '../controllers/user.controller.js';
 
 const router = Router();
 
@@ -36,6 +37,13 @@ router.delete('/products/:productId', requireAuth, requireAdmin, productControll
 router.get('/orders', requireAuth, requireAdmin, orderController.getOrders);
 router.get('/orders/:orderId', requireAuth, requireAdmin, orderController.getOrder);
 router.put('/orders/:orderId/status', requireAuth, requireAdmin, orderController.updateOrderStatus);
+
+// ==================== USERS ====================
+router.get('/users', requireAuth, requireAdmin, userController.getUsers);
+router.get('/users/:userId', requireAuth, requireAdmin, userController.getUser);
+router.get('/users/:userId/cart', requireAuth, requireAdmin, userController.getUserCart);
+router.get('/users/:userId/orders', requireAuth, requireAdmin, userController.getUserOrders);
+router.get('/users/:userId/addresses', requireAuth, requireAdmin, userController.getUserAddresses);
 
 // ==================== DELHIVERY ====================
 router.post('/delhivery/create-shipment', requireAuth, requireAdmin, delhiveryController.createShipment);

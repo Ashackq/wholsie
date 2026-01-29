@@ -25,6 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: "/admin", label: "Dashboard", icon: "fas fa-tachometer-alt" },
         { href: "/admin/products", label: "Products", icon: "fas fa-box" },
         { href: "/admin/categories", label: "Categories", icon: "fas fa-folder" },
+        { href: "/admin/users", label: "Users", icon: "fas fa-users" },
         { href: "/admin/orders", label: "Orders", icon: "fas fa-shopping-bag" },
         { href: "/admin/settings", label: "Settings", icon: "fas fa-cog" },
     ];
