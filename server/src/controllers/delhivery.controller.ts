@@ -279,8 +279,9 @@ export async function createShipment(req: Request, res: Response) {
         });
       }
 
-      // Update order with master waybill
+      // Update order with master waybill and all MPS waybills
       (order as any).delhiveryTrackingId = masterWaybill;
+      (order as any).mpsWaybills = fetchedWaybills;
       (order as any).status = "processing";
       await order.save();
 
@@ -288,6 +289,7 @@ export async function createShipment(req: Request, res: Response) {
         success: true,
         data: {
           waybill: masterWaybill, // Master waybill for tracking
+          mpsWaybills: fetchedWaybills, // All child waybills
           packages: result.packages,
           orderId: order._id,
           shipmentType: "MPS",

@@ -50,6 +50,7 @@ const orderSchema = new Schema(
     total: Number,
     // Delhivery shipment tracking
     delhiveryTrackingId: String,
+    mpsWaybills: [String], // For Multi-Package Shipments
     delhiveryShipmentStatus: String,
     delhiveryShipmentCreatedAt: Date,
     delhiveryPickupScheduled: Date,
