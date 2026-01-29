@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import { checkActiveUser } from "../middleware/check-active-user.js";
 
 // Import all necessary routes
 import authRouter from "./auth.js";
@@ -71,37 +72,41 @@ router.get("/products/:productId/reviews", reviewController.getProductReviews);
 // ==================== USER ROUTES (AUTH REQUIRED) ====================
 
 // Cart
-router.get("/cart", requireAuth, cartController.getCart);
-router.post("/cart/items", requireAuth, cartController.addToCart);
-router.put("/cart/items/:itemId", requireAuth, cartController.updateCartItem);
+router.get("/cart", requireAuth, checkActiveUser, cartController.getCart);
+router.post("/cart/items", requireAuth, checkActiveUser, cartController.addToCart);
+router.put("/cart/items/:itemId", requireAuth, checkActiveUser, cartController.updateCartItem);
 router.delete(
   "/cart/items/:itemId",
   requireAuth,
+  checkActiveUser,
   cartController.removeFromCart,
 );
-router.delete("/cart", requireAuth, cartController.clearCart);
+router.delete("/cart", requireAuth, checkActiveUser, cartController.clearCart);
 
 // Orders
-router.post("/orders", requireAuth, userOrderController.createOrder);
-router.get("/orders", requireAuth, userOrderController.getUserOrders);
+router.post("/orders", requireAuth, checkActiveUser, userOrderController.createOrder);
+router.get("/orders", requireAuth, checkActiveUser, userOrderController.getUserOrders);
 router.get(
   "/orders/:orderId",
   requireAuth,
+  checkActiveUser,
   userOrderController.getOrderDetails,
 );
-router.delete("/orders/:orderId", requireAuth, userOrderController.cancelOrder);
+router.delete("/orders/:orderId", requireAuth, checkActiveUser, userOrderController.cancelOrder);
 
 // Addresses
-router.get("/addresses", requireAuth, addressController.getAddresses);
-router.post("/addresses", requireAuth, addressController.addAddress);
+router.get("/addresses", requireAuth, checkActiveUser, addressController.getAddresses);
+router.post("/addresses", requireAuth, checkActiveUser, addressController.addAddress);
 router.put(
   "/addresses/:addressId",
   requireAuth,
+  checkActiveUser,
   addressController.updateAddress,
 );
 router.delete(
   "/addresses/:addressId",
   requireAuth,
+  checkActiveUser,
   addressController.deleteAddress,
 );
 
@@ -109,32 +114,36 @@ router.delete(
 router.post(
   "/products/:productId/reviews",
   requireAuth,
+  checkActiveUser,
   reviewController.addReview,
 );
-router.get("/my-reviews", requireAuth, reviewController.getUserReviews);
-router.put("/reviews/:reviewId", requireAuth, reviewController.updateReview);
-router.delete("/reviews/:reviewId", requireAuth, reviewController.deleteReview);
+router.get("/my-reviews", requireAuth, checkActiveUser, reviewController.getUserReviews);
+router.put("/reviews/:reviewId", requireAuth, checkActiveUser, reviewController.updateReview);
+router.delete("/reviews/:reviewId", requireAuth, checkActiveUser, reviewController.deleteReview);
 
 // Favorites/Wishlist
-router.get("/favorites", requireAuth, favoriteController.getFavorites);
-router.post("/favorites", requireAuth, favoriteController.addToFavorites);
+router.get("/favorites", requireAuth, checkActiveUser, favoriteController.getFavorites);
+router.post("/favorites", requireAuth, checkActiveUser, favoriteController.addToFavorites);
 router.delete(
   "/favorites/:productId",
   requireAuth,
+  checkActiveUser,
   favoriteController.removeFromFavorites,
 );
 router.get(
   "/favorites/check/:productId",
   requireAuth,
+  checkActiveUser,
   favoriteController.checkFavorite,
 );
 
 // Backward compatibility for wishlist endpoints (REDUNDANT - KEPT FOR COMPATIBILITY ONLY)
-router.get("/wishlist", requireAuth, favoriteController.getFavorites);
-router.post("/wishlist", requireAuth, favoriteController.addToFavorites);
+router.get("/wishlist", requireAuth, checkActiveUser, favoriteController.getFavorites);
+router.post("/wishlist", requireAuth, checkActiveUser, favoriteController.addToFavorites);
 router.delete(
   "/wishlist/:productId",
   requireAuth,
+  checkActiveUser,
   favoriteController.removeFromFavorites,
 );
 

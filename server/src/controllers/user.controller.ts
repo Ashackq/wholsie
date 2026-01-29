@@ -176,3 +176,46 @@ export const getUserAddresses = async (req: Request, res: Response) => {
         });
     }
 };
+
+// Update user status (admin only)
+export const updateUserStatus = async (req: Request, res: Response) => {
+    try {
+        const { userId } = req.params;
+        const { status } = req.body;
+
+        // Validate status value
+        const validStatuses = ['active', 'inactive', 'suspended'];
+        if (!status || !validStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid status. Must be one of: active, inactive, suspended',
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { status, updatedAt: new Date() },
+            { new: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
+        res.json({
+            success: true,
+            message: `User status updated to ${status}`,
+            data: user,
+        });
+    } catch (error) {
+        console.error('Error updating user status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating user status',
+            error: error instanceof Error ? error.message : 'Unknown error',
+        });
+    }
+};

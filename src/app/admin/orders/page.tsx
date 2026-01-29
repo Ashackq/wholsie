@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAdminAuth } from "../../../hooks/useAdminAuth";
+import { useSearchParams } from "next/navigation";
 
 type Order = {
   _id: string;
@@ -51,6 +52,7 @@ export default function AdminOrdersPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [creatingShipment, setCreatingShipment] = useState<string | null>(null);
@@ -65,6 +67,8 @@ export default function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const pageSize = 4;
+  const searchParams = useSearchParams();
+  const openOrderId = searchParams.get("open");
   const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
   useEffect(() => {
@@ -98,6 +102,24 @@ export default function AdminOrdersPage() {
     }
     load();
   }, [isAdmin, authLoading, API, page]);
+
+  useEffect(() => {
+    if (openOrderId) {
+      openOrder(openOrderId);
+    }
+  }, [openOrderId]);
+
+  const openOrder = async (orderId: string) => {
+    setSelectedOrderId(orderId);
+    setShowModal(true);
+
+    const res = await fetch(`${API}/admin/orders/${orderId}`, {
+      credentials: "include",
+    });
+
+    const data = await res.json();
+    setSelectedOrder(data.data);
+  }
 
   const goToPage = (nextPage: number) => {
     setPage(nextPage);

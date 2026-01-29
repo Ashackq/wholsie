@@ -52,6 +52,15 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
     next();
 }
 
+export function requireActive(req: Request, res: Response, next: NextFunction) {
+    if (!req.userId) {
+        return res.status(401).json({ error: "Authentication required" });
+    }
+    // Note: User status should be checked from the User model in the next middleware
+    // This is a placeholder that will be extended to check user.status === "active"
+    next();
+}
+
 export function generateToken(payload: JWTPayload): string {
     return jwt.sign(payload, env.JWT_SECRET, { expiresIn: "7d" });
 }

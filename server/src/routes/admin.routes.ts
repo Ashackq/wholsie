@@ -41,6 +41,7 @@ router.put('/orders/:orderId/status', requireAuth, requireAdmin, orderController
 // ==================== USERS ====================
 router.get('/users', requireAuth, requireAdmin, userController.getUsers);
 router.get('/users/:userId', requireAuth, requireAdmin, userController.getUser);
+router.put('/users/:userId/status', requireAuth, requireAdmin, userController.updateUserStatus);
 router.get('/users/:userId/cart', requireAuth, requireAdmin, userController.getUserCart);
 router.get('/users/:userId/orders', requireAuth, requireAdmin, userController.getUserOrders);
 router.get('/users/:userId/addresses', requireAuth, requireAdmin, userController.getUserAddresses);
