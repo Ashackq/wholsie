@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAdminAuth } from "../../../hooks/useAdminAuth";
+import { useRouter } from "next/navigation";
 
 type User = {
     _id: string;
@@ -69,6 +70,11 @@ export default function AdminUsersPage() {
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(0);
     const pageSize = 10;
+    const [togglingId, setTogglingId] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const router = useRouter();
+
 
     // Modal states
     const [showModal, setShowModal] = useState(false);
@@ -157,11 +163,48 @@ export default function AdminUsersPage() {
         }
     };
 
+    const updateUserStatus = async (userId: string, newStatus: string) => {
+        setTogglingId(userId);
+        try {
+            const res = await fetch(`${API}/admin/users/${userId}/status`, {
+                method: "PUT",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ status: newStatus }),
+            });
+
+            if (!res.ok) throw new Error("Failed to update user status");
+
+            const data = await res.json();
+            const updatedUser = data.data || data;
+            
+            setUsers(users.map(u => u._id === userId ? { ...u, status: newStatus } : u));
+            setSuccess(`User status updated to ${newStatus}`);
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+            setErrorMsg(err instanceof Error ? err.message : "Failed to update user status");
+            setTimeout(() => setErrorMsg(null), 3000);
+        } finally {
+            setTogglingId(null);
+        }
+    };
+
     const closeModal = () => {
         setShowModal(false);
         setModalData(null);
         setSelectedUser(null);
     };
+
+    const subtotal = modalData?.items?.reduce((sum: number, item: any) => {
+        const price = Number(item.price || item.productId?.price || 0);
+        const qty = Number(item.quantity || 1);
+        return sum + price * qty;
+    }, 0);
+
+    const tax = subtotal * 0.05;
+    const totalPrice = subtotal + tax;
 
     const totalPages = Math.ceil(total / pageSize);
     if (authLoading) {
@@ -207,6 +250,18 @@ export default function AdminUsersPage() {
                 {error && (
                     <div style={{ background: "#fee2e2", color: "#991b1b", padding: 16, borderRadius: 8, marginBottom: 20 }}>
                         {error}
+                    </div>
+                )}
+
+                {success && (
+                    <div style={{ background: "#dcfce7", color: "#166534", padding: 16, borderRadius: 8, marginBottom: 20 }}>
+                        {success}
+                    </div>
+                )}
+
+                {errorMsg && (
+                    <div style={{ background: "#fee2e2", color: "#991b1b", padding: 16, borderRadius: 8, marginBottom: 20 }}>
+                        {errorMsg}
                     </div>
                 )}
             </div>
@@ -470,121 +525,172 @@ export default function AdminUsersPage() {
                                 </div>
                             </>
                         ) : modalMode === "cart" ? (
-                            /* CART MODE FIXED */
-                            <div style={{ padding: 10 }}>
-                                {modalData?.items?.length > 0 ? (
-                                    <>
-                                        {modalData.items.map((item: CartItem, idx: number) => {
-                                            const price = Number(item.price) || 0;
-                                            const quantity = Number(item.quantity) || 0;
-                                            const totalPrice = price * quantity;
-                                        
-                                            return (
-                                                <div
-                                                    key={idx}
-                                                    style={{
-                                                        display: "flex",
-                                                        justifyContent: "space-between",
-                                                        alignItems: "center",
-                                                        padding: "14px 0",
-                                                        borderBottom:
-                                                            "1px solid #e5e7eb",
-                                                        gap: 12,
-                                                    }}
-                                                >
-                                                    <div style={{ flex: 1 }}>
-                                                        <div
-                                                            style={{
-                                                                fontWeight: 600,
-                                                                fontSize: 14,
-                                                            }}
-                                                        >
-                                                            {item.name ||
-                                                                "Unnamed Product"}
-                                                        </div>
-                                                            
-                                                        <div
-                                                            style={{
-                                                                fontSize: 13,
-                                                                color: "#6b7280",
-                                                            }}
-                                                        >
-                                                            Quantity: {quantity}
-                                                        </div>
-                                                    </div>
-                                                        
-                                                    <div style={{ textAlign: "right" }}>
-                                                        <div
-                                                            style={{
-                                                                fontWeight: 600,
-                                                                fontSize: 14,
-                                                            }}
-                                                        >
-                                                            ₹{totalPrice}
-                                                        </div>
-                                                        
-                                                        <div
-                                                            style={{
-                                                                fontSize: 13,
-                                                                color: "#6b7280",
-                                                            }}
-                                                        >
-                                                            ₹{price} each
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-
-                                        {/* Cart Summary */}
+                          <div style={{ marginBottom: 24 }}>
+                        
+                            <h4
+                              style={{
+                                margin: "0 0 12px 0",
+                                fontSize: 16,
+                                color: "#374151",
+                              }}
+                            >
+                              Order Items
+                            </h4>
+                          
+                            <div
+                              style={{
+                                border: "1px solid #e5e7eb",
+                                borderRadius: 8,
+                                overflow: "hidden",
+                              }}
+                            >
+                              {modalData?.items?.length > 0 ? (
+                                <>
+                                  {modalData.items.map((item: any, idx: number) => {
+                                    const product =
+                                      item.productId && typeof item.productId === "object"
+                                        ? item.productId
+                                        : null;
+                                
+                                    const name = product?.name || item.name || "Product";
+                                    const rawImage = product?.image || item.image || "/placeholder.png";
+                                
+                                    const image =
+                                      typeof rawImage === "string"
+                                        ? rawImage.startsWith("http") || rawImage.startsWith("/")
+                                          ? rawImage
+                                          : `/${rawImage}`
+                                        : "/placeholder.png";
+                                
+                                    const price = Number(item.price || product?.price || 0);
+                                    const qty = Number(item.quantity || 1);
+                                
+                                    return (
+                                      <div
+                                        key={idx}
+                                        style={{
+                                          display: "flex",
+                                          justifyContent: "space-between",
+                                          alignItems: "center",
+                                          padding: 12,
+                                          background: idx % 2 === 0 ? "#fff" : "#f9fafb",
+                                          fontSize: 14,
+                                        }}
+                                      >
+                                        {/* ✅ Left Side */}
                                         <div
-                                            style={{
-                                                marginTop: 20,
-                                                background: "#f9fafb",
-                                                padding: 16,
-                                                borderRadius: 8,
-                                            }}
+                                          style={{
+                                            display: "flex",
+                                            gap: 12,
+                                            alignItems: "center",
+                                            flex: 1,
+                                          }}
                                         >
-                                            <div
-                                                style={{
-                                                    display: "flex",
-                                                    justifyContent: "space-between",
-                                                    marginBottom: 6,
-                                                }}
-                                            >
-                                                <span>Subtotal:</span>
-                                                <strong>
-                                                    ₹{modalData.subtotal || 0}
-                                                </strong>
+                                          {/* ✅ Thumbnail EXACT Like Orders */}
+                                          <div
+                                            style={{
+                                              width: 100,
+                                              height: 100,
+                                              borderRadius: 10,
+                                              border: "1px solid #e5e7eb",
+                                              overflow: "hidden",
+                                              background: "#fff",
+                                              display: "flex",
+                                              alignItems: "center",
+                                              justifyContent: "center",
+                                            }}
+                                          >
+                                            <img
+                                              src={image}
+                                              alt={name}
+                                              style={{
+                                                width: "100%",
+                                                height: "100%",
+                                                objectFit: "contain",
+                                                padding: 6,
+                                              }}
+                                            />
+                                          </div>
+                                          
+                                          {/* ✅ Product Details */}
+                                          <div>
+                                            <strong>{name}</strong>
+                                          
+                                            <div style={{ fontSize: 13, color: "#6b7280" }}>
+                                              Qty: {qty} × ₹{price}
                                             </div>
-                                            
-                                            <div
-                                                style={{
-                                                    display: "flex",
-                                                    justifyContent: "space-between",
-                                                    marginBottom: 6,
-                                                }}
-                                            >
-                                                <span>Tax:</span>
-                                                <strong>₹{modalData.tax || 0}</strong>
-                                            </div>
-                                            
-                                            <div
-                                                style={{
-                                                    display: "flex",
-                                                    justifyContent: "space-between",
-                                                    fontSize: 16,
-                                                }}
-                                            >
-                                                <span>Total:</span>
-                                                <strong>₹{modalData.total || 0}</strong>
-                                            </div>
+                                          </div>
                                         </div>
-                                    </>
-                                ) : (
-                                    <p style={{ color: "#6b7280" }}>Cart is empty</p>
-                                )}
+                                          
+                                        {/* ✅ Right Price */}
+                                        <strong style={{ fontSize: 15 }}>
+                                          ₹{price * qty}
+                                        </strong>
+                                      </div>
+                                    );
+                                  })}
+
+                                  {/* ✅ Summary Box */}
+                                  <div
+                                    style={{
+                                      background: "#f9fafb",
+                                      padding: 16,
+                                      borderTop: "1px solid #e5e7eb",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        marginBottom: 8,
+                                      }}
+                                    >
+                                      <span>Subtotal:</span>
+                                      <strong>₹{subtotal.toFixed(2)}</strong>
+                                    </div>
+                                  
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        marginBottom: 8,
+                                      }}
+                                    >
+                                      <span>Tax (5%):</span>
+                                      <strong>₹{tax.toFixed(2)}</strong>
+                                    </div>
+                                  
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        marginBottom: 8,
+                                      }}
+                                    >
+                                    </div>
+                                  
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        paddingTop: 10,
+                                        borderTop: "2px solid #e5e7eb",
+                                        fontWeight: "bold",
+                                        fontSize: 16,
+                                      }}
+                                    >
+                                      <span>Total:</span>
+                                      <strong>₹{totalPrice.toFixed(2)}</strong>
+                                    </div>
+                                  </div>
+                                </>
+                              ) : (
+                                <p style={{ padding: 14, color: "#6b7280" }}>
+                                  Cart is empty
+                                </p>
+                              )}
                             </div>
+                          </div>
                         ) : modalMode === "orders" ? (
                             <div style={{ padding: 10 }}>
                                 {Array.isArray(modalData) && modalData.length > 0 ? (
@@ -596,12 +702,38 @@ export default function AdminUsersPage() {
                                                 padding: 16,
                                                 borderRadius: 8,
                                                 marginBottom: 12,
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "center",
                                             }}
                                         >
-                                            <strong>Order #{order.orderId}</strong>
-                                            <p>Total: ₹{order.total}</p>
-                                            <p>Status: {order.status}</p>
-                                            <p>Payment: {order.paymentStatus}</p>
+                                            {/* Order Info */}
+                                            <div>
+                                                <strong>Order #{order.orderId}</strong>
+                                                <p>Total: ₹{order.total}</p>
+                                                <p>Status: {order.status}</p>
+                                                <p>Payment: {order.paymentStatus}</p>
+                                            </div>
+                                        
+                                            {/* ✅ View Button */}
+                                            <button
+                                                onClick={() => {
+                                                    closeModal();
+                                                    router.push(`/admin/orders?open=${order._id}`);
+                                                }}
+                                                style={{
+                                                    padding: "8px 14px",
+                                                    background: "#2563eb",
+                                                    color: "#fff",
+                                                    border: "none",
+                                                    borderRadius: 6,
+                                                    cursor: "pointer",
+                                                    fontSize: 13,
+                                                    fontWeight: 600,
+                                                }}
+                                            >
+                                                View
+                                            </button>
                                         </div>
                                     ))
                                 ) : (
@@ -665,16 +797,45 @@ export default function AdminUsersPage() {
                                 <td>{user.email}</td>
                                 <td>{user.phone || "-"}</td>
                                 <td>
-                                    <span className={`px-2 py-1 rounded text-sm font-semibold ${
-                                                    user.status === "active"
-                                                        ? "bg-green-100 text-green-800"
-                                                        : user.status === "inactive"
-                                                          ? "bg-yellow-100 text-yellow-800"
-                                                          : "bg-red-100 text-red-800"
-                                                }`}
-                                    >
-                                        {user.status || "unknown"}
-                                    </span>
+                                  <span
+                                    onClick={() => {
+                                      if (togglingId) return;   
+                                      updateUserStatus(
+                                        user._id,
+                                        user.status === "active" ? "inactive" : "active"
+                                      )
+                                    }}
+                                    style={{
+                                      display: "inline-block",
+                                      padding: "6px 14px",
+                                      borderRadius: "999px",
+                                      fontSize: "13px",
+                                      fontWeight: 600,
+                                    
+                                      background:
+                                        user.status === "active"
+                                          ? "#dcfce7"   // light green
+                                          : "#fee2e2",  // light red
+                                    
+                                      color:
+                                        user.status === "active"
+                                          ? "#166534"   // dark green
+                                          : "#991b1b",  // dark red
+                                    
+                                      textTransform: "capitalize",
+                                      minWidth: "90px",
+                                      textAlign: "center",
+                                    
+                                      cursor: togglingId === user._id ? "wait" : "pointer",
+                                      opacity: togglingId === user._id ? 0.6 : 1,
+                                    
+                                      userSelect: "none",
+                                      transition: "0.2s ease",
+                                    }}
+                                    title="Click to toggle status"
+                                  >
+                                    {user.status === "active" ? "Active" : "Inactive"}
+                                  </span>
                                 </td>
                                 <td>
                                     <div>

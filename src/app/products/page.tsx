@@ -62,6 +62,7 @@ function ProductsContent() {
   // Mobile filter modal state
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [tempCategory, setTempCategory] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
 
   // Update active category when URL changes
   useEffect(() => {
@@ -117,6 +118,18 @@ function ProductsContent() {
     setIsFetching(false);
     fetchProducts(1, true);
   }, [categorySlug, searchQuery]);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile(); // first time run
+
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Open filter modal with current values
   const openFilterModal = () => {
@@ -928,14 +941,16 @@ function ProductsContent() {
                                       className="fas fa-star"
                                       aria-hidden="true"
                                     ></i>
-                                    <span
-                                      style={{
-                                        color: "#475569",
-                                        fontSize: "12px",
-                                      }}
-                                    >
-                                      (0 reviews)
-                                    </span>
+                                    {!isMobile && (
+                                      <span
+                                        style={{
+                                          color: "#475569",
+                                          fontSize: "12px",
+                                        }}
+                                      >
+                                        (0 reviews)
+                                      </span>
+                                    )}
                                   </p>
                                 </div>
 

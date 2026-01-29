@@ -533,7 +533,7 @@ export default function Home() {
       <section className="features mt_55">
         <div className="container">
           <div className="row">
-            <div className="col-xl-3 col-md-6 wow fadeInUp" data-wow-delay="0s">
+            <div className="col-xl-3 col-md-6 col-6 wow fadeInUp" data-wow-delay="0s">
               <div className="features_item purple">
                 <div className="icon">
                   <Image src="/assets/images/feature-icon_1.svg" alt="feature" width={50} height={50} />
@@ -544,7 +544,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="col-xl-3 col-md-6 wow fadeInUp" data-wow-delay="0.2s">
+            <div className="col-xl-3 col-md-6 col-6 wow fadeInUp" data-wow-delay="0.2s">
               <div className="features_item green">
                 <div className="icon">
                   <Image src="/assets/images/feature-icon_3.svg" alt="feature" width={50} height={50} />
@@ -555,7 +555,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="col-xl-3 col-md-6 wow fadeInUp" data-wow-delay="0.4s">
+            <div className="col-xl-3 col-md-6 col-6 wow fadeInUp" data-wow-delay="0.4s">
               <div className="features_item orange">
                 <div className="icon">
                   <Image src="/assets/images/feature-icon_2.svg" alt="feature" width={50} height={50} />
@@ -566,7 +566,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="col-xl-3 col-md-6 wow fadeInUp" data-wow-delay="0.6s">
+            <div className="col-xl-3 col-md-6 col-6 wow fadeInUp" data-wow-delay="0.6s">
               <div className="features_item">
                 <div className="icon">
                   <Image src="/assets/images/feature-icon_4.svg" alt="feature" width={50} height={50} />
