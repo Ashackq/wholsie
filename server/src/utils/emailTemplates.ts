@@ -7,57 +7,57 @@
  */
 
 interface OrderConfirmationTemplateData {
-    orderId: string;
-    orderDate: string;
-    customerName: string;
-    customerEmail: string;
-    customerPhone?: string;
-    shippingAddress: {
-        street?: string;
-        city?: string;
-        state?: string;
-        postalCode?: string;
-        country?: string;
-    };
-    items: Array<{
-        name: string;
-        quantity: number;
-        price: number;
-        amount: number;
-    }>;
-    subtotal: number;
-    tax: number;
-    shippingCost: number;
-    discount: number;
-    total: number;
-    paymentMethod?: string;
-    paymentStatus?: string;
-    storeName?: string;
-    storeEmail?: string;
-    storePhone?: string;
-    storeAddress?: string;
+  orderId: string;
+  orderDate: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  shippingAddress: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+  };
+  items: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    amount: number;
+  }>;
+  subtotal: number;
+  tax: number;
+  shippingCost: number;
+  discount: number;
+  total: number;
+  paymentMethod?: string;
+  paymentStatus?: string;
+  storeName?: string;
+  storeEmail?: string;
+  storePhone?: string;
+  storeAddress?: string;
 }
 
 interface ShippedTemplateData {
-    orderId: string;
-    customerName: string;
-    trackingNumber: string;
-    courierName?: string;
-    estimatedDelivery?: string;
-    storeName?: string;
-    storePhone?: string;
+  orderId: string;
+  customerName: string;
+  trackingNumber: string;
+  courierName?: string;
+  estimatedDelivery?: string;
+  storeName?: string;
+  storePhone?: string;
 }
 
 interface CancelledTemplateData {
-    orderId: string;
-    customerName: string;
-    cancellationReason?: string;
-    refundAmount: number;
-    refundMethod?: string;
-    refundTimeline?: string;
-    storeName?: string;
-    storeEmail?: string;
-    storePhone?: string;
+  orderId: string;
+  customerName: string;
+  cancellationReason?: string;
+  refundAmount: number;
+  refundMethod?: string;
+  refundTimeline?: string;
+  storeName?: string;
+  storeEmail?: string;
+  storePhone?: string;
 }
 
 /**
@@ -65,17 +65,17 @@ interface CancelledTemplateData {
  * Professional invoice-style email with order details and payment info
  */
 export function generateOrderConfirmationInvoiceTemplate(
-    data: OrderConfirmationTemplateData,
+  data: OrderConfirmationTemplateData,
 ): string {
-    const orderDate = new Date(data.orderDate).toLocaleDateString("en-IN", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
+  const orderDate = new Date(data.orderDate).toLocaleDateString("en-IN", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
-    const itemsHTML = data.items
-        .map(
-            (item) => `
+  const itemsHTML = data.items
+    .map(
+      (item) => `
             <tr>
                 <td style="padding: 12px 8px; border-bottom: 1px solid #e0e0e0; font-size: 14px;">
                     ${item.name}
@@ -91,12 +91,12 @@ export function generateOrderConfirmationInvoiceTemplate(
                 </td>
             </tr>
         `,
-        )
-        .join("");
+    )
+    .join("");
 
-    const discountRow =
-        data.discount > 0
-            ? `
+  const discountRow =
+    data.discount > 0
+      ? `
         <tr style="background: #f5f5f5;">
             <td colspan="3" style="padding: 12px 8px; text-align: right; font-weight: 600; font-size: 14px;">
                 Discount:
@@ -106,9 +106,9 @@ export function generateOrderConfirmationInvoiceTemplate(
             </td>
         </tr>
     `
-            : "";
+      : "";
 
-    return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -500,16 +500,18 @@ export function generateOrderConfirmationInvoiceTemplate(
  * Generate Order Shipped Email Template
  * Tracking and delivery information
  */
-export function generateOrderShippedTemplate(data: ShippedTemplateData): string {
-    const deliveryInfo = data.estimatedDelivery
-        ? new Date(data.estimatedDelivery).toLocaleDateString("en-IN", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        })
-        : "Typically 3-5 business days";
+export function generateOrderShippedTemplate(
+  data: ShippedTemplateData,
+): string {
+  const deliveryInfo = data.estimatedDelivery
+    ? new Date(data.estimatedDelivery).toLocaleDateString("en-IN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "Typically 3-5 business days";
 
-    return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -864,8 +866,10 @@ export function generateOrderShippedTemplate(data: ShippedTemplateData): string 
  * Generate Order Cancelled Email Template
  * Cancellation confirmation and refund information
  */
-export function generateOrderCancelledTemplate(data: CancelledTemplateData): string {
-    return `
+export function generateOrderCancelledTemplate(
+  data: CancelledTemplateData,
+): string {
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -1132,15 +1136,16 @@ export function generateOrderCancelledTemplate(data: CancelledTemplateData): str
                         <span class="info-label">Cancellation Date:</span>
                         <span class="info-value">${new Date().toLocaleDateString("en-IN")}</span>
                     </div>
-                    ${data.cancellationReason
-            ? `
+                    ${
+                      data.cancellationReason
+                        ? `
                     <div class="info-item">
                         <span class="info-label">Reason:</span>
                         <span class="info-value">${data.cancellationReason}</span>
                     </div>
                     `
-            : ""
-        }
+                        : ""
+                    }
                 </div>
 
                 <!-- Refund Information -->
@@ -1158,15 +1163,16 @@ export function generateOrderCancelledTemplate(data: CancelledTemplateData): str
                 </div>
 
                 <!-- Reason for Cancellation -->
-                ${data.cancellationReason
-            ? `
+                ${
+                  data.cancellationReason
+                    ? `
                 <div class="reason-box">
                     <h4>Cancellation Reason</h4>
                     <p>${data.cancellationReason}</p>
                 </div>
                 `
-            : ""
-        }
+                    : ""
+                }
 
                 <!-- Cancellation Timeline -->
                 <div class="timeline">

@@ -22,9 +22,11 @@ export async function createShipment(req: Request, res: Response) {
     const isObjectId = /^[0-9a-fA-F]{24}$/.test(orderId);
     const order = await Order.findOne(
       isObjectId
-        ? { $or: [{ _id: orderId }, { orderId: orderId }, { orderNo: orderId }] }
-        : { $or: [{ orderId: orderId }, { orderNo: orderId }] }
-    ).populate("userId shippingAddress");
+        ? {
+            $or: [{ _id: orderId }, { orderId: orderId }, { orderNo: orderId }],
+          }
+        : { $or: [{ orderId: orderId }, { orderNo: orderId }] },
+    ).populate("userId shippingAddress").populate("items.productId");
 
     if (!order) {
       return res.status(404).json({
@@ -48,6 +50,14 @@ export async function createShipment(req: Request, res: Response) {
     const weightCalculation = calculateOrderWeightFromObject(order);
     const shipmentWeight = weightCalculation.shipmentWeight || 100; // Fallback to 100g if undefined
     const boxDimensions = weightCalculation.dimensions; // Box dimensions from weight calculator
+    const requiresMPS = weightCalculation.requiresMPS;
+    const mpsBoxCount = weightCalculation.mpsBoxCount || 1;
+
+    console.log(`=== Shipment Calculation ===`);
+    console.log(`Total Quantity: ${weightCalculation.totalQuantity}`);
+    console.log(`Requires MPS: ${requiresMPS}`);
+    console.log(`Box Count: ${mpsBoxCount}`);
+    console.log(`Box Type: ${weightCalculation.selectedBox.name}`);
 
     // Check if destination pincode is serviceable
     const shippingPin =
@@ -89,53 +99,204 @@ export async function createShipment(req: Request, res: Response) {
     }
 
     // Build order ID string
-    const orderIdString = order.orderId || (order._id ? order._id.toString() : "UNKNOWN");
+    const orderIdString =
+      order.orderId || (order._id ? order._id.toString() : "UNKNOWN");
 
-    const shipmentData = {
-      shipments: [
-        {
+    // Prepare shipment data
+    let shipmentData: any;
+    let masterWaybill: string | undefined;
+
+    if (requiresMPS) {
+      // Multi-Package Shipment (MPS) - 7+ items
+      console.log(`Creating MPS with ${mpsBoxCount} boxes`);
+
+      // Fetch waybills from Delhivery for MPS
+      // We need mpsBoxCount waybills (one per box, first one is master)
+      console.log(`Fetching ${mpsBoxCount} waybills from Delhivery for MPS...`);
+      const waybillResult = await delhiveryUtils.fetchWaybills(mpsBoxCount);
+
+      if (
+        !waybillResult.success ||
+        !waybillResult.waybills ||
+        waybillResult.waybills.length < mpsBoxCount
+      ) {
+        return res.status(500).json({
+          error: "Failed to fetch waybills from Delhivery",
+          details:
+            waybillResult.error ||
+            `Needed ${mpsBoxCount} waybills but got ${waybillResult.waybills?.length || 0}`,
+        });
+      }
+
+      const fetchedWaybills = waybillResult.waybills;
+      masterWaybill = fetchedWaybills[0]; // First waybill is the master
+      console.log(
+        `Fetched waybills: Master=${masterWaybill}, Children=${fetchedWaybills.slice(1).join(", ")}`,
+      );
+
+      const shipments = [];
+
+      // Calculate items per box (distribute evenly)
+      const itemsPerBox = Math.ceil(
+        weightCalculation.totalQuantity / mpsBoxCount,
+      );
+      const weightPerBox = Math.ceil(
+        weightCalculation.totalProductWeight / mpsBoxCount,
+      );
+
+      for (let i = 0; i < mpsBoxCount; i++) {
+        const boxWeight =
+          weightPerBox +
+          (weightCalculation.selectedBox.overheadWeightGrams || 220);
+        const childWaybill = fetchedWaybills[i];
+
+        shipments.push({
           name: customerName,
           add: shippingAddr?.street || shippingAddr?.address || "",
-          pin: (shippingAddr?.postalCode || shippingAddr?.pincode || "").toString(),
+          pin: (
+            shippingAddr?.postalCode ||
+            shippingAddr?.pincode ||
+            ""
+          ).toString(),
           city: shippingAddr?.city || "",
           state: shippingAddr?.state || "",
           country: shippingAddr?.country || "India",
           phone: phone.toString(),
           order: orderIdString,
-          payment_mode: order.paymentStatus === "completed" ? "Prepaid" : "COD" as "Prepaid" | "COD",
+          payment_mode:
+            order.paymentStatus === "completed"
+              ? "Prepaid"
+              : ("COD" as "Prepaid" | "COD"),
           order_date:
             order.createdAt?.toISOString() || new Date().toISOString(),
-          total_amount:
-            (order.total || 0).toString(),
-          products_desc: order.items?.map((item: any) => item.name || item.productName).filter(Boolean).join(", ") || `${order.items?.length || 1} item(s)`,
-          quantity: (
-            order.items?.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0) ||
-            1
-          ).toString(),
-          weight: shipmentWeight.toString(),
+          total_amount: (order.total || 0).toString(),
+          products_desc: `Box ${i + 1}/${mpsBoxCount}: ${
+            order.items
+              ?.map((item: any) => item.name || item.productName)
+              .filter(Boolean)
+              .join(", ") || `${order.items?.length || 1} item(s)`
+          }`,
+          quantity: itemsPerBox.toString(),
+          weight: boxWeight.toString(),
           shipment_length: boxDimensions.length.toString(),
           shipment_width: boxDimensions.breadth.toString(),
           shipment_height: boxDimensions.height.toString(),
           seller_add: env.SELLER_ADDRESS || "Warehouse",
           seller_name: env.SELLER_NAME || "Wholesiii",
           shipping_mode: "Surface",
-          cod_amount: order.paymentStatus === "completed" ? "" : (order.total || 0).toString(),
+          cod_amount:
+            order.paymentStatus === "completed"
+              ? ""
+              : i === 0
+                ? (order.total || 0).toString()
+                : "0", // COD only on first box
+          // MPS specific fields
+          waybill: childWaybill,
+          shipment_type: "MPS",
+          master_id: masterWaybill,
+          mps_children: mpsBoxCount.toString(),
+        });
+      }
+
+      shipmentData = {
+        shipments,
+        pickup_location: {
+          name: env.SELLER_NAME || "Wholesiii",
+          pin: env.SELLER_PINCODE || "",
         },
-      ],
-      pickup_location: {
-        name: env.SELLER_NAME || "Wholesiii",
-        pin: env.SELLER_PINCODE || "",
-      },
-    };
+      };
+    } else {
+      // Single shipment (1-6 items)
+      shipmentData = {
+        shipments: [
+          {
+            name: customerName,
+            add: shippingAddr?.street || shippingAddr?.address || "",
+            pin: (
+              shippingAddr?.postalCode ||
+              shippingAddr?.pincode ||
+              ""
+            ).toString(),
+            city: shippingAddr?.city || "",
+            state: shippingAddr?.state || "",
+            country: shippingAddr?.country || "India",
+            phone: phone.toString(),
+            order: orderIdString,
+            payment_mode:
+              order.paymentStatus === "completed"
+                ? "Prepaid"
+                : ("COD" as "Prepaid" | "COD"),
+            order_date:
+              order.createdAt?.toISOString() || new Date().toISOString(),
+            total_amount: (order.total || 0).toString(),
+            products_desc:
+              order.items
+                ?.map((item: any) => item.name || item.productName)
+                .filter(Boolean)
+                .join(", ") || `${order.items?.length || 1} item(s)`,
+            quantity: weightCalculation.totalQuantity.toString(),
+            weight: shipmentWeight.toString(),
+            shipment_length: boxDimensions.length.toString(),
+            shipment_width: boxDimensions.breadth.toString(),
+            shipment_height: boxDimensions.height.toString(),
+            seller_add: env.SELLER_ADDRESS || "Warehouse",
+            seller_name: env.SELLER_NAME || "Wholesiii",
+            shipping_mode: "Surface",
+            cod_amount:
+              order.paymentStatus === "completed"
+                ? ""
+                : (order.total || 0).toString(),
+          },
+        ],
+        pickup_location: {
+          name: env.SELLER_NAME || "Wholesiii",
+          pin: env.SELLER_PINCODE || "",
+        },
+      };
+    }
 
     // Log the shipment data for debugging
     console.log("=== Creating Delhivery Shipment ===");
     console.log("Order ID:", orderIdString);
+    console.log(
+      "Shipment Type:",
+      requiresMPS ? "MPS (Multi-Package)" : "Single Package",
+    );
+    if (requiresMPS && masterWaybill) {
+      console.log("Master Waybill:", masterWaybill);
+    }
     console.log("Shipment Data:", JSON.stringify(shipmentData, null, 2));
 
     // Create shipment with Delhivery
     const result = await delhiveryUtils.createShipment(shipmentData);
 
+    // For MPS, check if all packages were created successfully
+    if (requiresMPS) {
+      if (!result.success) {
+        return res.status(400).json({
+          error: "Failed to create MPS shipment",
+          details: result.rmk || result.error,
+        });
+      }
+
+      // Update order with master waybill
+      (order as any).delhiveryTrackingId = masterWaybill;
+      (order as any).status = "processing";
+      await order.save();
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          waybill: masterWaybill, // Master waybill for tracking
+          packages: result.packages,
+          orderId: order._id,
+          shipmentType: "MPS",
+          boxCount: mpsBoxCount,
+        },
+      });
+    }
+
+    // Single shipment response
     if (!result.success || !result.waybill) {
       return res.status(400).json({
         error: "Failed to create shipment",
@@ -154,6 +315,8 @@ export async function createShipment(req: Request, res: Response) {
         waybill: result.waybill,
         packages: result.packages,
         orderId: order._id,
+        shipmentType: "Single",
+        boxCount: 1,
       },
     });
   } catch (error: any) {

@@ -25,6 +25,7 @@ const productSchema = new Schema(
         material: String,
         style: String,
         weight: Number, // grams
+        packetCount: { type: Number, default: 1 }, // number of packets in this product (1 for single, N for combos)
         shelfLife: String,
         features: String,
         dietType: String,
