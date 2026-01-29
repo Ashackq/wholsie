@@ -1274,17 +1274,32 @@ export default function CheckoutPage() {
                     </p>
                   )}
 
-                  {tatInfo?.data?.expected_delivery_date && tatInfo?.data?.tat && (
-                    <p style={{ color: "#333", margin: "8px 0 0", fontWeight: "500" }}>
-                      {(() => {
-                        const deliveryDate = new Date(tatInfo.data.expected_delivery_date);
-                        const days = tatInfo.data.tat;
-                        const dayName = deliveryDate.toLocaleDateString('en-US', { weekday: 'long' });
-                        const dateStr = deliveryDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-                        return `Arrives in ${days} day${days !== 1 ? 's' : ''}, ${dayName} ${dateStr}`;
-                      })()}
-                    </p>
-                  )}
+                  {tatInfo?.data?.expected_delivery_date &&
+                    tatInfo?.data?.tat && (
+                      <p
+                        style={{
+                          color: "#333",
+                          margin: "8px 0 0",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {(() => {
+                          const deliveryDate = new Date(
+                            tatInfo.data.expected_delivery_date,
+                          );
+                          const days = tatInfo.data.tat;
+                          const dayName = deliveryDate.toLocaleDateString(
+                            "en-US",
+                            { weekday: "long" },
+                          );
+                          const dateStr = deliveryDate.toLocaleDateString(
+                            "en-US",
+                            { day: "numeric", month: "short" },
+                          );
+                          return `Arrives in ${days} day${days !== 1 ? "s" : ""}, ${dayName} ${dateStr}`;
+                        })()}
+                      </p>
+                    )}
                 </div>
 
                 {/* Order Notes */}

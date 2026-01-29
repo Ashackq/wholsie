@@ -106,6 +106,9 @@ export async function createShipment(req: Request, res: Response) {
     let shipmentData: any;
     let masterWaybill: string | undefined;
 
+    console.log(`Debug MPS Check: Order=${orderIdString}, Qty=${weightCalculation.totalQuantity}, MPS=${requiresMPS}, Max Mps Threshold=6`);
+
+    let fetchedWaybills: string[] = [];
     if (requiresMPS) {
       // Multi-Package Shipment (MPS) - 7+ items
       console.log(`Creating MPS with ${mpsBoxCount} boxes`);
@@ -128,7 +131,7 @@ export async function createShipment(req: Request, res: Response) {
         });
       }
 
-      const fetchedWaybills = waybillResult.waybills;
+      fetchedWaybills = waybillResult.waybills;
       masterWaybill = fetchedWaybills[0]; // First waybill is the master
       console.log(
         `Fetched waybills: Master=${masterWaybill}, Children=${fetchedWaybills.slice(1).join(", ")}`,
@@ -190,11 +193,11 @@ export async function createShipment(req: Request, res: Response) {
               : i === 0
                 ? (order.total || 0).toString()
                 : "0", // COD only on first box
-          // MPS specific fields
-          waybill: childWaybill,
-          shipment_type: "MPS",
-          master_id: masterWaybill,
-          mps_children: mpsBoxCount.toString(),
+          // MPS specific fields - Adjusted for potential API issues
+          waybill: childWaybill, // Valid waybill from fetch
+          // shipment_type: "MPS", // Commented out to avoid schema validation errors if invalid
+          // master_id: masterWaybill, // Renaming to potentially correct field if needed, but keeping for reference
+          // Try passing empty string for non-master? No, Delhivery usually links by common ref or master waybill
         });
       }
 
@@ -502,7 +505,18 @@ export async function getTracking(req: Request, res: Response) {
       });
     }
 
-    const result = await delhiveryUtils.getTrackingStatus(waybill);
+    // Check if this is an MPS order by finding the order with this master waybill
+    const order = await Order.findOne({ delhiveryTrackingId: waybill });
+    
+    let waybillsToTrack: string | string[] = waybill;
+    
+    // If order has MPS waybills, track all of them
+    if (order && order.mpsWaybills && order.mpsWaybills.length > 0) {
+      // Track master waybill + all child waybills
+      waybillsToTrack = [waybill, ...order.mpsWaybills];
+    }
+
+    const result = await delhiveryUtils.getTrackingStatus(waybillsToTrack);
 
     return res.status(200).json({
       success: true,

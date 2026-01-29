@@ -169,7 +169,9 @@ export default function OrdersPage() {
                                   order.createdAt || order.orderDate || "",
                                 ).toLocaleDateString()}
                               </td>
-                              <td style={{ verticalAlign: "middle" }}>{order.items?.length || 0} item(s)</td>
+                              <td style={{ verticalAlign: "middle" }}>
+                                {order.items?.length || 0} item(s)
+                              </td>
                               <td style={{ verticalAlign: "middle" }}>
                                 <strong>
                                   ₹
@@ -200,12 +202,16 @@ export default function OrdersPage() {
                                     }}
                                     title="Download Invoice PDF"
                                     onMouseEnter={(e) => {
-                                      e.currentTarget.style.backgroundColor = "#E55B00";
-                                      e.currentTarget.style.transform = "translateY(-2px)";
+                                      e.currentTarget.style.backgroundColor =
+                                        "#E55B00";
+                                      e.currentTarget.style.transform =
+                                        "translateY(-2px)";
                                     }}
                                     onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor = "#FF6600";
-                                      e.currentTarget.style.transform = "translateY(0)";
+                                      e.currentTarget.style.backgroundColor =
+                                        "#FF6600";
+                                      e.currentTarget.style.transform =
+                                        "translateY(0)";
                                     }}
                                   >
                                     Invoice
@@ -236,12 +242,16 @@ export default function OrdersPage() {
                                     transition: "all 0.3s ease",
                                   }}
                                   onMouseEnter={(e) => {
-                                    e.currentTarget.style.backgroundColor = "#5a0f0f";
-                                    e.currentTarget.style.transform = "translateY(-2px)";
+                                    e.currentTarget.style.backgroundColor =
+                                      "#5a0f0f";
+                                    e.currentTarget.style.transform =
+                                      "translateY(-2px)";
                                   }}
                                   onMouseLeave={(e) => {
-                                    e.currentTarget.style.backgroundColor = "#781414";
-                                    e.currentTarget.style.transform = "translateY(0)";
+                                    e.currentTarget.style.backgroundColor =
+                                      "#781414";
+                                    e.currentTarget.style.transform =
+                                      "translateY(0)";
                                   }}
                                 >
                                   View Details

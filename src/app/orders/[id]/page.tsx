@@ -267,11 +267,24 @@ export default function OrderDetailPage() {
                     >
                       Order #{order.orderId}
                     </h2>
-                    <p style={{ color: "#666", fontSize: "14px", marginBottom: "0" }}>
+                    <p
+                      style={{
+                        color: "#666",
+                        fontSize: "14px",
+                        marginBottom: "0",
+                      }}
+                    >
                       Placed on {new Date(order.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "10px",
+                      alignItems: "center",
+                    }}
+                  >
                     {(order as any).invoiceUrl && (
                       <a
                         href={(order as any).invoiceUrl}
@@ -340,7 +353,14 @@ export default function OrderDetailPage() {
               >
                 {/* Payment Status */}
                 <div>
-                  <div style={{ fontSize: "13px", color: "#666", marginBottom: "6px", fontWeight: "600" }}>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: "#666",
+                      marginBottom: "6px",
+                      fontWeight: "600",
+                    }}
+                  >
                     <i className="fas fa-credit-card"></i> Payment Status
                   </div>
                   <div
@@ -362,10 +382,24 @@ export default function OrderDetailPage() {
 
                 {/* Order ID with Cancel Button */}
                 <div>
-                  <div style={{ fontSize: "13px", color: "#666", marginBottom: "6px", fontWeight: "600" }}>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: "#666",
+                      marginBottom: "6px",
+                      fontWeight: "600",
+                    }}
+                  >
                     <i className="fas fa-hashtag"></i> Order ID
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                    }}
+                  >
                     <span
                       style={{
                         background: "#e9ecef",
@@ -378,7 +412,9 @@ export default function OrderDetailPage() {
                     >
                       {order.orderId}
                     </span>
-                    {["pending", "confirmed", "processing"].includes(order.status) &&
+                    {["pending", "confirmed", "processing"].includes(
+                      order.status,
+                    ) &&
                       order.status !== "cancelled" && (
                         <button
                           onClick={handleCancel}
@@ -398,7 +434,8 @@ export default function OrderDetailPage() {
                           onMouseEnter={(e) => {
                             if (!cancelling) {
                               e.currentTarget.style.background = "#E55A00";
-                              e.currentTarget.style.transform = "translateY(-2px)";
+                              e.currentTarget.style.transform =
+                                "translateY(-2px)";
                             }
                           }}
                           onMouseLeave={(e) => {
@@ -415,10 +452,24 @@ export default function OrderDetailPage() {
                 {/* Tracking ID with Track Button */}
                 {order.delhiveryTrackingId && (
                   <div>
-                    <div style={{ fontSize: "13px", color: "#666", marginBottom: "6px", fontWeight: "600" }}>
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#666",
+                        marginBottom: "6px",
+                        fontWeight: "600",
+                      }}
+                    >
                       <i className="fas fa-shipping-fast"></i> Tracking ID
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        flexWrap: "wrap",
+                      }}
+                    >
                       <span
                         style={{
                           background: "#e9ecef",
@@ -527,17 +578,27 @@ export default function OrderDetailPage() {
                 <table className="table" style={{ fontSize: "14px" }}>
                   <thead>
                     <tr>
-                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>Product</th>
-                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>Price</th>
-                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>Qty</th>
-                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>Total</th>
+                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>
+                        Product
+                      </th>
+                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>
+                        Price
+                      </th>
+                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>
+                        Qty
+                      </th>
+                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>
+                        Total
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {order.items.map((item, idx) => (
                       <tr key={idx}>
                         <td style={{ padding: "10px 8px" }}>{item.name}</td>
-                        <td style={{ padding: "10px 8px" }}>₹{item.price.toFixed(2)}</td>
+                        <td style={{ padding: "10px 8px" }}>
+                          ₹{item.price.toFixed(2)}
+                        </td>
                         <td style={{ padding: "10px 8px" }}>{item.quantity}</td>
                         <td style={{ padding: "10px 8px" }}>
                           <strong>

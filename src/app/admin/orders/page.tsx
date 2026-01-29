@@ -14,6 +14,7 @@ type Order = {
   updatedAt?: string;
   userId?: any;
   delhiveryTrackingId?: string;
+  mpsWaybills?: string[];
   items?: Array<{
     productId?: any;
     quantity?: number;
@@ -122,14 +123,14 @@ export default function AdminOrdersPage() {
       setFormData({
         status: orderData?.status || order.status || "pending",
       });
-      
+
       // Fetch tracking details if waybill exists
       if (orderData.delhiveryTrackingId) {
         setLoadingTrackingDetails(true);
         try {
           const trackingRes = await fetch(
             `${API}/admin/delhivery/tracking/${orderData.delhiveryTrackingId}`,
-            { credentials: "include" }
+            { credentials: "include" },
           );
           if (trackingRes.ok) {
             const trackingJson = await trackingRes.json();
@@ -232,6 +233,7 @@ export default function AdminOrdersPage() {
             ? {
                 ...o,
                 delhiveryTrackingId: data.data.waybill,
+                mpsWaybills: data.data.mpsWaybills,
                 status: "processing",
               }
             : o,
@@ -675,13 +677,16 @@ export default function AdminOrdersPage() {
                   >
                     {(() => {
                       const subtotal = selectedOrder.subtotal || 0;
-                      const shippingCost = (selectedOrder as any).shippingCost || 0;
+                      const shippingCost =
+                        (selectedOrder as any).shippingCost || 0;
                       const discount = selectedOrder.discount || 0;
-                      const platformFee = (selectedOrder as any).platformFee || 0;
+                      const platformFee =
+                        (selectedOrder as any).platformFee || 0;
                       const tax = (selectedOrder as any).tax || 0;
-                      
+
                       // Use order.total directly - it's already calculated correctly in backend
-                      const total = selectedOrder.total || selectedOrder.netAmount || 0;
+                      const total =
+                        selectedOrder.total || selectedOrder.netAmount || 0;
 
                       return (
                         <>
@@ -792,9 +797,68 @@ export default function AdminOrdersPage() {
                     }}
                   >
                     <div>
-                      <strong>Tracking ID:</strong>{" "}
+                      <strong>Tracking ID (Master):</strong>{" "}
                       {selectedOrder.delhiveryTrackingId || "Not created"}
                     </div>
+                    {selectedOrder.mpsWaybills &&
+                      selectedOrder.mpsWaybills.length > 0 && (
+                        <div style={{ gridColumn: "1 / -1" }}>
+                          <strong>Child Waybills (MPS):</strong>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: "8px",
+                              marginTop: "4px",
+                            }}
+                          >
+                            {selectedOrder.mpsWaybills.map((wb) => (
+                              <span
+                                key={wb}
+                                style={{
+                                  background: "#e5e7eb",
+                                  padding: "2px 8px",
+                                  borderRadius: "4px",
+                                  fontSize: "12px",
+                                  fontFamily: "monospace",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                }}
+                              >
+                                {wb}
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(wb);
+                                    setSuccess(`Copied waybill ${wb}`);
+                                    setTimeout(() => setSuccess(null), 2000);
+                                  }}
+                                  title="Copy Waybill"
+                                  style={{
+                                    border: "none",
+                                    background: "none",
+                                    cursor: "pointer",
+                                    padding: "2px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  📋
+                                </button>
+                                <a
+                                  href={`https://www.delhivery.com/track-v2/package/${wb}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Track this package"
+                                  style={{ textDecoration: "none" }}
+                                >
+                                  🔍
+                                </a>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     <div>
                       <strong>Payment ID:</strong>{" "}
                       {selectedOrder.razorpayPaymentId || "N/A"}
@@ -829,7 +893,7 @@ export default function AdminOrdersPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Tracking Details */}
                   {selectedOrder.delhiveryTrackingId && (
                     <div style={{ marginTop: 16 }}>
@@ -856,10 +920,11 @@ export default function AdminOrdersPage() {
                         </div>
                       ) : trackingDetails?.ShipmentData?.[0]?.Shipment ? (
                         (() => {
-                          const shipment = trackingDetails.ShipmentData[0].Shipment;
+                          const shipment =
+                            trackingDetails.ShipmentData[0].Shipment;
                           const status = shipment.Status;
                           const scans = shipment.Scans || [];
-                          
+
                           return (
                             <div
                               style={{
@@ -890,13 +955,23 @@ export default function AdminOrdersPage() {
                                     >
                                       {status?.Status || "Unknown"}
                                     </div>
-                                    <div style={{ fontSize: 13, color: "#16a34a" }}>
+                                    <div
+                                      style={{ fontSize: 13, color: "#16a34a" }}
+                                    >
                                       {status?.StatusLocation || "N/A"}
                                     </div>
                                   </div>
-                                  <div style={{ fontSize: 12, color: "#4b5563", textAlign: "right" }}>
+                                  <div
+                                    style={{
+                                      fontSize: 12,
+                                      color: "#4b5563",
+                                      textAlign: "right",
+                                    }}
+                                  >
                                     {status?.StatusDateTime
-                                      ? new Date(status.StatusDateTime).toLocaleString()
+                                      ? new Date(
+                                          status.StatusDateTime,
+                                        ).toLocaleString()
                                       : "N/A"}
                                   </div>
                                 </div>
@@ -918,7 +993,8 @@ export default function AdminOrdersPage() {
                               <div
                                 style={{
                                   display: "grid",
-                                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                                  gridTemplateColumns:
+                                    "repeat(auto-fit, minmax(180px, 1fr))",
                                   gap: 12,
                                   fontSize: 13,
                                   paddingTop: 12,
@@ -929,18 +1005,23 @@ export default function AdminOrdersPage() {
                                   <strong>AWB:</strong> {shipment.AWB || "N/A"}
                                 </div>
                                 <div>
-                                  <strong>Origin:</strong> {shipment.Origin || "N/A"}
+                                  <strong>Origin:</strong>{" "}
+                                  {shipment.Origin || "N/A"}
                                 </div>
                                 <div>
-                                  <strong>Destination:</strong> {shipment.Destination || "N/A"}
+                                  <strong>Destination:</strong>{" "}
+                                  {shipment.Destination || "N/A"}
                                 </div>
                                 <div>
-                                  <strong>Order Type:</strong> {shipment.OrderType || "N/A"}
+                                  <strong>Order Type:</strong>{" "}
+                                  {shipment.OrderType || "N/A"}
                                 </div>
                                 {shipment.ExpectedDeliveryDate && (
                                   <div>
                                     <strong>Expected Delivery:</strong>{" "}
-                                    {new Date(shipment.ExpectedDeliveryDate).toLocaleDateString()}
+                                    {new Date(
+                                      shipment.ExpectedDeliveryDate,
+                                    ).toLocaleDateString()}
                                   </div>
                                 )}
                               </div>
@@ -958,7 +1039,13 @@ export default function AdminOrdersPage() {
                                   >
                                     Scan History
                                   </div>
-                                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: 8,
+                                    }}
+                                  >
                                     {scans.map((scan: any, idx: number) => {
                                       const detail = scan.ScanDetail;
                                       return (
@@ -978,16 +1065,33 @@ export default function AdminOrdersPage() {
                                               marginBottom: 4,
                                             }}
                                           >
-                                            <span style={{ fontWeight: "600", color: "#047857" }}>
+                                            <span
+                                              style={{
+                                                fontWeight: "600",
+                                                color: "#047857",
+                                              }}
+                                            >
                                               {detail?.Scan || "Unknown"}
                                             </span>
-                                            <span style={{ fontSize: 12, color: "#6b7280" }}>
+                                            <span
+                                              style={{
+                                                fontSize: 12,
+                                                color: "#6b7280",
+                                              }}
+                                            >
                                               {detail?.ScanDateTime
-                                                ? new Date(detail.ScanDateTime).toLocaleString()
+                                                ? new Date(
+                                                    detail.ScanDateTime,
+                                                  ).toLocaleString()
                                                 : "N/A"}
                                             </span>
                                           </div>
-                                          <div style={{ fontSize: 12, color: "#374151" }}>
+                                          <div
+                                            style={{
+                                              fontSize: 12,
+                                              color: "#374151",
+                                            }}
+                                          >
                                             {detail?.ScannedLocation || "N/A"}
                                           </div>
                                           {detail?.Instructions && (
@@ -1010,7 +1114,9 @@ export default function AdminOrdersPage() {
                               )}
 
                               {/* Track on Delhivery Link */}
-                              <div style={{ marginTop: 16, textAlign: "center" }}>
+                              <div
+                                style={{ marginTop: 16, textAlign: "center" }}
+                              >
                                 <a
                                   href={`https://www.delhivery.com/track-v2/package/${selectedOrder.delhiveryTrackingId}`}
                                   target="_blank"
@@ -1043,7 +1149,8 @@ export default function AdminOrdersPage() {
                             fontSize: 14,
                           }}
                         >
-                          Tracking details not available. The shipment may be pending pickup.
+                          Tracking details not available. The shipment may be
+                          pending pickup.
                         </div>
                       )}
                     </div>
@@ -1186,10 +1293,23 @@ export default function AdminOrdersPage() {
                   </td>
                   <td>
                     {o.delhiveryTrackingId ? (
-                      <span style={{ fontSize: 12, color: "var(--primary)" }}>
-                        <i className="fas fa-check-circle"></i>{" "}
-                        {o.delhiveryTrackingId.substring(0, 10)}...
-                      </span>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span style={{ fontSize: 12, color: "var(--primary)" }}>
+                          <i className="fas fa-check-circle"></i>{" "}
+                          {o.delhiveryTrackingId.substring(0, 10)}...
+                        </span>
+                        {o.mpsWaybills && o.mpsWaybills.length > 0 && (
+                          <span
+                            style={{
+                              fontSize: 10,
+                              color: "#6b7280",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            + {o.mpsWaybills.length} more (MPS)
+                          </span>
+                        )}
+                      </div>
                     ) : (
                       <span style={{ fontSize: 12, color: "var(--text-2)" }}>
                         <i className="fas fa-times-circle"></i> Not created
@@ -1367,13 +1487,19 @@ export default function AdminOrdersPage() {
               transition: "all 0.3s ease",
             }}
             onMouseEnter={(e) => {
-              if (!loading && !(page * pageSize >= total && items.length < pageSize)) {
+              if (
+                !loading &&
+                !(page * pageSize >= total && items.length < pageSize)
+              ) {
                 e.currentTarget.style.backgroundColor = "#E55B00";
                 e.currentTarget.style.transform = "translateY(-2px)";
               }
             }}
             onMouseLeave={(e) => {
-              if (!loading && !(page * pageSize >= total && items.length < pageSize)) {
+              if (
+                !loading &&
+                !(page * pageSize >= total && items.length < pageSize)
+              ) {
                 e.currentTarget.style.backgroundColor = "#FF6600";
                 e.currentTarget.style.transform = "translateY(0)";
               }
@@ -1414,7 +1540,16 @@ export default function AdminOrdersPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, borderBottom: "2px solid #e5e7eb", paddingBottom: 15 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 20,
+                borderBottom: "2px solid #e5e7eb",
+                paddingBottom: 15,
+              }}
+            >
               <h2 style={{ margin: 0, fontSize: 24, color: "#1f2937" }}>
                 Shipment Tracking
               </h2>
@@ -1435,29 +1570,93 @@ export default function AdminOrdersPage() {
 
             {loadingTracking && (
               <div style={{ textAlign: "center", padding: 40 }}>
-                <i className="fas fa-spinner fa-spin" style={{ fontSize: 32, color: "#FF6600" }}></i>
-                <p style={{ marginTop: 15, color: "#6b7280" }}>Loading tracking data...</p>
+                <i
+                  className="fas fa-spinner fa-spin"
+                  style={{ fontSize: 32, color: "#FF6600" }}
+                ></i>
+                <p style={{ marginTop: 15, color: "#6b7280" }}>
+                  Loading tracking data...
+                </p>
               </div>
             )}
 
             {!loadingTracking && trackingData && (
               <div>
-                <div style={{ background: "#f9fafb", padding: 20, borderRadius: 8, marginBottom: 20 }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 15 }}>
+                <div
+                  style={{
+                    background: "#f9fafb",
+                    padding: 20,
+                    borderRadius: 8,
+                    marginBottom: 20,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(200px, 1fr))",
+                      gap: 15,
+                    }}
+                  >
                     <div>
-                      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 5 }}>Waybill</div>
-                      <div style={{ fontSize: 16, fontWeight: 600, color: "#1f2937" }}>{trackingOrder.delhiveryTrackingId}</div>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "#6b7280",
+                          marginBottom: 5,
+                        }}
+                      >
+                        Waybill
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 16,
+                          fontWeight: 600,
+                          color: "#1f2937",
+                        }}
+                      >
+                        {trackingOrder.delhiveryTrackingId}
+                      </div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 5 }}>Order ID</div>
-                      <div style={{ fontSize: 16, fontWeight: 600, color: "#1f2937" }}>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "#6b7280",
+                          marginBottom: 5,
+                        }}
+                      >
+                        Order ID
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 16,
+                          fontWeight: 600,
+                          color: "#1f2937",
+                        }}
+                      >
                         {trackingOrder.orderId || trackingOrder.orderNo}
                       </div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 5 }}>Current Status</div>
-                      <div style={{ fontSize: 16, fontWeight: 600, color: "#059669" }}>
-                        {trackingData.ShipmentData?.[0]?.Shipment?.Status?.Status || "In Transit"}
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "#6b7280",
+                          marginBottom: 5,
+                        }}
+                      >
+                        Current Status
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 16,
+                          fontWeight: 600,
+                          color: "#059669",
+                        }}
+                      >
+                        {trackingData.ShipmentData?.[0]?.Shipment?.Status
+                          ?.Status || "In Transit"}
                       </div>
                     </div>
                   </div>
@@ -1465,39 +1664,76 @@ export default function AdminOrdersPage() {
 
                 {trackingData.ShipmentData?.[0]?.Shipment?.Scans && (
                   <div>
-                    <h3 style={{ fontSize: 18, marginBottom: 15, color: "#1f2937" }}>Tracking History</h3>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {trackingData.ShipmentData[0].Shipment.Scans.map((scan: any, idx: number) => (
-                        <div
-                          key={idx}
-                          style={{
-                            background: "#ffffff",
-                            border: "1px solid #e5e7eb",
-                            borderRadius: 8,
-                            padding: 15,
-                            display: "flex",
-                            gap: 15,
-                          }}
-                        >
-                          <div style={{ fontSize: 24 }}>
-                            {scan.ScanDetail?.Scan === "UD" ? "📦" :
-                             scan.ScanDetail?.Scan === "OP" ? "🚚" :
-                             scan.ScanDetail?.Scan === "IT" ? "🔄" :
-                             scan.ScanDetail?.Scan === "DL" ? "✅" : "📍"}
+                    <h3
+                      style={{
+                        fontSize: 18,
+                        marginBottom: 15,
+                        color: "#1f2937",
+                      }}
+                    >
+                      Tracking History
+                    </h3>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 12,
+                      }}
+                    >
+                      {trackingData.ShipmentData[0].Shipment.Scans.map(
+                        (scan: any, idx: number) => (
+                          <div
+                            key={idx}
+                            style={{
+                              background: "#ffffff",
+                              border: "1px solid #e5e7eb",
+                              borderRadius: 8,
+                              padding: 15,
+                              display: "flex",
+                              gap: 15,
+                            }}
+                          >
+                            <div style={{ fontSize: 24 }}>
+                              {scan.ScanDetail?.Scan === "UD"
+                                ? "📦"
+                                : scan.ScanDetail?.Scan === "OP"
+                                  ? "🚚"
+                                  : scan.ScanDetail?.Scan === "IT"
+                                    ? "🔄"
+                                    : scan.ScanDetail?.Scan === "DL"
+                                      ? "✅"
+                                      : "📍"}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div
+                                style={{
+                                  fontWeight: 600,
+                                  fontSize: 14,
+                                  color: "#1f2937",
+                                  marginBottom: 5,
+                                }}
+                              >
+                                {scan.ScanDetail?.Instructions ||
+                                  scan.ScanDetail?.Scan}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: 13,
+                                  color: "#6b7280",
+                                  marginBottom: 3,
+                                }}
+                              >
+                                {scan.ScanDetail?.ScannedLocation}
+                              </div>
+                              <div style={{ fontSize: 12, color: "#9ca3af" }}>
+                                {new Date(
+                                  scan.ScanDetail?.ScanDateTime,
+                                ).toLocaleString()}
+                              </div>
+                            </div>
                           </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 600, fontSize: 14, color: "#1f2937", marginBottom: 5 }}>
-                              {scan.ScanDetail?.Instructions || scan.ScanDetail?.Scan}
-                            </div>
-                            <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 3 }}>
-                              {scan.ScanDetail?.ScannedLocation}
-                            </div>
-                            <div style={{ fontSize: 12, color: "#9ca3af" }}>
-                              {new Date(scan.ScanDetail?.ScanDateTime).toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                        ),
+                      )}
                     </div>
                   </div>
                 )}
