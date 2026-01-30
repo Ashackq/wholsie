@@ -163,7 +163,7 @@ export default function Footer() {
                     className="img-fluid"
                   />
                 </b>
-                123 Business Street, City, State 12345
+                610, A/p. Songaon tarf, Nisrale ,Maharashtra, IN 415519
               </span>
               <span>
                 <b>

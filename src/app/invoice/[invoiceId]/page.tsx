@@ -135,7 +135,7 @@ export default function InvoicePage() {
             <div className="flex items-center gap-3">
               <img
                 src="/assets/images/logo/wholesi.png"
-                alt="Wholesii"
+                alt="Wholesiii"
                 loading="eager"
                 className="block h-8 w-auto max-w-[120px] object-contain"
               />

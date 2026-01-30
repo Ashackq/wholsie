@@ -108,7 +108,7 @@ export default function OrderDetailPage() {
           order_id: razorpayOrderId,
           amount: Math.round(total * 100),
           currency: "INR",
-          name: "Wholesii",
+          name: "Wholesiii",
           description: `Payment for Order ${order.orderNo || order.orderId}`,
           handler: async () => {
             // Payment successful

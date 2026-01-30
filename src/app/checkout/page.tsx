@@ -541,7 +541,7 @@ export default function CheckoutPage() {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       amount: amount * 100,
       currency: "INR",
-      name: "Wholesii",
+      name: "Wholesiii",
       description: "Order Payment",
       order_id: razorpayOrderId,
       handler: async function (response: any) {
