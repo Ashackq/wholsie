@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation, EffectFade } from "swiper/modules";
+import InstagramFeed from "@/components/InstagramFeed";
 
 import "swiper/css";
 import "swiper/css/pagination";
@@ -87,6 +88,28 @@ export default function Home() {
     return () => window.removeEventListener("resize", updateSlides);
   }, []);
 
+  // Add intersection observer for product images zoom effect
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '50px'
+      }
+    );
+
+    const productImages = document.querySelectorAll('.product-image-zoom');
+    productImages.forEach((img) => observer.observe(img));
+
+    return () => observer.disconnect();
+  }, [products, recentLaunches, combos]);
+
   const shouldShowCombosNav = combos.length > slidesPerView;
   const shouldShowRecentNav = recentLaunches.length > slidesPerView;
 
@@ -94,7 +117,7 @@ export default function Home() {
     <>
       {/* Hero Banner Slider */}
       <img
-        className="gadget_banner_slider"
+        className="gadget_banner_slider zoom-in"
         src="/assets/images/header_banner.jpg"
         alt="Slider Banner 1"
         style={{
@@ -128,21 +151,21 @@ export default function Home() {
           >
             <SwiperSlide>
               <img
-                className="hero-slide-img"
+                className="hero-slide-img zoom-in"
                 src="/assets/images/slider/wholesiibanner1.jpg"
                 alt="Slider Banner 1"
               />
             </SwiperSlide>
             <SwiperSlide>
               <img
-                className="hero-slide-img"
+                className="hero-slide-img zoom-in"
                 src="/assets/images/slider/wholesiibanner2.jpg"
                 alt="Slider Banner 2"
               />
             </SwiperSlide>
             <SwiperSlide>
               <img
-                className="hero-slide-img"
+                className="hero-slide-img zoom-in"
                 src="/assets/images/slider/wholesiibanner3.jpg"
                 alt="Slider Banner 3"
               />
@@ -160,7 +183,7 @@ export default function Home() {
         <div className="container">
           <div className="row">
             {categories.slice(0, 2).map((category, index) => (
-              <div key={category._id} className="col-lg-6 col-md-6 col-6 wow fadeInUp" style={{ marginBottom: "0px" }} data-wow-delay={`${index * 0.2}s`}>
+              <div key={category._id} className={`col-lg-6 col-md-6 col-6 wow fadeInUp `} style={{ marginBottom: "0px" }} data-wow-delay={`${index * 0.2}s`}>
                 <div
                   className="add_banner_item"
                   style={{
@@ -299,7 +322,7 @@ export default function Home() {
                                   alt={product.name || product.title || "Product"}
                                   width={300}
                                   height={250}
-                                  className="img-fluid w-100"
+                                  className="img-fluid w-100 product-image-zoom"
                                   style={{ objectFit: "cover", width: "100%", height: "220px" }}
                                 />
                               </div>
@@ -466,7 +489,7 @@ export default function Home() {
                                   alt={product.name || product.title || "Product"}
                                   width={300}
                                   height={250}
-                                  className="img-fluid w-100"
+                                  className="img-fluid w-100 product-image-zoom"
                                   style={{ objectFit: "cover", width: "100%", height: "220px" }}
                                 />
                               </div>
@@ -529,14 +552,34 @@ export default function Home() {
         )}
       </section>
 
+      {/* Instagram Feed Section */}
+      <section className="instagram_feed_section mt_80 mb_80">
+        <div className="container">
+          <div className="row">
+            <div className="col-xl-12 wow fadeInUp" data-wow-delay="0s">
+              <div className="section_heading mb_15">
+                <h3>Follow Us on Instagram</h3>
+                <p>Stay updated with our latest products and healthy snack combinations</p>
+              </div>
+            </div>
+          </div>
+
+          {/* <div className="row">
+            <div className="col-xl-12">
+              <InstagramFeed />
+            </div>
+          </div>*/}
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="features mt_55">
         <div className="container">
           <div className="row">
-            <div className="col-xl-3 col-md-6 col-6 wow fadeInUp" data-wow-delay="0s">
+            <div className="col-xl-3 col-md-6 col-6 wow fadeInUp zoom-in-up " data-wow-delay="0s">
               <div className="features_item purple">
                 <div className="icon">
-                  <Image src="/assets/images/feature-icon_1.svg" alt="feature" width={50} height={50} />
+                  <Image src="/assets/images/feature-icon_1.svg" alt="feature" width={50} height={50} className="zoom-in" />
                 </div>
                 <div className="text">
                   <h3>Free Shipping</h3>
@@ -544,10 +587,10 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="col-xl-3 col-md-6 col-6 wow fadeInUp" data-wow-delay="0.2s">
+            <div className="col-xl-3 col-md-6 col-6 wow fadeInUp zoom-in-up " data-wow-delay="0.2s">
               <div className="features_item green">
                 <div className="icon">
-                  <Image src="/assets/images/feature-icon_3.svg" alt="feature" width={50} height={50} />
+                  <Image src="/assets/images/feature-icon_3.svg" alt="feature" width={50} height={50} className="zoom-in" />
                 </div>
                 <div className="text">
                   <h3>Support Assured</h3>
@@ -555,10 +598,10 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="col-xl-3 col-md-6 col-6 wow fadeInUp" data-wow-delay="0.4s">
+            <div className="col-xl-3 col-md-6 col-6 wow fadeInUp zoom-in-up " data-wow-delay="0.4s">
               <div className="features_item orange">
                 <div className="icon">
-                  <Image src="/assets/images/feature-icon_2.svg" alt="feature" width={50} height={50} />
+                  <Image src="/assets/images/feature-icon_2.svg" alt="feature" width={50} height={50} className="zoom-in" />
                 </div>
                 <div className="text">
                   <h3>Secure Checkout</h3>
@@ -566,10 +609,10 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="col-xl-3 col-md-6 col-6 wow fadeInUp" data-wow-delay="0.6s">
+            <div className="col-xl-3 col-md-6 col-6 wow fadeInUp zoom-in-up " data-wow-delay="0.6s">
               <div className="features_item">
                 <div className="icon">
-                  <Image src="/assets/images/feature-icon_4.svg" alt="feature" width={50} height={50} />
+                  <Image src="/assets/images/feature-icon_4.svg" alt="feature" width={50} height={50} className="zoom-in" />
                 </div>
                 <div className="text">
                   <h3>Daily Offers</h3>

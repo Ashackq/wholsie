@@ -154,7 +154,7 @@ export default function Header() {
                     <div className="container">
                         <div className="row">
                             <div className="col-12 d-flex flex-wrap">
-                                <div className="main_menu_area">
+                                <div className="main_menu_area" style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                                     <div className={`menu_category_area ${showCategories ? 'show_category' : ''}`}>
                                         <a href="/" className="menu_logo d-none">
                                             <img src="/assets/images/logo/wholesi.png" alt="logo" />
@@ -193,7 +193,7 @@ export default function Header() {
                                             ))}
                                         </ul>
                                     </div>
-                                    <ul className="menu_item">
+                                    <ul className="menu_item" style={{ justifyContent: 'center', flex: 1, display: 'flex' }}>
                                         <li>
                                             <a className="nav-animate" href="/">home </a>
                                         </li>
