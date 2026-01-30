@@ -198,7 +198,7 @@ export default function Home() {
           <div className="row">
             <div className="col-xl-12 wow fadeInUp" data-wow-delay="0s">
               <div className="section_heading mb_15">
-                <h3>Health Hampers</h3>
+                <h3>Healthy Hampers</h3>
               </div>
             </div>
           </div>

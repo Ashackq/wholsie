@@ -50,6 +50,33 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Wholesiii',
+    url: siteUrl,
+    logo: `${siteUrl}/logo.png`,
+    description:
+      'Premium healthy snacks and baked goods with zero cholesterol and no artificial additives.',
+    sameAs: [
+      'https://www.facebook.com/wholesiii',
+      'https://www.instagram.com/wholesiii',
+      'https://www.twitter.com/wholesiii',
+      'https://www.linkedin.com/company/wholesiii',
+    ],
+    address: {
+      '@type': 'PostalAddress',
+      addressCountry: 'IN',
+      addressRegion: 'Delhi',
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'Customer Service',
+      email: 'support@wholesiii.com',
+      availableLanguage: ['en', 'hi'],
+    },
+  };
+
   return (
     <html lang="en">
       <LayoutProvider>
@@ -57,6 +84,28 @@ export default function RootLayout({
           <meta charSet="UTF-8" />
           <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests" />
           <link rel="icon" href="/favicon.ico" />
+
+          {/* Core SEO Meta Tags */}
+          <meta name="author" content="Wholesiii" />
+          <meta name="copyright" content="Wholesiii © 2026" />
+          <meta name="language" content="English" />
+          <meta name="revisit-after" content="7 days" />
+          <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+          <meta name="theme-color" content="#0f172a" />
+
+          {/* Mobile & Viewport Optimization */}
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+          <meta name="apple-mobile-web-app-title" content="Wholesiii" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+          {/* Alternate links for multilingual SEO (if applicable) */}
+          <link rel="alternate" hrefLang="en-IN" href={`${siteUrl}`} />
+          <link rel="alternate" hrefLang="x-default" href={`${siteUrl}`} />
+
+          {/* Preconnect to external domains */}
+          <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+          <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
 
           {/* Core styles from legacy PHP site */}
           <link rel="stylesheet" href="/assets/css/all.min.css" />
@@ -94,6 +143,12 @@ export default function RootLayout({
             integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
             crossOrigin="anonymous"
             referrerPolicy="no-referrer"
+          />
+
+          {/* JSON-LD Structured Data */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
           />
         </head>
         <body>
