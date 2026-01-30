@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAdminAuth } from "../../../hooks/useAdminAuth";
+import AdminSearchFilter from "../../../components/AdminSearchFilter";
+import RefreshButton from "../../../components/RefreshButton";
 import { useRouter } from "next/navigation";
 
 type User = {
@@ -82,6 +84,7 @@ export default function AdminUsersPage() {
     const [selectedUser, setSelectedUser] = useState<UserDetails | null>(null);
     const [modalData, setModalData] = useState<any>(null);
     const [modalLoading, setModalLoading] = useState(false);
+    const [search, setSearch] = useState("");
 
     const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
@@ -203,6 +206,20 @@ export default function AdminUsersPage() {
         return sum + price * qty;
     }, 0);
 
+    const filteredUsers = users.filter((u) => {
+      const q = search.toLowerCase();
+        
+      const fullName = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
+        
+      return (
+        fullName.includes(q) ||
+        (u.email || "").toLowerCase().includes(q) ||
+        (u.phone || "").toLowerCase().includes(q) ||
+        (u.status || "").toLowerCase().includes(q) ||
+        (u.role || "").toLowerCase().includes(q)
+      );
+    });
+
     const tax = subtotal * 0.05;
     const totalPrice = subtotal + tax;
 
@@ -243,27 +260,25 @@ export default function AdminUsersPage() {
 
     return (
         <div>
-            <div className="admin-page-header">
+            <div
+              className="admin-page-header"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              {/* Left Side */}
+              <div>
                 <h1>Users</h1>
                 <p>Manage your users</p>
-                
-                {error && (
-                    <div style={{ background: "#fee2e2", color: "#991b1b", padding: 16, borderRadius: 8, marginBottom: 20 }}>
-                        {error}
-                    </div>
-                )}
-
-                {success && (
-                    <div style={{ background: "#dcfce7", color: "#166534", padding: 16, borderRadius: 8, marginBottom: 20 }}>
-                        {success}
-                    </div>
-                )}
-
-                {errorMsg && (
-                    <div style={{ background: "#fee2e2", color: "#991b1b", padding: 16, borderRadius: 8, marginBottom: 20 }}>
-                        {errorMsg}
-                    </div>
-                )}
+              </div>
+            
+              {/* ✅ Right Side Refresh */}
+              <RefreshButton
+                onRefresh={loadUsers}
+                loading={loading}
+              />
             </div>
 
             {showModal && (
@@ -772,12 +787,33 @@ export default function AdminUsersPage() {
 
 
             <div className="admin-table-container">
-                <div className="admin-table-header" style={{ alignItems: "center", justifyContent: "space-between" }}>
-                    <h3>All Users ({total || users.length})</h3>
+                <div
+                  className="admin-table-header"
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 20,
+                  }}
+                >
+                  <div>
+                    <h3 style={{ margin: 0 }}>
+                      All Users ({filteredUsers.length})
+                    </h3>
+              
                     <div style={{ fontSize: 13, color: "var(--text-2)" }}>
-                        Page {page} · Showing {users.length} of {total || users.length}
+                      Page {page} · Showing {filteredUsers.length} of {total}
                     </div>
+                  </div>
+              
+                  {/* ✅ Search Bar */}
+                  <AdminSearchFilter
+                    search={search}
+                    setSearch={setSearch}
+                    placeholder="Search users..."
+                  />
                 </div>
+
                 <table className="admin-table">
                     <thead>
                         <tr>
@@ -789,112 +825,146 @@ export default function AdminUsersPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {users.map((user) => (
+                        {filteredUsers.length > 0 ? (
+                          filteredUsers.map((user) => (
                             <tr key={user._id}>
-                                <td>
-                                    {user.firstName} {user.lastName}
-                                </td>
-                                <td>{user.email}</td>
-                                <td>{user.phone || "-"}</td>
-                                <td>
-                                  <span
-                                    onClick={() => {
-                                      if (togglingId) return;   
-                                      updateUserStatus(
-                                        user._id,
-                                        user.status === "active" ? "inactive" : "active"
-                                      )
-                                    }}
+                              <td>
+                                {user.firstName} {user.lastName}
+                              </td>
+
+                              <td>{user.email}</td>
+
+                              <td>{user.phone || "-"}</td>
+
+                              <td>
+                                <span
+                                  onClick={() => {
+                                    if (togglingId) return;
+
+                                    updateUserStatus(
+                                      user._id,
+                                      user.status === "active" ? "inactive" : "active"
+                                    );
+                                  }}
+                                  style={{
+                                    display: "inline-block",
+                                    padding: "6px 14px",
+                                    borderRadius: "999px",
+                                    fontSize: "13px",
+                                    fontWeight: 600,
+
+                                    background:
+                                      user.status === "active"
+                                        ? "#dcfce7"
+                                        : "#fee2e2",
+
+                                    color:
+                                      user.status === "active"
+                                        ? "#166534"
+                                        : "#991b1b",
+
+                                    textTransform: "capitalize",
+                                    minWidth: "90px",
+                                    textAlign: "center",
+
+                                    cursor:
+                                      togglingId === user._id ? "wait" : "pointer",
+
+                                    opacity:
+                                      togglingId === user._id ? 0.6 : 1,
+
+                                    userSelect: "none",
+                                    transition: "0.2s ease",
+                                  }}
+                                  title="Click to toggle status"
+                                >
+                                  {user.status === "active" ? "Active" : "Inactive"}
+                                </span>
+                              </td>
+                              
+                              <td>
+                                <div>
+                                  <button
+                                    onClick={() => openModal(user, "cart")}
                                     style={{
-                                      display: "inline-block",
-                                      padding: "6px 14px",
-                                      borderRadius: "999px",
-                                      fontSize: "13px",
-                                      fontWeight: 600,
-                                    
-                                      background:
-                                        user.status === "active"
-                                          ? "#dcfce7"   // light green
-                                          : "#fee2e2",  // light red
-                                    
-                                      color:
-                                        user.status === "active"
-                                          ? "#166534"   // dark green
-                                          : "#991b1b",  // dark red
-                                    
-                                      textTransform: "capitalize",
-                                      minWidth: "90px",
-                                      textAlign: "center",
-                                    
-                                      cursor: togglingId === user._id ? "wait" : "pointer",
-                                      opacity: togglingId === user._id ? 0.6 : 1,
-                                    
-                                      userSelect: "none",
-                                      transition: "0.2s ease",
+                                      padding: "6px 12px",
+                                      background: "#3b82f6",
+                                      color: "#fff",
+                                      border: "none",
+                                      borderRadius: 4,
+                                      cursor: "pointer",
+                                      marginRight: 8,
+                                      fontSize: 12,
                                     }}
-                                    title="Click to toggle status"
                                   >
-                                    {user.status === "active" ? "Active" : "Inactive"}
-                                  </span>
-                                </td>
-                                <td>
-                                    <div>
-                                        <button 
-                                            onClick={() => openModal(user, "cart")}
-                                            style={{
-                                                padding: "6px 12px",
-                                                background: "#3b82f6",
-                                                color: "#fff",
-                                                border: "none",
-                                                borderRadius: 4,
-                                                cursor: "pointer",
-                                                marginRight: 8,
-                                                fontSize: 12,
-                                            }}
-                                        >Cart</button>
-                                        <button 
-                                            onClick={() => openModal(user, "orders")}
-                                            style={{
-                                                padding: "6px 12px",
-                                                background: "#8b5cf6",
-                                                color: "#fff",
-                                                border: "none",
-                                                borderRadius: 4,
-                                                cursor: "pointer",
-                                                marginRight: 8,
-                                                fontSize: 12,
-                                            }}
-                                        >Orders</button>
-                                        <button 
-                                            onClick={() => openModal(user, "address")}
-                                            style={{
-                                                padding: "6px 12px",
-                                                background: "#ea580c",
-                                                color: "#fff",
-                                                border: "none",
-                                                borderRadius: 4,
-                                                cursor: "pointer",
-                                                marginRight: 8,
-                                                fontSize: 12,
-                                            }}
-                                        >Address</button>
-                                        <button 
-                                            onClick={() => openModal(user, "view")}
-                                            style={{
-                                                padding: "6px 12px",
-                                                background: "#10b981",
-                                                color: "#fff",
-                                                border: "none",
-                                                borderRadius: 4,
-                                                cursor: "pointer",
-                                                marginRight: 8,
-                                                fontSize: 12,
-                                            }}
-                                        >View</button>
-                                    </div>
-                                </td>
+                                    Cart
+                                  </button>
+                                
+                                  <button
+                                    onClick={() => openModal(user, "orders")}
+                                    style={{
+                                      padding: "6px 12px",
+                                      background: "#8b5cf6",
+                                      color: "#fff",
+                                      border: "none",
+                                      borderRadius: 4,
+                                      cursor: "pointer",
+                                      marginRight: 8,
+                                      fontSize: 12,
+                                    }}
+                                  >
+                                    Orders
+                                  </button>
+                                
+                                  <button
+                                    onClick={() => openModal(user, "address")}
+                                    style={{
+                                      padding: "6px 12px",
+                                      background: "#ea580c",
+                                      color: "#fff",
+                                      border: "none",
+                                      borderRadius: 4,
+                                      cursor: "pointer",
+                                      marginRight: 8,
+                                      fontSize: 12,
+                                    }}
+                                  >
+                                    Address
+                                  </button>
+                                
+                                  <button
+                                    onClick={() => openModal(user, "view")}
+                                    style={{
+                                      padding: "6px 12px",
+                                      background: "#10b981",
+                                      color: "#fff",
+                                      border: "none",
+                                      borderRadius: 4,
+                                      cursor: "pointer",
+                                      marginRight: 8,
+                                      fontSize: 12,
+                                    }}
+                                  >
+                                    View
+                                  </button>
+                                </div>
+                              </td>
                             </tr>
-                        ))}
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={5}
+                              style={{
+                                textAlign: "center",
+                                padding: 40,
+                                color: "var(--text-2)",
+                              }}
+                            >
+                              No users found
+                            </td>
+                          </tr>
+                        )}
                     </tbody>
                 </table>
             </div>

@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAdminAuth } from "../../../hooks/useAdminAuth";
+import AdminSearchFilter from "../../../components/AdminSearchFilter"
+import RefreshButton from "../../../components/RefreshButton"
 
 type Product = {
     _id: string;
@@ -58,6 +60,8 @@ export default function AdminProductsPage() {
     const [modalMode, setModalMode] = useState<"create" | "edit" | "view">("create");
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [loadingDetails, setLoadingDetails] = useState(false);
+    const [search, setSearch] = useState("");
+    const [refreshing, setRefreshing] = useState(false);
     const createEmptyForm = () => ({
         name: "",
         price: "",
@@ -80,35 +84,43 @@ export default function AdminProductsPage() {
     const pageSize = 4;
     const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
+    const loadProducts = async () => {
+      setLoading(true);
+      try {
+        const offset = (page - 1) * pageSize;
+    
+        const [productsRes, categoriesRes] = await Promise.all([
+          fetch(`${API}/admin/products?offset=${offset}&limit=${pageSize}`, {
+            credentials: "include",
+          }),
+          fetch(`${API}/admin/categories?limit=200`, {
+            credentials: "include",
+          }),
+        ]);
+    
+        const productsJson = await productsRes.json();
+        const categoriesJson = await categoriesRes.json();
+    
+        const list = productsJson.data || productsJson.products || [];
+        const totalCount =
+          productsJson.pagination?.total ??
+          (Array.isArray(list) ? offset + list.length : 0);
+    
+        setItems(list);
+        setTotal(totalCount);
+        setCategories(categoriesJson.data || categoriesJson.categories || []);
+      } catch (e: any) {
+        setError(e?.message || "Failed to load products");
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    };
+
     useEffect(() => {
-        if (!isAdmin || authLoading) return;
-
-        async function load() {
-            setLoading(true);
-            try {
-                const offset = (page - 1) * pageSize;
-                const [productsRes, categoriesRes] = await Promise.all([
-                    fetch(`${API}/admin/products?offset=${offset}&limit=${pageSize}`, { credentials: "include" }),
-                    fetch(`${API}/admin/categories?limit=200`, { credentials: "include" }),
-                ]);
-
-                const productsJson = await productsRes.json();
-                const categoriesJson = await categoriesRes.json();
-
-                const list = productsJson.data || productsJson.products || [];
-                const totalCount = productsJson.pagination?.total ?? (Array.isArray(list) ? offset + list.length : 0);
-
-                setItems(list);
-                setTotal(totalCount);
-                setCategories(categoriesJson.data || categoriesJson.categories || []);
-            } catch (e: any) {
-                setError(e?.message || "Failed to load products");
-            } finally {
-                setLoading(false);
-            }
-        }
-        load();
-    }, [isAdmin, authLoading, API, page]);
+      if (!isAdmin || authLoading) return;
+      loadProducts();
+    }, [isAdmin, authLoading, page]);
 
     const goToPage = (nextPage: number) => {
         setPage(nextPage);
@@ -270,6 +282,18 @@ export default function AdminProductsPage() {
         }
     };
 
+    const filteredProducts = items.filter((p) => {
+      const q = search.toLowerCase();
+
+      return (
+        (p.name || "").toLowerCase().includes(q) ||
+        (p.sku || "").toLowerCase().includes(q) ||
+        (p.slug || "").toLowerCase().includes(q) ||
+        (p.status || "").toString().toLowerCase().includes(q) ||
+        (p.categoryId?.name || "").toLowerCase().includes(q)
+      );
+    });
+
     if (authLoading) {
         return (
             <div className="admin-page-header">
@@ -306,29 +330,44 @@ export default function AdminProductsPage() {
 
     return (
         <div>
-            <div className="admin-page-header">
-                <h1>Products</h1>
-                <p>Manage your product inventory</p>
-                <button
+            <div
+              className="admin-page-header"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              {/* Left Side */}
+                <div>
+                  <h1>Products</h1>
+                  <p>Manage your product inventory</p>
+
+                  {/* ✅ Button नीचे आ गया */}
+                  <button
                     onClick={() => {
-                        setModalMode("create");
-                        setSelectedProduct(null);
-                        setEditingId(null);
-                        setFormData(createEmptyForm());
-                        setShowModal(true);
+                      setModalMode("create");
+                      setSelectedProduct(null);
+                      setEditingId(null);
+                      setFormData(createEmptyForm());
+                      setShowModal(true);
                     }}
                     style={{
-                        padding: "8px 16px",
-                        background: "#0f172a",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 6,
-                        cursor: "pointer",
-                        marginTop: 10,
+                      padding: "8px 16px",
+                      background: "#0f172a",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      marginTop: 10,
                     }}
-                >
+                  >
                     Add New Product
-                </button>
+                  </button>
+                </div>
+                
+                {/* ✅ Right Side Refresh */}
+                <RefreshButton onRefresh={loadProducts} loading={loading} />
             </div>
 
             {error && (
@@ -646,12 +685,33 @@ export default function AdminProductsPage() {
             )}
 
             <div className="admin-table-container">
-                <div className="admin-table-header" style={{ alignItems: "center", justifyContent: "space-between" }}>
-                    <h3>All Products ({total || items.length})</h3>
+                <div
+                  className="admin-table-header"
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 20,
+                  }}
+                >
+                  <div>
+                    <h3 style={{ margin: 0 }}>
+                      All Products ({filteredProducts.length})
+                    </h3>
+              
                     <div style={{ fontSize: 13, color: "var(--text-2)" }}>
-                        Page {page} · Showing {items.length} of {total || items.length}
+                      Page {page} · Showing {filteredProducts.length} of {total}
                     </div>
+                  </div>
+              
+                  {/* ✅ Search */}
+                  <AdminSearchFilter
+                    search={search}
+                    setSearch={setSearch}
+                    placeholder="Search products..."
+                  />
                 </div>
+
                 <table className="admin-table">
                     <thead>
                         <tr>
@@ -666,8 +726,8 @@ export default function AdminProductsPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {items.length > 0 ? (
-                            items.map((product) => (
+                        {filteredProducts.length > 0 ? (
+                            filteredProducts.map((product) => (
                                 <tr key={product._id}>
                                     <td>
                                         {product.image ? (

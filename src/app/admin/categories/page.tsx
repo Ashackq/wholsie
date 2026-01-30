@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAdminAuth } from "../../../hooks/useAdminAuth";
+import AdminSearchFilter from "../../../components/AdminSearchFilter";
+import RefreshButton from "../../../components/RefreshButton";
 
 type Category = {
     _id: string;
@@ -29,26 +31,35 @@ export default function AdminCategoriesPage() {
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [formData, setFormData] = useState({ name: "", status: "active", image: "" });
+    const [search, setSearch] = useState("");
     const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+    const createEmptyForm = () => ({
+      name: "",
+      status: "active",
+      image: "",
+    });
+
+    const loadCategories = async () => {
+      setLoading(true);
+
+      try {
+        const res = await fetch(`${API}/admin/categories`, {
+          credentials: "include",
+        });
+
+        const json = await res.json();
+        setItems(json.data || json || []);
+      } catch (e: any) {
+        setError(e?.message || "Failed to load categories");
+      } finally {
+        setLoading(false);
+      }
+    };
 
     useEffect(() => {
-        if (!isAdmin || authLoading) return;
-
-        async function load() {
-            try {
-                const res = await fetch(`${API}/admin/categories`, {
-                    credentials: "include",
-                });
-                const json = await res.json();
-                setItems(json.data || json || []);
-                setLoading(false);
-            } catch (e: any) {
-                setError(e?.message || "Failed to load categories");
-                setLoading(false);
-            }
-        }
-        load();
-    }, [isAdmin, authLoading, API]);
+      if (!isAdmin || authLoading) return;
+      loadCategories();
+    }, [isAdmin, authLoading]);
 
     const handleEdit = async (category: Category) => {
         setLoadingDetails(true);
@@ -119,7 +130,7 @@ export default function AdminCategoriesPage() {
             const updatedCategory = await res.json();
             const savedCategory = updatedCategory.data || updatedCategory;
             if (editingId) {
-                setItems(items.map((c) => (c._id === editingId ? savedCategory : c)));
+                setItems(filteredCategories.map((c) => (c._id === editingId ? savedCategory : c)));
                 setSuccess("Category updated successfully");
             } else {
                 // Ensure the new category has an _id before adding to list
@@ -179,31 +190,52 @@ export default function AdminCategoriesPage() {
         );
     }
 
+    const filteredCategories = items.filter((cat) =>
+      (cat.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (cat.slug || "").toLowerCase().includes(search.toLowerCase())
+    );
+
+
     return (
         <div>
-            <div className="admin-page-header">
-                <h1>Categories</h1>
-                <p>Manage product categories</p>
-                <button
+            <div
+              className="admin-page-header"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              {/* Left Side */}
+                <div>
+                  <h1>Categories</h1>
+                  <p>Manage product categories</p>
+
+                  {/* ✅ Button नीचे आ गया */}
+                  <button
                     onClick={() => {
-                        setModalMode("create");
-                        setSelectedCategory(null);
-                        setEditingId(null);
-                        setFormData({ name: "", status: "active", image: "" });
-                        setShowModal(true);
+                      setModalMode("create");
+                      setSelectedCategory(null);
+                      setEditingId(null);
+                      setFormData(createEmptyForm());
+                      setShowModal(true);
                     }}
                     style={{
-                        padding: "8px 16px",
-                        background: "#0f172a",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 6,
-                        cursor: "pointer",
-                        marginTop: 10,
+                      padding: "8px 16px",
+                      background: "#0f172a",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      marginTop: 10,
                     }}
-                >
-                    Add New Category
-                </button>
+                  >
+                    Add New Product
+                  </button>
+                </div>
+                
+                {/* ✅ Right Side Refresh */}
+                <RefreshButton onRefresh={loadCategories} loading={loading} />
             </div>
 
             {error && (
@@ -386,8 +418,23 @@ export default function AdminCategoriesPage() {
             )}
 
             <div className="admin-table-container">
-                <div className="admin-table-header">
-                    <h3>All Categories ({items.length})</h3>
+                <div className="admin-table-header"
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center"
+                    }}
+                >
+                    <div>
+                        <h3>All Categories ({filteredCategories.length})</h3>
+                    </div>
+                    <div>
+                        <AdminSearchFilter
+                            search={search}
+                            setSearch={setSearch}
+                            placeholder="Search categories..."
+                        />
+                    </div>
                 </div>
                 <table className="admin-table">
                     <thead>
@@ -399,8 +446,8 @@ export default function AdminCategoriesPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {items.length > 0 ? (
-                            items.map((category, index) => (
+                        {filteredCategories.length > 0 ? (
+                            filteredCategories.map((category, index) => (
                                 <tr key={category._id || `category-${index}`}>
                                     <td>
                                         <strong>{category.name ?? "-"}</strong>

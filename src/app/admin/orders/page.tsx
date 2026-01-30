@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAdminAuth } from "../../../hooks/useAdminAuth";
+import AdminSearchFilter from "../../../components/AdminSearchFilter"
+import RefreshButton from "../../../components/RefreshButton";
 import { useSearchParams } from "next/navigation";
 
 type Order = {
@@ -66,42 +68,48 @@ export default function AdminOrdersPage() {
   });
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState("");
   const pageSize = 4;
   const searchParams = useSearchParams();
   const openOrderId = searchParams.get("open");
   const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
+  const loadOrders = async () => {
+    setLoading(true);
+    try {
+      const offset = (page - 1) * pageSize;
+
+      const res = await fetch(
+        `${API}/admin/orders?offset=${offset}&limit=${pageSize}`,
+        {
+          credentials: "include",
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache" },
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to fetch orders");
+
+      const json = await res.json();
+      const list = json.data || [];
+
+      const totalCount =
+        json.pagination?.total ??
+        (Array.isArray(list) ? offset + list.length : 0);
+
+      setItems(list);
+      setTotal(totalCount);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load orders");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!isAdmin || authLoading) return;
-
-    async function load() {
-      setLoading(true);
-      try {
-        const offset = (page - 1) * pageSize;
-        const res = await fetch(
-          `${API}/admin/orders?offset=${offset}&limit=${pageSize}`,
-          {
-            credentials: "include",
-            cache: "no-store",
-            headers: { "Cache-Control": "no-cache" },
-          },
-        );
-        if (!res.ok) throw new Error("Failed to fetch orders");
-        const json = await res.json();
-        const list = json.data || [];
-        const totalCount =
-          json.pagination?.total ??
-          (Array.isArray(list) ? offset + list.length : 0);
-        setItems(list);
-        setTotal(totalCount);
-      } catch (e: any) {
-        setError(e?.message || "Failed to load orders");
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [isAdmin, authLoading, API, page]);
+    loadOrders();
+  }, [isAdmin, authLoading, page]);
 
   useEffect(() => {
     if (openOrderId) {
@@ -287,6 +295,19 @@ export default function AdminOrdersPage() {
     setTrackingData(null);
   };
 
+  const filteredOrders = items.filter((order) => {
+    const q = search.toLowerCase();
+
+    return (
+      (order.orderId || "").toLowerCase().includes(q) ||
+      (order.orderNo || "").toLowerCase().includes(q) ||
+      (order._id || "").toLowerCase().includes(q) ||
+      (order.status || "").toLowerCase().includes(q) ||
+      (order.paymentStatus || "").toLowerCase().includes(q) ||
+      (order.userId?.email || "").toLowerCase().includes(q)
+    );
+  });
+
   if (authLoading) {
     return (
       <div className="admin-page-header">
@@ -323,9 +344,25 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
-      <div className="admin-page-header">
-        <h1>Orders</h1>
-        <p>Manage customer orders</p>
+      <div
+        className="admin-page-header"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        {/* Left Side */}
+        <div>
+          <h1>Orders</h1>
+          <p>Manage customer orders</p>
+        </div>
+      
+        {/* ✅ Right Side Refresh */}
+        <RefreshButton
+          onRefresh={loadOrders}
+          loading={loading}
+        />
       </div>
 
       {error && (
@@ -1158,13 +1195,30 @@ export default function AdminOrdersPage() {
       <div className="admin-table-container">
         <div
           className="admin-table-header"
-          style={{ alignItems: "center", justifyContent: "space-between" }}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 20,
+          }}
         >
-          <h3>All Orders ({total || items.length})</h3>
-          <div style={{ fontSize: 13, color: "var(--text-2)" }}>
-            Page {page} · Showing {items.length} of {total || items.length}
+          <div>
+            <h3 style={{ margin: 0 }}>
+              All Orders ({filteredOrders.length})
+            </h3>
+            <div style={{ fontSize: 13, color: "var(--text-2)" }}>
+              Page {page} · Showing {filteredOrders.length} of {total}
+            </div>
           </div>
+        
+          {/* ✅ Search Bar */}
+          <AdminSearchFilter
+            search={search}
+            setSearch={setSearch}
+            placeholder="Search orders..."
+          />
         </div>
+
         <table className="admin-table">
           <thead>
             <tr>
@@ -1178,8 +1232,8 @@ export default function AdminOrdersPage() {
             </tr>
           </thead>
           <tbody>
-            {items.length > 0 ? (
-              items.map((o) => (
+            {filteredOrders.length > 0 ? (
+              filteredOrders.map((o) => (
                 <tr key={o._id}>
                   <td>
                     <strong>{o.orderId || o.orderNo || o._id}</strong>

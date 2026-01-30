@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import RefreshButton from "../../components/RefreshButton";
 
 type DashboardData = {
   totalOrders: number;
@@ -16,30 +17,33 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const API_URL =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-        const url = `${API_URL}/admin/dashboard`;
-        console.log(url);
-        const res = await fetch(url, {
-          credentials: "include",
-        });
-        if (res.status === 401 || res.status === 403) {
-          setError("Admin authentication required. Please log in.");
-          setLoading(false);
-          return;
-        }
-        const json = await res.json();
-        setData(json.data);
-        setLoading(false);
-      } catch (e: any) {
-        setError(e?.message || "Failed to load dashboard");
-        setLoading(false);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+
+  const loadDashboard = async () => {
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_URL}/admin/dashboard`, {
+        credentials: "include",
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        setError("Admin authentication required. Please log in.");
+        return;
       }
+
+      const json = await res.json();
+      setData(json.data);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load dashboard");
+    } finally {
+      setLoading(false);
     }
-    load();
+  };
+
+
+  useEffect(() => {
+    loadDashboard();
   }, []);
 
   if (loading) {
@@ -80,9 +84,25 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="admin-page-header">
-        <h1>Dashboard</h1>
-        <p>Welcome back! Here's what's happening with your store.</p>
+      <div
+        className="admin-page-header"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        {/* Left Side */}
+        <div>
+          <h1>Dashboard</h1>
+          <p>Welcome back! Here's what's happening with your store.</p>
+        </div>
+      
+        {/* ✅ Right Side Refresh */}
+        <RefreshButton
+          onRefresh={loadDashboard}
+          loading={loading}
+        />
       </div>
 
       {/* Stats Grid */}
