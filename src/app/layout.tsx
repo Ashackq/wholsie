@@ -10,25 +10,27 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Wholesii | Wholesale marketplace",
-    template: "%s | Wholesii",
+    default: "Wholesiii | Healthy Snacks & Baked Snacking",
+    template: "%s | Wholesiii",
   },
   description:
-    "Wholesii connects buyers and suppliers with fast ordering, secure payments, and real-time tracking.",
+    "Discover guilt-free, nutrient-rich baked snacks from Divaine Leaf. Zero cholesterol, gluten-free options, and premium ingredients. Shop foxnuts, millet puffs, oats puffs, and more—healthy snacking made easy.",
+  keywords:
+    "healthy snacks, baked snacks, foxnut, makhana, oats puffs, millet puffs, gluten-free snacks, zero cholesterol, nutritious snacks, Divaine Leaf",
   openGraph: {
-    title: "Wholesii | Wholesale marketplace",
+    title: "Wholesiii | Healthy Snacks & Baked Snacking",
     description:
-      "Discover, compare, and order wholesale products with streamlined checkout and trusted payments.",
+      "Premium baked snacks with zero cholesterol and no artificial additives. Shop foxnuts, millet puffs, oats puffs, and more from Divaine Leaf.",
     url: siteUrl,
-    siteName: "Wholesii",
+    siteName: "Wholesiii",
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Wholesii | Wholesale marketplace",
+    title: "Wholesiii | Healthy Snacks & Baked Snacking",
     description:
-      "Discover, compare, and order wholesale products with streamlined checkout and trusted payments.",
+      "Premium baked snacks with zero cholesterol and no artificial additives. Shop foxnuts, millet puffs, oats puffs from Divaine Leaf.",
   },
   alternates: {
     canonical: siteUrl,

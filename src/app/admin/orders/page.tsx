@@ -242,7 +242,7 @@ function AdminOrdersContent() {
         const details = errorData?.details || errorData?.rmk;
         throw new Error(
           (errorData.error || "Failed to create shipment") +
-            (details ? `: ${details}` : ""),
+          (details ? `: ${details}` : ""),
         );
       }
 
@@ -253,11 +253,11 @@ function AdminOrdersContent() {
         items.map((o) =>
           o._id === order._id
             ? {
-                ...o,
-                delhiveryTrackingId: data.data.waybill,
-                mpsWaybills: data.data.mpsWaybills,
-                status: "processing",
-              }
+              ...o,
+              delhiveryTrackingId: data.data.waybill,
+              mpsWaybills: data.data.mpsWaybills,
+              status: "processing",
+            }
             : o,
         ),
       );
@@ -597,30 +597,30 @@ function AdminOrdersContent() {
                           )}
                           {((selectedOrder as any).shippingAddress.city ||
                             (selectedOrder as any).shippingAddress.state) && (
-                            <div>
-                              {(selectedOrder as any).shippingAddress.city}
-                              {(selectedOrder as any).shippingAddress.city &&
-                              (selectedOrder as any).shippingAddress.state
-                                ? ", "
-                                : ""}
-                              {(selectedOrder as any).shippingAddress.state}
-                            </div>
-                          )}
+                              <div>
+                                {(selectedOrder as any).shippingAddress.city}
+                                {(selectedOrder as any).shippingAddress.city &&
+                                  (selectedOrder as any).shippingAddress.state
+                                  ? ", "
+                                  : ""}
+                                {(selectedOrder as any).shippingAddress.state}
+                              </div>
+                            )}
                           {((selectedOrder as any).shippingAddress.postalCode ||
                             (selectedOrder as any).shippingAddress.country) && (
-                            <div>
-                              {
-                                (selectedOrder as any).shippingAddress
-                                  .postalCode
-                              }
-                              {(selectedOrder as any).shippingAddress
-                                .postalCode &&
-                              (selectedOrder as any).shippingAddress.country
-                                ? ", "
-                                : ""}
-                              {(selectedOrder as any).shippingAddress.country}
-                            </div>
-                          )}
+                              <div>
+                                {
+                                  (selectedOrder as any).shippingAddress
+                                    .postalCode
+                                }
+                                {(selectedOrder as any).shippingAddress
+                                  .postalCode &&
+                                  (selectedOrder as any).shippingAddress.country
+                                  ? ", "
+                                  : ""}
+                                {(selectedOrder as any).shippingAddress.country}
+                              </div>
+                            )}
                         </div>
                       </div>
                     )}
@@ -653,27 +653,27 @@ function AdminOrdersContent() {
                           )}
                           {((selectedOrder.userId as any).address.city ||
                             (selectedOrder.userId as any).address.state) && (
-                            <div>
-                              {(selectedOrder.userId as any).address.city}
-                              {(selectedOrder.userId as any).address.city &&
-                              (selectedOrder.userId as any).address.state
-                                ? ", "
-                                : ""}
-                              {(selectedOrder.userId as any).address.state}
-                            </div>
-                          )}
+                              <div>
+                                {(selectedOrder.userId as any).address.city}
+                                {(selectedOrder.userId as any).address.city &&
+                                  (selectedOrder.userId as any).address.state
+                                  ? ", "
+                                  : ""}
+                                {(selectedOrder.userId as any).address.state}
+                              </div>
+                            )}
                           {((selectedOrder.userId as any).address.postalCode ||
                             (selectedOrder.userId as any).address.country) && (
-                            <div>
-                              {(selectedOrder.userId as any).address.postalCode}
-                              {(selectedOrder.userId as any).address
-                                .postalCode &&
-                              (selectedOrder.userId as any).address.country
-                                ? ", "
-                                : ""}
-                              {(selectedOrder.userId as any).address.country}
-                            </div>
-                          )}
+                              <div>
+                                {(selectedOrder.userId as any).address.postalCode}
+                                {(selectedOrder.userId as any).address
+                                  .postalCode &&
+                                  (selectedOrder.userId as any).address.country
+                                  ? ", "
+                                  : ""}
+                                {(selectedOrder.userId as any).address.country}
+                              </div>
+                            )}
                         </div>
                       </div>
                     )}
@@ -702,9 +702,6 @@ function AdminOrdersContent() {
                       const shippingCost =
                         (selectedOrder as any).shippingCost || 0;
                       const discount = selectedOrder.discount || 0;
-                      const platformFee =
-                        (selectedOrder as any).platformFee || 0;
-                      const tax = (selectedOrder as any).tax || 0;
 
                       // Use order.total directly - it's already calculated correctly in backend
                       const total =
@@ -723,19 +720,7 @@ function AdminOrdersContent() {
                             <span>Subtotal:</span>
                             <span>₹{subtotal.toFixed(2)}</span>
                           </div>
-                          {tax > 0 && (
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                marginBottom: 8,
-                                fontSize: 14,
-                              }}
-                            >
-                              <span>Tax (5%):</span>
-                              <span>₹{tax.toFixed(2)}</span>
-                            </div>
-                          )}
+
                           {shippingCost > 0 && (
                             <div
                               style={{
@@ -749,19 +734,7 @@ function AdminOrdersContent() {
                               <span>₹{shippingCost.toFixed(2)}</span>
                             </div>
                           )}
-                          {platformFee > 0 && (
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                marginBottom: 8,
-                                fontSize: 14,
-                              }}
-                            >
-                              <span>Platform Fee (2%):</span>
-                              <span>₹{platformFee.toFixed(2)}</span>
-                            </div>
-                          )}
+
                           {discount > 0 && (
                             <div
                               style={{
@@ -992,8 +965,8 @@ function AdminOrdersContent() {
                                   >
                                     {status?.StatusDateTime
                                       ? new Date(
-                                          status.StatusDateTime,
-                                        ).toLocaleString()
+                                        status.StatusDateTime,
+                                      ).toLocaleString()
                                       : "N/A"}
                                   </div>
                                 </div>
@@ -1103,8 +1076,8 @@ function AdminOrdersContent() {
                                             >
                                               {detail?.ScanDateTime
                                                 ? new Date(
-                                                    detail.ScanDateTime,
-                                                  ).toLocaleString()
+                                                  detail.ScanDateTime,
+                                                ).toLocaleString()
                                                 : "N/A"}
                                             </span>
                                           </div>

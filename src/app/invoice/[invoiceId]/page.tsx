@@ -30,9 +30,7 @@ interface InvoiceData {
   shippingAddress: Address;
   items: InvoiceItem[];
   subtotal: number;
-  tax: number;
   shippingCost: number;
-  platformFee?: number;
   discount: number;
   total: number;
   paymentMethod?: string;
@@ -171,11 +169,10 @@ export default function InvoicePage() {
                 <span className="font-semibold">{invoice.orderNumber}</span>
               </p>
               <span
-                className={`mt-2 inline-block rounded px-3 py-1 text-xs font-semibold ${
-                  invoice.paymentStatus === "paid"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-yellow-100 text-yellow-800"
-                }`}
+                className={`mt-2 inline-block rounded px-3 py-1 text-xs font-semibold ${invoice.paymentStatus === "paid"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-yellow-100 text-yellow-800"
+                  }`}
               >
                 {invoice.paymentStatus.toUpperCase()}
               </span>
@@ -254,12 +251,6 @@ export default function InvoicePage() {
                 ₹{invoice.subtotal.toFixed(2)}
               </span>
             </div>
-            <div className="flex justify-between border-b border-gray-200 py-2">
-              <span className="text-sm text-gray-600">Tax:</span>
-              <span className="text-sm font-semibold">
-                ₹{invoice.tax.toFixed(2)}
-              </span>
-            </div>
             {invoice.shippingCost > 0 && (
               <div className="flex justify-between border-b border-gray-200 py-2">
                 <span className="text-sm text-gray-600">Shipping Charges:</span>
@@ -268,14 +259,7 @@ export default function InvoicePage() {
                 </span>
               </div>
             )}
-            {invoice.platformFee && invoice.platformFee > 0 && (
-              <div className="flex justify-between border-b border-gray-200 py-2">
-                <span className="text-sm text-gray-600">Platform Fee:</span>
-                <span className="text-sm font-semibold">
-                  ₹{invoice.platformFee.toFixed(2)}
-                </span>
-              </div>
-            )}
+
             {invoice.discount > 0 && (
               <div className="flex justify-between border-b border-gray-200 py-2">
                 <span className="text-sm text-gray-600">Discount:</span>

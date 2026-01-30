@@ -70,7 +70,6 @@ interface Order {
   total?: number;
   netAmount?: number;
   subtotal: number;
-  tax?: number;
   taxAmount?: number;
   shippingCost?: number;
   deliveryCharge?: number;
@@ -129,7 +128,6 @@ interface Invoice {
     amount: number;
   }>;
   subtotal: number;
-  tax: number;
   shippingCost: number;
   discount: number;
   total: number;

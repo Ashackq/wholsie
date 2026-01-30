@@ -26,7 +26,6 @@ export interface PdfInvoiceData {
     billingAddress?: InvoiceAddress;
     items: InvoiceItem[];
     subtotal: number;
-    tax: number;
     shippingCost: number;
     discount: number;
     total: number;
@@ -407,12 +406,6 @@ export function generateInvoiceHTML(data: PdfInvoiceData): string {
                 <div class="summary-row">
                     <span class="summary-label">Shipping:</span>
                     <span class="summary-value">₹${data.shippingCost.toFixed(2)}</span>
-                </div>
-                ` : ""}
-                ${data.tax > 0 ? `
-                <div class="summary-row">
-                    <span class="summary-label">Tax (GST):</span>
-                    <span class="summary-value">₹${data.tax.toFixed(2)}</span>
                 </div>
                 ` : ""}
                 ${data.discount > 0 ? `

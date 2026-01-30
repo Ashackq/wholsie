@@ -43,9 +43,7 @@ const orderSchema = new Schema(
     razorpayOrderId: String,
     razorpayPaymentId: String,
     subtotal: Number,
-    tax: Number,
     shippingCost: Number,
-    platformFee: Number, // 2% platform fee
     discount: Number,
     total: Number,
     // Delhivery shipment tracking

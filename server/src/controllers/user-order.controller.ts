@@ -80,7 +80,6 @@ export async function createOrder(
         price,
         weight, // Add weight to order item
         total: price * item.quantity,
-        tax: (price * item.quantity * (product.tax || 0)) / 100,
       };
     });
 
@@ -90,11 +89,6 @@ export async function createOrder(
       0,
     );
 
-    // Tax: 5% on subtotal
-    const taxAmount = subtotal * 0.05;
-
-    // Platform fee: 2% on subtotal
-    const platformFee = subtotal * 0.02;
 
     // Use shipping cost from frontend if provided, otherwise calculate
     let deliveryCharge = 0;
@@ -107,7 +101,7 @@ export async function createOrder(
 
     const couponAmount = 0; // TODO: Apply coupon logic
     const netAmount =
-      subtotal + taxAmount + platformFee + deliveryCharge - couponAmount;
+      subtotal + deliveryCharge - couponAmount;
 
     // Create order
     const order = new Order({
@@ -115,8 +109,6 @@ export async function createOrder(
       userId,
       items: orderItems,
       subtotal,
-      tax: taxAmount,
-      platformFee,
       shippingCost: deliveryCharge,
       discount: couponAmount,
       total: netAmount,

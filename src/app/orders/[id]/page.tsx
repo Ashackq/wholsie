@@ -39,11 +39,9 @@ interface Order {
   total?: number;
   netAmount?: number;
   subtotal: number;
-  tax?: number;
   taxAmount?: number;
   shippingCost?: number;
   deliveryCharge?: number;
-  platformFee?: number;
   discount?: number;
   couponAmount?: number;
   razorpayOrderId?: string;
@@ -632,9 +630,9 @@ export default function OrderDetailPage() {
               </h3>
               {(order.shippingAddress &&
                 (order.shippingAddress.street || order.shippingAddress.city)) ||
-              order.deliveryCity ||
-              order.deliveryState ||
-              order.deliveryPincode ? (
+                order.deliveryCity ||
+                order.deliveryState ||
+                order.deliveryPincode ? (
                 <address
                   style={{
                     marginBottom: "0",
@@ -708,44 +706,29 @@ export default function OrderDetailPage() {
                   <span>Subtotal:</span>
                   <span>₹{order.subtotal.toFixed(2)}</span>
                 </div>
-                {((order.tax && order.tax > 0) ||
-                  (order.taxAmount && order.taxAmount > 0)) && (
-                  <div className="d-flex justify-content-between mb-2">
-                    <span>Tax:</span>
-                    <span>
-                      ₹{(order.tax || order.taxAmount || 0).toFixed(2)}
-                    </span>
-                  </div>
-                )}
                 {((order.shippingCost && order.shippingCost > 0) ||
                   (order.deliveryCharge && order.deliveryCharge > 0)) && (
-                  <div className="d-flex justify-content-between mb-2">
-                    <span>Shipping:</span>
-                    <span>
-                      ₹
-                      {(
-                        order.shippingCost ||
-                        order.deliveryCharge ||
-                        0
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                )}
-                {order.platformFee && order.platformFee > 0 && (
-                  <div className="d-flex justify-content-between mb-2">
-                    <span>Platform Fee:</span>
-                    <span>₹{order.platformFee.toFixed(2)}</span>
-                  </div>
-                )}
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Shipping:</span>
+                      <span>
+                        ₹
+                        {(
+                          order.shippingCost ||
+                          order.deliveryCharge ||
+                          0
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                 {((order.discount && order.discount > 0) ||
                   (order.couponAmount && order.couponAmount > 0)) && (
-                  <div className="d-flex justify-content-between mb-2 text-success">
-                    <span>Discount:</span>
-                    <span>
-                      -₹{(order.discount || order.couponAmount || 0).toFixed(2)}
-                    </span>
-                  </div>
-                )}
+                    <div className="d-flex justify-content-between mb-2 text-success">
+                      <span>Discount:</span>
+                      <span>
+                        -₹{(order.discount || order.couponAmount || 0).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
               </div>
               <div
                 className="d-flex justify-content-between"

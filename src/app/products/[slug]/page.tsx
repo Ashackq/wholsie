@@ -584,10 +584,6 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                                 </tr>
                                                             )}
                                                             <tr>
-                                                                <th style={{ width: '30%', fontWeight: 'bold' }}>Tax Rate</th>
-                                                                <td>{product.taxPercentage}% GST</td>
-                                                            </tr>
-                                                            <tr>
                                                                 <th style={{ width: '30%', fontWeight: 'bold' }}>Stock</th>
                                                                 <td>{product.stock > 0 ? `${product.stock} units` : 'Out of Stock'}</td>
                                                             </tr>

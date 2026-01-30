@@ -31,7 +31,6 @@ type Cart = {
     userId: string;
     items: CartItem[];
     subtotal?: number;
-    tax?: number;
     total?: number;
 };
 
@@ -179,7 +178,7 @@ export default function AdminUsersPage() {
 
             const data = await res.json();
             const updatedUser = data.data || data;
-            
+
             setUsers(users.map(u => u._id === userId ? { ...u, status: newStatus } : u));
             setSuccess(`User status updated to ${newStatus}`);
             setTimeout(() => setSuccess(null), 3000);
@@ -203,8 +202,7 @@ export default function AdminUsersPage() {
         return sum + price * qty;
     }, 0);
 
-    const tax = subtotal * 0.05;
-    const totalPrice = subtotal + tax;
+    const totalPrice = subtotal;
 
     const totalPages = Math.ceil(total / pageSize);
     if (authLoading) {
@@ -223,7 +221,7 @@ export default function AdminUsersPage() {
             </div>
         );
     }
-    
+
     if (!isAdmin) {
         return (
             <div className="admin-page-header">
@@ -232,7 +230,7 @@ export default function AdminUsersPage() {
             </div>
         );
     }
-    
+
     if (loading) {
         return (
             <div className="admin-page-header">
@@ -246,7 +244,7 @@ export default function AdminUsersPage() {
             <div className="admin-page-header">
                 <h1>Users</h1>
                 <p>Manage your users</p>
-                
+
                 {error && (
                     <div style={{ background: "#fee2e2", color: "#991b1b", padding: 16, borderRadius: 8, marginBottom: 20 }}>
                         {error}
@@ -309,12 +307,12 @@ export default function AdminUsersPage() {
                                     {modalMode === "cart"
                                         ? "Shopping Cart"
                                         : modalMode === "orders"
-                                        ? "Orders"
-                                        : modalMode === "address"
-                                        ? "Addresses"
-                                        : "User Details"}
+                                            ? "Orders"
+                                            : modalMode === "address"
+                                                ? "Addresses"
+                                                : "User Details"}
                                 </h3>
-                                    
+
                                 {selectedUser && (
                                     <div
                                         style={{
@@ -327,7 +325,7 @@ export default function AdminUsersPage() {
                                     </div>
                                 )}
                             </div>
-                            
+
                             <button
                                 onClick={closeModal}
                                 style={{
@@ -341,7 +339,7 @@ export default function AdminUsersPage() {
                                 ×
                             </button>
                         </div>
-                            
+
                         {/* Modal Body */}
                         {modalLoading ? (
                             <div style={{ textAlign: "center", padding: 40 }}>
@@ -393,7 +391,7 @@ export default function AdminUsersPage() {
                                         </div>
                                     )}
                                 </div>
-                                
+
                                 {/* Basic Information */}
                                 <div style={{ marginBottom: 24 }}>
                                     <h4
@@ -405,7 +403,7 @@ export default function AdminUsersPage() {
                                     >
                                         Basic Information
                                     </h4>
-                                    
+
                                     <div
                                         style={{
                                             background: "#f9fafb",
@@ -436,7 +434,7 @@ export default function AdminUsersPage() {
                                         </div>
                                     </div>
                                 </div>
-                                    
+
                                 {/* Account Status */}
                                 <div style={{ marginBottom: 24 }}>
                                     <h4
@@ -448,7 +446,7 @@ export default function AdminUsersPage() {
                                     >
                                         Account Status
                                     </h4>
-                                    
+
                                     <div
                                         style={{
                                             background: "#f9fafb",
@@ -479,7 +477,7 @@ export default function AdminUsersPage() {
                                         </div>
                                     </div>
                                 </div>
-                                    
+
                                 {/* Timestamps */}
                                 <div style={{ marginBottom: 24 }}>
                                     <h4
@@ -491,7 +489,7 @@ export default function AdminUsersPage() {
                                     >
                                         Timestamps
                                     </h4>
-                                    
+
                                     <div
                                         style={{
                                             background: "#f9fafb",
@@ -508,189 +506,180 @@ export default function AdminUsersPage() {
                                             <strong>Joined:</strong>{" "}
                                             {modalData.createdAt
                                                 ? new Date(
-                                                      modalData.createdAt
-                                                  ).toLocaleString()
+                                                    modalData.createdAt
+                                                ).toLocaleString()
                                                 : "N/A"}
                                         </div>
-                                              
+
                                         <div>
                                             <strong>Updated:</strong>{" "}
                                             {modalData.updatedAt
                                                 ? new Date(
-                                                      modalData.updatedAt
-                                                  ).toLocaleString()
+                                                    modalData.updatedAt
+                                                ).toLocaleString()
                                                 : "N/A"}
                                         </div>
                                     </div>
                                 </div>
                             </>
                         ) : modalMode === "cart" ? (
-                          <div style={{ marginBottom: 24 }}>
-                        
-                            <h4
-                              style={{
-                                margin: "0 0 12px 0",
-                                fontSize: 16,
-                                color: "#374151",
-                              }}
-                            >
-                              Order Items
-                            </h4>
-                          
-                            <div
-                              style={{
-                                border: "1px solid #e5e7eb",
-                                borderRadius: 8,
-                                overflow: "hidden",
-                              }}
-                            >
-                              {modalData?.items?.length > 0 ? (
-                                <>
-                                  {modalData.items.map((item: any, idx: number) => {
-                                    const product =
-                                      item.productId && typeof item.productId === "object"
-                                        ? item.productId
-                                        : null;
-                                
-                                    const name = product?.name || item.name || "Product";
-                                    const rawImage = product?.image || item.image || "/placeholder.png";
-                                
-                                    const image =
-                                      typeof rawImage === "string"
-                                        ? rawImage.startsWith("http") || rawImage.startsWith("/")
-                                          ? rawImage
-                                          : `/${rawImage}`
-                                        : "/placeholder.png";
-                                
-                                    const price = Number(item.price || product?.price || 0);
-                                    const qty = Number(item.quantity || 1);
-                                
-                                    return (
-                                      <div
-                                        key={idx}
-                                        style={{
-                                          display: "flex",
-                                          justifyContent: "space-between",
-                                          alignItems: "center",
-                                          padding: 12,
-                                          background: idx % 2 === 0 ? "#fff" : "#f9fafb",
-                                          fontSize: 14,
-                                        }}
-                                      >
-                                        {/* ✅ Left Side */}
-                                        <div
-                                          style={{
-                                            display: "flex",
-                                            gap: 12,
-                                            alignItems: "center",
-                                            flex: 1,
-                                          }}
-                                        >
-                                          {/* ✅ Thumbnail EXACT Like Orders */}
-                                          <div
-                                            style={{
-                                              width: 100,
-                                              height: 100,
-                                              borderRadius: 10,
-                                              border: "1px solid #e5e7eb",
-                                              overflow: "hidden",
-                                              background: "#fff",
-                                              display: "flex",
-                                              alignItems: "center",
-                                              justifyContent: "center",
-                                            }}
-                                          >
-                                            <img
-                                              src={image}
-                                              alt={name}
-                                              style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                objectFit: "contain",
-                                                padding: 6,
-                                              }}
-                                            />
-                                          </div>
-                                          
-                                          {/* ✅ Product Details */}
-                                          <div>
-                                            <strong>{name}</strong>
-                                          
-                                            <div style={{ fontSize: 13, color: "#6b7280" }}>
-                                              Qty: {qty} × ₹{price}
-                                            </div>
-                                          </div>
-                                        </div>
-                                          
-                                        {/* ✅ Right Price */}
-                                        <strong style={{ fontSize: 15 }}>
-                                          ₹{price * qty}
-                                        </strong>
-                                      </div>
-                                    );
-                                  })}
+                            <div style={{ marginBottom: 24 }}>
 
-                                  {/* ✅ Summary Box */}
-                                  <div
+                                <h4
                                     style={{
-                                      background: "#f9fafb",
-                                      padding: 16,
-                                      borderTop: "1px solid #e5e7eb",
-                                    }}
-                                  >
-                                    <div
-                                      style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        marginBottom: 8,
-                                      }}
-                                    >
-                                      <span>Subtotal:</span>
-                                      <strong>₹{subtotal.toFixed(2)}</strong>
-                                    </div>
-                                  
-                                    <div
-                                      style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        marginBottom: 8,
-                                      }}
-                                    >
-                                      <span>Tax (5%):</span>
-                                      <strong>₹{tax.toFixed(2)}</strong>
-                                    </div>
-                                  
-                                    <div
-                                      style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        marginBottom: 8,
-                                      }}
-                                    >
-                                    </div>
-                                  
-                                    <div
-                                      style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        paddingTop: 10,
-                                        borderTop: "2px solid #e5e7eb",
-                                        fontWeight: "bold",
+                                        margin: "0 0 12px 0",
                                         fontSize: 16,
-                                      }}
-                                    >
-                                      <span>Total:</span>
-                                      <strong>₹{totalPrice.toFixed(2)}</strong>
-                                    </div>
-                                  </div>
-                                </>
-                              ) : (
-                                <p style={{ padding: 14, color: "#6b7280" }}>
-                                  Cart is empty
-                                </p>
-                              )}
+                                        color: "#374151",
+                                    }}
+                                >
+                                    Order Items
+                                </h4>
+
+                                <div
+                                    style={{
+                                        border: "1px solid #e5e7eb",
+                                        borderRadius: 8,
+                                        overflow: "hidden",
+                                    }}
+                                >
+                                    {modalData?.items?.length > 0 ? (
+                                        <>
+                                            {modalData.items.map((item: any, idx: number) => {
+                                                const product =
+                                                    item.productId && typeof item.productId === "object"
+                                                        ? item.productId
+                                                        : null;
+
+                                                const name = product?.name || item.name || "Product";
+                                                const rawImage = product?.image || item.image || "/placeholder.png";
+
+                                                const image =
+                                                    typeof rawImage === "string"
+                                                        ? rawImage.startsWith("http") || rawImage.startsWith("/")
+                                                            ? rawImage
+                                                            : `/${rawImage}`
+                                                        : "/placeholder.png";
+
+                                                const price = Number(item.price || product?.price || 0);
+                                                const qty = Number(item.quantity || 1);
+
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        style={{
+                                                            display: "flex",
+                                                            justifyContent: "space-between",
+                                                            alignItems: "center",
+                                                            padding: 12,
+                                                            background: idx % 2 === 0 ? "#fff" : "#f9fafb",
+                                                            fontSize: 14,
+                                                        }}
+                                                    >
+                                                        {/* ✅ Left Side */}
+                                                        <div
+                                                            style={{
+                                                                display: "flex",
+                                                                gap: 12,
+                                                                alignItems: "center",
+                                                                flex: 1,
+                                                            }}
+                                                        >
+                                                            {/* ✅ Thumbnail EXACT Like Orders */}
+                                                            <div
+                                                                style={{
+                                                                    width: 100,
+                                                                    height: 100,
+                                                                    borderRadius: 10,
+                                                                    border: "1px solid #e5e7eb",
+                                                                    overflow: "hidden",
+                                                                    background: "#fff",
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    justifyContent: "center",
+                                                                }}
+                                                            >
+                                                                <img
+                                                                    src={image}
+                                                                    alt={name}
+                                                                    style={{
+                                                                        width: "100%",
+                                                                        height: "100%",
+                                                                        objectFit: "contain",
+                                                                        padding: 6,
+                                                                    }}
+                                                                />
+                                                            </div>
+
+                                                            {/* ✅ Product Details */}
+                                                            <div>
+                                                                <strong>{name}</strong>
+
+                                                                <div style={{ fontSize: 13, color: "#6b7280" }}>
+                                                                    Qty: {qty} × ₹{price}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* ✅ Right Price */}
+                                                        <strong style={{ fontSize: 15 }}>
+                                                            ₹{price * qty}
+                                                        </strong>
+                                                    </div>
+                                                );
+                                            })}
+
+                                            {/* ✅ Summary Box */}
+                                            <div
+                                                style={{
+                                                    background: "#f9fafb",
+                                                    padding: 16,
+                                                    borderTop: "1px solid #e5e7eb",
+                                                }}
+                                            >
+                                                <div
+                                                    style={{
+                                                        display: "flex",
+                                                        justifyContent: "space-between",
+                                                        marginBottom: 8,
+                                                    }}
+                                                >
+                                                    <span>Subtotal:</span>
+                                                    <strong>₹{subtotal.toFixed(2)}</strong>
+                                                </div>
+
+
+
+                                                <div
+                                                    style={{
+                                                        display: "flex",
+                                                        justifyContent: "space-between",
+                                                        marginBottom: 8,
+                                                    }}
+                                                >
+                                                </div>
+
+                                                <div
+                                                    style={{
+                                                        display: "flex",
+                                                        justifyContent: "space-between",
+                                                        paddingTop: 10,
+                                                        borderTop: "2px solid #e5e7eb",
+                                                        fontWeight: "bold",
+                                                        fontSize: 16,
+                                                    }}
+                                                >
+                                                    <span>Total:</span>
+                                                    <strong>₹{totalPrice.toFixed(2)}</strong>
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p style={{ padding: 14, color: "#6b7280" }}>
+                                            Cart is empty
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-                          </div>
                         ) : modalMode === "orders" ? (
                             <div style={{ padding: 10 }}>
                                 {Array.isArray(modalData) && modalData.length > 0 ? (
@@ -714,7 +703,7 @@ export default function AdminUsersPage() {
                                                 <p>Status: {order.status}</p>
                                                 <p>Payment: {order.paymentStatus}</p>
                                             </div>
-                                        
+
                                             {/* ✅ View Button */}
                                             <button
                                                 onClick={() => {
@@ -797,49 +786,49 @@ export default function AdminUsersPage() {
                                 <td>{user.email}</td>
                                 <td>{user.phone || "-"}</td>
                                 <td>
-                                  <span
-                                    onClick={() => {
-                                      if (togglingId) return;   
-                                      updateUserStatus(
-                                        user._id,
-                                        user.status === "active" ? "inactive" : "active"
-                                      )
-                                    }}
-                                    style={{
-                                      display: "inline-block",
-                                      padding: "6px 14px",
-                                      borderRadius: "999px",
-                                      fontSize: "13px",
-                                      fontWeight: 600,
-                                    
-                                      background:
-                                        user.status === "active"
-                                          ? "#dcfce7"   // light green
-                                          : "#fee2e2",  // light red
-                                    
-                                      color:
-                                        user.status === "active"
-                                          ? "#166534"   // dark green
-                                          : "#991b1b",  // dark red
-                                    
-                                      textTransform: "capitalize",
-                                      minWidth: "90px",
-                                      textAlign: "center",
-                                    
-                                      cursor: togglingId === user._id ? "wait" : "pointer",
-                                      opacity: togglingId === user._id ? 0.6 : 1,
-                                    
-                                      userSelect: "none",
-                                      transition: "0.2s ease",
-                                    }}
-                                    title="Click to toggle status"
-                                  >
-                                    {user.status === "active" ? "Active" : "Inactive"}
-                                  </span>
+                                    <span
+                                        onClick={() => {
+                                            if (togglingId) return;
+                                            updateUserStatus(
+                                                user._id,
+                                                user.status === "active" ? "inactive" : "active"
+                                            )
+                                        }}
+                                        style={{
+                                            display: "inline-block",
+                                            padding: "6px 14px",
+                                            borderRadius: "999px",
+                                            fontSize: "13px",
+                                            fontWeight: 600,
+
+                                            background:
+                                                user.status === "active"
+                                                    ? "#dcfce7"   // light green
+                                                    : "#fee2e2",  // light red
+
+                                            color:
+                                                user.status === "active"
+                                                    ? "#166534"   // dark green
+                                                    : "#991b1b",  // dark red
+
+                                            textTransform: "capitalize",
+                                            minWidth: "90px",
+                                            textAlign: "center",
+
+                                            cursor: togglingId === user._id ? "wait" : "pointer",
+                                            opacity: togglingId === user._id ? 0.6 : 1,
+
+                                            userSelect: "none",
+                                            transition: "0.2s ease",
+                                        }}
+                                        title="Click to toggle status"
+                                    >
+                                        {user.status === "active" ? "Active" : "Inactive"}
+                                    </span>
                                 </td>
                                 <td>
                                     <div>
-                                        <button 
+                                        <button
                                             onClick={() => openModal(user, "cart")}
                                             style={{
                                                 padding: "6px 12px",
@@ -852,7 +841,7 @@ export default function AdminUsersPage() {
                                                 fontSize: 12,
                                             }}
                                         >Cart</button>
-                                        <button 
+                                        <button
                                             onClick={() => openModal(user, "orders")}
                                             style={{
                                                 padding: "6px 12px",
@@ -865,7 +854,7 @@ export default function AdminUsersPage() {
                                                 fontSize: 12,
                                             }}
                                         >Orders</button>
-                                        <button 
+                                        <button
                                             onClick={() => openModal(user, "address")}
                                             style={{
                                                 padding: "6px 12px",
@@ -878,7 +867,7 @@ export default function AdminUsersPage() {
                                                 fontSize: 12,
                                             }}
                                         >Address</button>
-                                        <button 
+                                        <button
                                             onClick={() => openModal(user, "view")}
                                             style={{
                                                 padding: "6px 12px",

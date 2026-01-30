@@ -27,7 +27,6 @@ type CartProduct = {
     name?: string;
     option?: string;
   }>;
-  tax?: number;
 };
 
 type CartItem = {
@@ -611,7 +610,7 @@ export default function CartPage() {
                         fontStyle: "italic",
                       }}
                     >
-                      Tax, shipping & platform fees calculated at checkout
+                      Shipping charges calculated at checkout
                     </p>
                   </div>
                 </div>

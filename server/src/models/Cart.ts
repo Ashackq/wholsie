@@ -19,7 +19,6 @@ const cartSchema = new Schema(
         expectedDeliveryDate: Date,
         deliveryPostalCode: String,
         subtotal: Number,
-        tax: Number,
         total: Number,
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
