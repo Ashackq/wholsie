@@ -164,7 +164,7 @@ export default function Footer() {
                     style={{ filter: 'brightness(0) invert(1)' }}
                   />
                 </b>
-                610, A/p. Songaon tarf, Nisrale ,Maharashtra, IN 415519
+                610, Songaon tarf, Near Songaon Phata, Satara, Maharashtra, IN. 415519
               </span>
               <span>
                 <b>

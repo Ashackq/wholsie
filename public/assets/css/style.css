@@ -1265,7 +1265,7 @@ header .header_support h3 a:hover {
     -moz-transition: all linear .3s;
     -ms-transition: all linear .3s;
     -o-transition: all linear .3s;
-    font-size: 16px;
+    font-size: 20px;
     opacity: 1;
     font-family: var(--headingFont);
 }
