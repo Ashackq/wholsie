@@ -71,7 +71,7 @@ export default function Footer() {
                 </li>
                 <li>
                   <a href="https://www.instagram.com/wholesiiifoods" target="_blank" rel="noreferrer">
-                    <i className="fab fa-instagram"></i>
+                    <i className="fab fa-instagram" ></i>
                   </a>
                 </li>
                 <li>
@@ -161,9 +161,10 @@ export default function Footer() {
                     src="/assets/images/location_icon_white.png"
                     alt="Map"
                     className="img-fluid"
+                    style={{ filter: 'brightness(0) invert(1)' }}
                   />
                 </b>
-                123 Business Street, City, State 12345
+                610, A/p. Songaon tarf, Nisrale ,Maharashtra, IN 415519
               </span>
               <span>
                 <b>
@@ -171,6 +172,8 @@ export default function Footer() {
                     src="/assets/images/phone_icon_white.png"
                     alt="Call"
                     className="img-fluid"
+                    style={{ filter: 'brightness(0) invert(1)' }}
+
                   />
                 </b>
                 <a href="callto:+919209307191">+91 9209307191</a>
@@ -181,6 +184,8 @@ export default function Footer() {
                     src="/assets/images/mail_icon_white.png"
                     alt="Mail"
                     className="img-fluid"
+                    style={{ filter: 'brightness(0) invert(1)' }}
+
                   />
                 </b>
                 <a href="mailto:info@wholesiii.com">info@wholesiii.com</a>

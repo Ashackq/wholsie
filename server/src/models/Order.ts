@@ -43,13 +43,12 @@ const orderSchema = new Schema(
     razorpayOrderId: String,
     razorpayPaymentId: String,
     subtotal: Number,
-    tax: Number,
     shippingCost: Number,
-    platformFee: Number, // 2% platform fee
     discount: Number,
     total: Number,
     // Delhivery shipment tracking
     delhiveryTrackingId: String,
+    mpsWaybills: [String], // For Multi-Package Shipments
     delhiveryShipmentStatus: String,
     delhiveryShipmentCreatedAt: Date,
     delhiveryPickupScheduled: Date,

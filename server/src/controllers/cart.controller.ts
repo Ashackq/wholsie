@@ -79,7 +79,7 @@ export async function addToCart(req: Request, res: Response, next: NextFunction)
 
         await cart.populate({
             path: 'items.productId',
-            select: 'name images price salePrice discount variants tax'
+            select: 'name images price salePrice discount variants'
         });
 
         res.json({

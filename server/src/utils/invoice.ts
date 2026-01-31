@@ -22,7 +22,6 @@ export interface InvoiceData {
     shippingAddress: InvoiceAddress;
     items: InvoiceItem[];
     subtotal: number;
-    tax: number;
     shippingCost: number;
     discount: number;
     total: number;
@@ -235,10 +234,6 @@ export function generateInvoiceHTML(data: InvoiceData): string {
                             <span>Subtotal:</span>
                             <span>₹${data.subtotal.toFixed(2)}</span>
                         </div>
-                        ${data.tax > 0 ? `<div class="summary-row">
-                            <span>Tax:</span>
-                            <span>₹${data.tax.toFixed(2)}</span>
-                        </div>` : ""}
                         ${data.shippingCost > 0 ? `<div class="summary-row">
                             <span>Shipping:</span>
                             <span>₹${data.shippingCost.toFixed(2)}</span>

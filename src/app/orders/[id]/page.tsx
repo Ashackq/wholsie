@@ -39,11 +39,9 @@ interface Order {
   total?: number;
   netAmount?: number;
   subtotal: number;
-  tax?: number;
   taxAmount?: number;
   shippingCost?: number;
   deliveryCharge?: number;
-  platformFee?: number;
   discount?: number;
   couponAmount?: number;
   razorpayOrderId?: string;
@@ -110,7 +108,7 @@ export default function OrderDetailPage() {
           order_id: razorpayOrderId,
           amount: Math.round(total * 100),
           currency: "INR",
-          name: "Wholesii",
+          name: "Wholesiii",
           description: `Payment for Order ${order.orderNo || order.orderId}`,
           handler: async () => {
             // Payment successful
@@ -267,11 +265,24 @@ export default function OrderDetailPage() {
                     >
                       Order #{order.orderId}
                     </h2>
-                    <p style={{ color: "#666", fontSize: "14px", marginBottom: "0" }}>
+                    <p
+                      style={{
+                        color: "#666",
+                        fontSize: "14px",
+                        marginBottom: "0",
+                      }}
+                    >
                       Placed on {new Date(order.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", alignItems: "center" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "10px",
+                      alignItems: "center",
+                    }}
+                  >
                     {(order as any).invoiceUrl && (
                       <a
                         href={(order as any).invoiceUrl}
@@ -340,7 +351,14 @@ export default function OrderDetailPage() {
               >
                 {/* Payment Status */}
                 <div>
-                  <div style={{ fontSize: "13px", color: "#666", marginBottom: "6px", fontWeight: "600" }}>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: "#666",
+                      marginBottom: "6px",
+                      fontWeight: "600",
+                    }}
+                  >
                     <i className="fas fa-credit-card"></i> Payment Status
                   </div>
                   <div
@@ -362,10 +380,24 @@ export default function OrderDetailPage() {
 
                 {/* Order ID with Cancel Button */}
                 <div>
-                  <div style={{ fontSize: "13px", color: "#666", marginBottom: "6px", fontWeight: "600" }}>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: "#666",
+                      marginBottom: "6px",
+                      fontWeight: "600",
+                    }}
+                  >
                     <i className="fas fa-hashtag"></i> Order ID
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                    }}
+                  >
                     <span
                       style={{
                         background: "#e9ecef",
@@ -378,7 +410,9 @@ export default function OrderDetailPage() {
                     >
                       {order.orderId}
                     </span>
-                    {["pending", "confirmed", "processing"].includes(order.status) &&
+                    {["pending", "confirmed", "processing"].includes(
+                      order.status,
+                    ) &&
                       order.status !== "cancelled" && (
                         <button
                           onClick={handleCancel}
@@ -398,7 +432,8 @@ export default function OrderDetailPage() {
                           onMouseEnter={(e) => {
                             if (!cancelling) {
                               e.currentTarget.style.background = "#E55A00";
-                              e.currentTarget.style.transform = "translateY(-2px)";
+                              e.currentTarget.style.transform =
+                                "translateY(-2px)";
                             }
                           }}
                           onMouseLeave={(e) => {
@@ -415,10 +450,24 @@ export default function OrderDetailPage() {
                 {/* Tracking ID with Track Button */}
                 {order.delhiveryTrackingId && (
                   <div>
-                    <div style={{ fontSize: "13px", color: "#666", marginBottom: "6px", fontWeight: "600" }}>
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#666",
+                        marginBottom: "6px",
+                        fontWeight: "600",
+                      }}
+                    >
                       <i className="fas fa-shipping-fast"></i> Tracking ID
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        flexWrap: "wrap",
+                      }}
+                    >
                       <span
                         style={{
                           background: "#e9ecef",
@@ -527,17 +576,27 @@ export default function OrderDetailPage() {
                 <table className="table" style={{ fontSize: "14px" }}>
                   <thead>
                     <tr>
-                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>Product</th>
-                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>Price</th>
-                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>Qty</th>
-                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>Total</th>
+                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>
+                        Product
+                      </th>
+                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>
+                        Price
+                      </th>
+                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>
+                        Qty
+                      </th>
+                      <th style={{ fontSize: "13px", padding: "10px 8px" }}>
+                        Total
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {order.items.map((item, idx) => (
                       <tr key={idx}>
                         <td style={{ padding: "10px 8px" }}>{item.name}</td>
-                        <td style={{ padding: "10px 8px" }}>₹{item.price.toFixed(2)}</td>
+                        <td style={{ padding: "10px 8px" }}>
+                          ₹{item.price.toFixed(2)}
+                        </td>
                         <td style={{ padding: "10px 8px" }}>{item.quantity}</td>
                         <td style={{ padding: "10px 8px" }}>
                           <strong>
@@ -571,9 +630,9 @@ export default function OrderDetailPage() {
               </h3>
               {(order.shippingAddress &&
                 (order.shippingAddress.street || order.shippingAddress.city)) ||
-              order.deliveryCity ||
-              order.deliveryState ||
-              order.deliveryPincode ? (
+                order.deliveryCity ||
+                order.deliveryState ||
+                order.deliveryPincode ? (
                 <address
                   style={{
                     marginBottom: "0",
@@ -647,44 +706,29 @@ export default function OrderDetailPage() {
                   <span>Subtotal:</span>
                   <span>₹{order.subtotal.toFixed(2)}</span>
                 </div>
-                {((order.tax && order.tax > 0) ||
-                  (order.taxAmount && order.taxAmount > 0)) && (
-                  <div className="d-flex justify-content-between mb-2">
-                    <span>Tax:</span>
-                    <span>
-                      ₹{(order.tax || order.taxAmount || 0).toFixed(2)}
-                    </span>
-                  </div>
-                )}
                 {((order.shippingCost && order.shippingCost > 0) ||
                   (order.deliveryCharge && order.deliveryCharge > 0)) && (
-                  <div className="d-flex justify-content-between mb-2">
-                    <span>Shipping:</span>
-                    <span>
-                      ₹
-                      {(
-                        order.shippingCost ||
-                        order.deliveryCharge ||
-                        0
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                )}
-                {order.platformFee && order.platformFee > 0 && (
-                  <div className="d-flex justify-content-between mb-2">
-                    <span>Platform Fee:</span>
-                    <span>₹{order.platformFee.toFixed(2)}</span>
-                  </div>
-                )}
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>Shipping:</span>
+                      <span>
+                        ₹
+                        {(
+                          order.shippingCost ||
+                          order.deliveryCharge ||
+                          0
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                 {((order.discount && order.discount > 0) ||
                   (order.couponAmount && order.couponAmount > 0)) && (
-                  <div className="d-flex justify-content-between mb-2 text-success">
-                    <span>Discount:</span>
-                    <span>
-                      -₹{(order.discount || order.couponAmount || 0).toFixed(2)}
-                    </span>
-                  </div>
-                )}
+                    <div className="d-flex justify-content-between mb-2 text-success">
+                      <span>Discount:</span>
+                      <span>
+                        -₹{(order.discount || order.couponAmount || 0).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
               </div>
               <div
                 className="d-flex justify-content-between"

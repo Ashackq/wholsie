@@ -339,10 +339,11 @@ export async function createShipment(
 }
 
 /**
- * Track a shipment using waybill/AWB number
+ * Track a shipment using waybill/AWB number(s)
+ * @param waybills - Single waybill string or array of waybills (up to 50)
  */
 export async function getTrackingStatus(
-  waybill: string,
+  waybills: string | string[],
 ): Promise<TrackingData | null> {
   const token = env.DELHIVERY_TOKEN;
   if (!token) {
@@ -350,7 +351,11 @@ export async function getTrackingStatus(
   }
 
   try {
-    const url = `${DELHIVERY_API_BASE}/api/v1/packages/json/?waybill=${encodeURIComponent(waybill)}`;
+    // Handle both single waybill and array of waybills
+    const waybillParam = Array.isArray(waybills)
+      ? waybills.join(",")
+      : waybills;
+    const url = `${DELHIVERY_TRACK_BASE}/api/v1/packages/json/?waybill=${encodeURIComponent(waybillParam)}`;
     const response = await fetch(url, {
       method: "GET",
       headers: {

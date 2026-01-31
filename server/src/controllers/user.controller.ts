@@ -113,7 +113,6 @@ export const getUserCart = async (req: Request, res: Response) => {
                     userId,
                     items: [],
                     subtotal: 0,
-                    tax: 0,
                     total: 0,
                 },
             });

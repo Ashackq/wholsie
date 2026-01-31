@@ -24,9 +24,7 @@ interface OrderDocument extends Document {
   items: OrderItem[];
   shippingAddress?: ShippingAddress | null;
   subtotal?: number | null;
-  tax?: number | null;
   shippingCost?: number | null;
-  platformFee?: number | null;
   discount?: number | null;
   total?: number | null;
   paymentMethod?: string | null;
@@ -88,9 +86,7 @@ export async function createInvoiceFromOrder(
 
     // Amounts
     subtotal: order.subtotal || 0,
-    tax: order.tax || 0,
     shippingCost: order.shippingCost || 0,
-    platformFee: order.platformFee || 0,
     discount: order.discount || 0,
     total: order.total,
 

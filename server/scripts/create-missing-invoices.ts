@@ -71,7 +71,6 @@ async function createMissingInvoices() {
             amount: item.price * item.quantity,
           })),
           subtotal: populatedOrder.subtotal || 0,
-          tax: populatedOrder.tax || 0,
           shippingCost: populatedOrder.shippingCost || 0,
           discount: populatedOrder.discount || 0,
           total: populatedOrder.total,

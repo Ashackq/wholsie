@@ -67,10 +67,8 @@ export default function CheckoutPage() {
 
   // Order calculation states
   const [subtotal, setSubtotal] = useState(0);
-  const [tax, setTax] = useState(0);
   const [shippingCharge, setShippingCharge] = useState(0);
   const [packagingCharges, setPackagingCharges] = useState(0);
-  const [platformFee, setPlatformFee] = useState(0);
   const [groups, setGroups] = useState<GroupedItem[]>([]);
   const [serviceability, setServiceability] = useState<any>(null);
   const [tatInfo, setTatInfo] = useState<any>(null);
@@ -311,12 +309,8 @@ export default function CheckoutPage() {
       (sum, g) => sum + (g.unitPrice || 0) * (g.quantity || 0),
       0,
     );
-    const taxCalc = subtotalCalc * 0.05;
-    const platformFeeCalc = subtotalCalc * 0.02;
     return {
       subtotal: subtotalCalc,
-      tax: taxCalc,
-      platformFee: platformFeeCalc,
     };
   }, [groups]);
 
@@ -330,9 +324,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setSubtotal(summary.subtotal);
-    setTax(summary.tax);
-    setPlatformFee(summary.platformFee);
-  }, [summary.subtotal, summary.tax, summary.platformFee]);
+  }, [summary.subtotal]);
 
   // Check serviceability when address changes
   useEffect(() => {
@@ -475,7 +467,7 @@ export default function CheckoutPage() {
 
   const calculateTotal = () => {
     let total =
-      subtotal + tax + shippingCharge + packagingCharges + platformFee;
+      subtotal + shippingCharge + packagingCharges;
     total = total - couponDiscount;
 
     if (useWallet && walletBalance > 0) {
@@ -490,10 +482,8 @@ export default function CheckoutPage() {
     if (!useWallet || walletBalance <= 0) return 0;
     const total =
       summary.subtotal +
-      summary.tax +
       shippingCharge +
       packagingCharges +
-      summary.platformFee -
       couponDiscount;
     return Math.min(walletBalance, total);
   };
@@ -551,7 +541,7 @@ export default function CheckoutPage() {
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       amount: amount * 100,
       currency: "INR",
-      name: "Wholesii",
+      name: "Wholesiii",
       description: "Order Payment",
       order_id: razorpayOrderId,
       handler: async function (response: any) {
@@ -1274,17 +1264,32 @@ export default function CheckoutPage() {
                     </p>
                   )}
 
-                  {tatInfo?.data?.expected_delivery_date && tatInfo?.data?.tat && (
-                    <p style={{ color: "#333", margin: "8px 0 0", fontWeight: "500" }}>
-                      {(() => {
-                        const deliveryDate = new Date(tatInfo.data.expected_delivery_date);
-                        const days = tatInfo.data.tat;
-                        const dayName = deliveryDate.toLocaleDateString('en-US', { weekday: 'long' });
-                        const dateStr = deliveryDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-                        return `Arrives in ${days} day${days !== 1 ? 's' : ''}, ${dayName} ${dateStr}`;
-                      })()}
-                    </p>
-                  )}
+                  {tatInfo?.data?.expected_delivery_date &&
+                    tatInfo?.data?.tat && (
+                      <p
+                        style={{
+                          color: "#333",
+                          margin: "8px 0 0",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {(() => {
+                          const deliveryDate = new Date(
+                            tatInfo.data.expected_delivery_date,
+                          );
+                          const days = tatInfo.data.tat;
+                          const dayName = deliveryDate.toLocaleDateString(
+                            "en-US",
+                            { weekday: "long" },
+                          );
+                          const dateStr = deliveryDate.toLocaleDateString(
+                            "en-US",
+                            { day: "numeric", month: "short" },
+                          );
+                          return `Arrives in ${days} day${days !== 1 ? "s" : ""}, ${dayName} ${dateStr}`;
+                        })()}
+                      </p>
+                    )}
                 </div>
 
                 {/* Order Notes */}
@@ -1471,12 +1476,7 @@ export default function CheckoutPage() {
                       <span>{formatCurrency(summary.subtotal)}</span>
                     </div>
                   </h6>
-                  <h6>
-                    <span>Tax</span>
-                    <div>
-                      <span>{formatCurrency(summary.tax)}</span>
-                    </div>
-                  </h6>
+
                   <h6>
                     <span>Shipping Charge</span>
                     <div>
@@ -1503,25 +1503,15 @@ export default function CheckoutPage() {
                       </div>
                     </h6>
                   )}
-                  {summary.platformFee > 0 && (
-                    <h6>
-                      <span>Platform fee</span>
-                      <div>
-                        <span>{formatCurrency(summary.platformFee)}</span>
-                      </div>
-                    </h6>
-                  )}
                   <h4>
                     <span>Grand Total</span>
                     <div style={{ color: "#F05F22" }}>
                       <span>
                         {formatCurrency(
                           summary.subtotal +
-                            summary.tax +
-                            shippingCharge +
-                            packagingCharges +
-                            summary.platformFee -
-                            couponDiscount,
+                          shippingCharge +
+                          packagingCharges +
+                          couponDiscount,
                         )}
                       </span>
                     </div>

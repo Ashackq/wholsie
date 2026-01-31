@@ -91,7 +91,6 @@ export async function createProduct(
       price,
       salePrice,
       discountPrice,
-      tax,
       stock,
       categoryId,
       images,
@@ -129,7 +128,6 @@ export async function createProduct(
       discountedPrice: finalSalePrice,
       discountPrice: finalSalePrice,
       discount,
-      tax: tax || 0,
       stock: stock || 0,
       quantity: stock || 0,
       categoryId,
@@ -176,7 +174,6 @@ export async function updateProduct(
       price,
       salePrice,
       discountPrice,
-      tax,
       stock,
       categoryId,
       images,
@@ -198,7 +195,6 @@ export async function updateProduct(
         .replace(/^-+|-+$/g, "");
     }
     if (description !== undefined) updateData.description = description;
-    if (tax !== undefined) updateData.tax = tax;
     if (stock !== undefined) {
       updateData.stock = stock;
       updateData.quantity = stock;

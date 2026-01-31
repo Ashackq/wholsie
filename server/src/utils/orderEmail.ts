@@ -390,12 +390,12 @@ export async function prepareInvoiceData(order: any): Promise<PdfInvoiceData> {
     shippingAddress: order.shippingAddress || {},
     billingAddress: user.address
       ? {
-          street: user.address.street || undefined,
-          city: user.address.city || undefined,
-          state: user.address.state || undefined,
-          postalCode: user.address.postalCode || undefined,
-          country: user.address.country || undefined,
-        }
+        street: user.address.street || undefined,
+        city: user.address.city || undefined,
+        state: user.address.state || undefined,
+        postalCode: user.address.postalCode || undefined,
+        country: user.address.country || undefined,
+      }
       : undefined,
     items: (order.items || []).map((item: any) => ({
       name: item.name,
@@ -404,7 +404,6 @@ export async function prepareInvoiceData(order: any): Promise<PdfInvoiceData> {
       amount: (item.price || 0) * (item.quantity || 1),
     })),
     subtotal: order.subtotal || 0,
-    tax: order.tax || 0,
     shippingCost: order.shippingCost || 0,
     discount: order.discount || 0,
     total: order.total || 0,
