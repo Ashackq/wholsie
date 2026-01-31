@@ -206,31 +206,17 @@ export default function AdminUsersPage() {
     }, 0);
 
     const filteredUsers = users.filter((u) => {
-      const q = search.toLowerCase();
-        
-      const fullName = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
-        
-      return (
-        fullName.includes(q) ||
-        (u.email || "").toLowerCase().includes(q) ||
-        (u.phone || "").toLowerCase().includes(q) ||
-        (u.status || "").toLowerCase().includes(q) ||
-        (u.role || "").toLowerCase().includes(q)
-      );
-    });
+        const q = search.toLowerCase();
 
-    const filteredUsers = users.filter((u) => {
-      const q = search.toLowerCase();
-        
-      const fullName = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
-        
-      return (
-        fullName.includes(q) ||
-        (u.email || "").toLowerCase().includes(q) ||
-        (u.phone || "").toLowerCase().includes(q) ||
-        (u.status || "").toLowerCase().includes(q) ||
-        (u.role || "").toLowerCase().includes(q)
-      );
+        const fullName = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
+
+        return (
+            fullName.includes(q) ||
+            (u.email || "").toLowerCase().includes(q) ||
+            (u.phone || "").toLowerCase().includes(q) ||
+            (u.status || "").toLowerCase().includes(q) ||
+            (u.role || "").toLowerCase().includes(q)
+        );
     });
 
     const totalPrice = subtotal;
@@ -273,24 +259,24 @@ export default function AdminUsersPage() {
     return (
         <div>
             <div
-              className="admin-page-header"
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
+                className="admin-page-header"
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                }}
             >
-              {/* Left Side */}
-              <div>
-                <h1>Users</h1>
-                <p>Manage your users</p>
-              </div>
-            
-              {/* ✅ Right Side Refresh */}
-              <RefreshButton
-                onRefresh={loadUsers}
-                loading={loading}
-              />
+                {/* Left Side */}
+                <div>
+                    <h1>Users</h1>
+                    <p>Manage your users</p>
+                </div>
+
+                {/* ✅ Right Side Refresh */}
+                <RefreshButton
+                    onRefresh={loadUsers}
+                    loading={loading}
+                />
 
                 {error && (
                     <div style={{ background: "#fee2e2", color: "#991b1b", padding: 16, borderRadius: 8, marginBottom: 20 }}>
@@ -809,30 +795,30 @@ export default function AdminUsersPage() {
 
             <div className="admin-table-container">
                 <div
-                  className="admin-table-header"
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 20,
-                  }}
+                    className="admin-table-header"
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 20,
+                    }}
                 >
-                  <div>
-                    <h3 style={{ margin: 0 }}>
-                      All Users ({filteredUsers.length})
-                    </h3>
-              
-                    <div style={{ fontSize: 13, color: "var(--text-2)" }}>
-                      Page {page} · Showing {filteredUsers.length} of {total}
+                    <div>
+                        <h3 style={{ margin: 0 }}>
+                            All Users ({filteredUsers.length})
+                        </h3>
+
+                        <div style={{ fontSize: 13, color: "var(--text-2)" }}>
+                            Page {page} · Showing {filteredUsers.length} of {total}
+                        </div>
                     </div>
-                  </div>
-              
-                  {/* ✅ Search Bar */}
-                  <AdminSearchFilter
-                    search={search}
-                    setSearch={setSearch}
-                    placeholder="Search users..."
-                  />
+
+                    {/* ✅ Search Bar */}
+                    <AdminSearchFilter
+                        search={search}
+                        setSearch={setSearch}
+                        placeholder="Search users..."
+                    />
                 </div>
 
                 <table className="admin-table">
@@ -847,144 +833,144 @@ export default function AdminUsersPage() {
                     </thead>
                     <tbody>
                         {filteredUsers.length > 0 ? (
-                          filteredUsers.map((user) => (
-                            <tr key={user._id}>
-                              <td>
-                                {user.firstName} {user.lastName}
-                              </td>
+                            filteredUsers.map((user) => (
+                                <tr key={user._id}>
+                                    <td>
+                                        {user.firstName} {user.lastName}
+                                    </td>
 
-                              <td>{user.email}</td>
+                                    <td>{user.email}</td>
 
-                              <td>{user.phone || "-"}</td>
+                                    <td>{user.phone || "-"}</td>
 
-                              <td>
-                                <span
-                                  onClick={() => {
-                                    if (togglingId) return;
+                                    <td>
+                                        <span
+                                            onClick={() => {
+                                                if (togglingId) return;
 
-                                    updateUserStatus(
-                                      user._id,
-                                      user.status === "active" ? "inactive" : "active"
-                                    );
-                                  }}
-                                  style={{
-                                    display: "inline-block",
-                                    padding: "6px 14px",
-                                    borderRadius: "999px",
-                                    fontSize: "13px",
-                                    fontWeight: 600,
+                                                updateUserStatus(
+                                                    user._id,
+                                                    user.status === "active" ? "inactive" : "active"
+                                                );
+                                            }}
+                                            style={{
+                                                display: "inline-block",
+                                                padding: "6px 14px",
+                                                borderRadius: "999px",
+                                                fontSize: "13px",
+                                                fontWeight: 600,
 
-                                    background:
-                                      user.status === "active"
-                                        ? "#dcfce7"
-                                        : "#fee2e2",
+                                                background:
+                                                    user.status === "active"
+                                                        ? "#dcfce7"
+                                                        : "#fee2e2",
 
-                                    color:
-                                      user.status === "active"
-                                        ? "#166534"
-                                        : "#991b1b",
+                                                color:
+                                                    user.status === "active"
+                                                        ? "#166534"
+                                                        : "#991b1b",
 
-                                    textTransform: "capitalize",
-                                    minWidth: "90px",
-                                    textAlign: "center",
+                                                textTransform: "capitalize",
+                                                minWidth: "90px",
+                                                textAlign: "center",
 
-                                    cursor:
-                                      togglingId === user._id ? "wait" : "pointer",
+                                                cursor:
+                                                    togglingId === user._id ? "wait" : "pointer",
 
-                                    opacity:
-                                      togglingId === user._id ? 0.6 : 1,
+                                                opacity:
+                                                    togglingId === user._id ? 0.6 : 1,
 
-                                    userSelect: "none",
-                                    transition: "0.2s ease",
-                                  }}
-                                  title="Click to toggle status"
-                                >
-                                  {user.status === "active" ? "Active" : "Inactive"}
-                                </span>
-                              </td>
-                              
-                              <td>
-                                <div>
-                                  <button
-                                    onClick={() => openModal(user, "cart")}
-                                    style={{
-                                      padding: "6px 12px",
-                                      background: "#3b82f6",
-                                      color: "#fff",
-                                      border: "none",
-                                      borderRadius: 4,
-                                      cursor: "pointer",
-                                      marginRight: 8,
-                                      fontSize: 12,
-                                    }}
-                                  >
-                                    Cart
-                                  </button>
-                                
-                                  <button
-                                    onClick={() => openModal(user, "orders")}
-                                    style={{
-                                      padding: "6px 12px",
-                                      background: "#8b5cf6",
-                                      color: "#fff",
-                                      border: "none",
-                                      borderRadius: 4,
-                                      cursor: "pointer",
-                                      marginRight: 8,
-                                      fontSize: 12,
-                                    }}
-                                  >
-                                    Orders
-                                  </button>
-                                
-                                  <button
-                                    onClick={() => openModal(user, "address")}
-                                    style={{
-                                      padding: "6px 12px",
-                                      background: "#ea580c",
-                                      color: "#fff",
-                                      border: "none",
-                                      borderRadius: 4,
-                                      cursor: "pointer",
-                                      marginRight: 8,
-                                      fontSize: 12,
-                                    }}
-                                  >
-                                    Address
-                                  </button>
-                                
-                                  <button
-                                    onClick={() => openModal(user, "view")}
-                                    style={{
-                                      padding: "6px 12px",
-                                      background: "#10b981",
-                                      color: "#fff",
-                                      border: "none",
-                                      borderRadius: 4,
-                                      cursor: "pointer",
-                                      marginRight: 8,
-                                      fontSize: 12,
-                                    }}
-                                  >
-                                    View
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
+                                                userSelect: "none",
+                                                transition: "0.2s ease",
+                                            }}
+                                            title="Click to toggle status"
+                                        >
+                                            {user.status === "active" ? "Active" : "Inactive"}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <div>
+                                            <button
+                                                onClick={() => openModal(user, "cart")}
+                                                style={{
+                                                    padding: "6px 12px",
+                                                    background: "#3b82f6",
+                                                    color: "#fff",
+                                                    border: "none",
+                                                    borderRadius: 4,
+                                                    cursor: "pointer",
+                                                    marginRight: 8,
+                                                    fontSize: 12,
+                                                }}
+                                            >
+                                                Cart
+                                            </button>
+
+                                            <button
+                                                onClick={() => openModal(user, "orders")}
+                                                style={{
+                                                    padding: "6px 12px",
+                                                    background: "#8b5cf6",
+                                                    color: "#fff",
+                                                    border: "none",
+                                                    borderRadius: 4,
+                                                    cursor: "pointer",
+                                                    marginRight: 8,
+                                                    fontSize: 12,
+                                                }}
+                                            >
+                                                Orders
+                                            </button>
+
+                                            <button
+                                                onClick={() => openModal(user, "address")}
+                                                style={{
+                                                    padding: "6px 12px",
+                                                    background: "#ea580c",
+                                                    color: "#fff",
+                                                    border: "none",
+                                                    borderRadius: 4,
+                                                    cursor: "pointer",
+                                                    marginRight: 8,
+                                                    fontSize: 12,
+                                                }}
+                                            >
+                                                Address
+                                            </button>
+
+                                            <button
+                                                onClick={() => openModal(user, "view")}
+                                                style={{
+                                                    padding: "6px 12px",
+                                                    background: "#10b981",
+                                                    color: "#fff",
+                                                    border: "none",
+                                                    borderRadius: 4,
+                                                    cursor: "pointer",
+                                                    marginRight: 8,
+                                                    fontSize: 12,
+                                                }}
+                                            >
+                                                View
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
                         ) : (
-                          <tr>
-                            <td
-                              colSpan={5}
-                              style={{
-                                textAlign: "center",
-                                padding: 40,
-                                color: "var(--text-2)",
-                              }}
-                            >
-                              No users found
-                            </td>
-                          </tr>
+                            <tr>
+                                <td
+                                    colSpan={5}
+                                    style={{
+                                        textAlign: "center",
+                                        padding: 40,
+                                        color: "var(--text-2)",
+                                    }}
+                                >
+                                    No users found
+                                </td>
+                            </tr>
                         )}
                     </tbody>
                 </table>
