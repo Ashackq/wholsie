@@ -34,7 +34,7 @@ async function bootstrap() {
   });
 
   // Apply rate limiter to all API routes
-  app.use("/api", limiter);
+  // app.use("/api", limiter);
 
   // Stricter rate limiting for auth endpoints
   const authLimiter = rateLimit({
