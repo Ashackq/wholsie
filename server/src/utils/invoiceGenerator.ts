@@ -118,6 +118,6 @@ export async function createInvoiceFromOrder(
  * @returns Invoice URL
  */
 export function getInvoiceUrl(invoiceId: string): string {
-  const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   return `${baseUrl}/invoice/${invoiceId}`;
 }

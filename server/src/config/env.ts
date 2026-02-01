@@ -16,6 +16,9 @@ const envSchema = z.object({
     SMS_ROUTE: z.string().optional(),
     // Test helper
     TEST_SMS_TO: z.string().optional(),
+    // OTP Simulation
+    OTP_SIMULATION_MODE: z.coerce.boolean().default(false),
+    OTP_SIMULATION_CODE: z.string().optional(),
     // Delhivery Integration
     DELHIVERY_TOKEN: z.string().optional(),
     DELHIVERY_API_URL: z.string().url().default("https://staging-express.delhivery.com"),

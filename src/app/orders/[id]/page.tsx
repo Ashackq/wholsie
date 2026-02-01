@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { getOrder, createPaymentOrder, deleteOrder } from "@/lib/api";
+import { getOrder, createPaymentOrder, deleteOrder, trackShipment } from "@/lib/api";
 
 interface Order {
   _id: string;
@@ -79,6 +79,14 @@ export default function OrderDetailPage() {
       });
       console.log("Total/NetAmount:", orderData?.total || orderData?.netAmount);
       setOrder(orderData || null);
+
+      if (orderData?.delhiveryTrackingId) {
+        try {
+          await trackShipment(orderData.delhiveryTrackingId);
+        } catch (trackingErr) {
+          console.warn("Tracking fetch failed:", trackingErr);
+        }
+      }
     } catch (err) {
       console.error("Failed to load order:", err);
       router.push("/orders");
@@ -448,71 +456,88 @@ export default function OrderDetailPage() {
                 </div>
 
                 {/* Tracking ID with Track Button */}
-                {order.delhiveryTrackingId && (
-                  <div>
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        color: "#666",
-                        marginBottom: "6px",
-                        fontWeight: "600",
-                      }}
-                    >
-                      <i className="fas fa-shipping-fast"></i> Tracking ID
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <span
+                {order.delhiveryTrackingId &&
+                  ["shipped", "delivered"].includes(order.status) && (
+                    <div>
+                      <div
                         style={{
-                          background: "#e9ecef",
-                          padding: "4px 10px",
-                          borderRadius: "15px",
-                          fontSize: "11px",
-                          fontWeight: "500",
-                          color: "#495057",
+                          fontSize: "13px",
+                          color: "#666",
+                          marginBottom: "6px",
+                          fontWeight: "600",
                         }}
                       >
-                        {order.delhiveryTrackingId}
-                      </span>
-                      <a
-                        href={`https://www.delhivery.com/track-v2/package/${order.delhiveryTrackingId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        <i className="fas fa-shipping-fast"></i> Tracking ID
+                      </div>
+                      <div
                         style={{
-                          padding: "4px 12px",
-                          background: "#17a2b8",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "20px",
-                          fontSize: "12px",
-                          fontWeight: "500",
-                          textDecoration: "none",
-                          display: "inline-flex",
+                          display: "flex",
                           alignItems: "center",
-                          gap: "4px",
-                          transition: "all 0.3s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "#138496";
-                          e.currentTarget.style.transform = "translateY(-2px)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "#17a2b8";
-                          e.currentTarget.style.transform = "translateY(0)";
+                          gap: "8px",
+                          flexWrap: "wrap",
                         }}
                       >
-                        <i className="fas fa-map-marker-alt"></i>
-                        Track
-                      </a>
+                        <span
+                          style={{
+                            background: "#e9ecef",
+                            padding: "4px 10px",
+                            borderRadius: "15px",
+                            fontSize: "11px",
+                            fontWeight: "500",
+                            color: "#495057",
+                          }}
+                        >
+                          {order.delhiveryTrackingId}
+                        </span>
+                        <a
+                          href={`https://www.delhivery.com/track-v2/package/${order.delhiveryTrackingId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            padding: "4px 12px",
+                            background: "#17a2b8",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "20px",
+                            fontSize: "12px",
+                            fontWeight: "500",
+                            textDecoration: "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            transition: "all 0.3s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "#138496";
+                            e.currentTarget.style.transform = "translateY(-2px)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "#17a2b8";
+                            e.currentTarget.style.transform = "translateY(0)";
+                          }}
+                        >
+                          <i className="fas fa-map-marker-alt"></i>
+                          Track
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                {order.delhiveryTrackingId &&
+                  !["shipped", "delivered"].includes(order.status) && (
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        color: "#92400e",
+                        background: "#fef3c7",
+                        border: "1px solid #fcd34d",
+                        padding: "8px 12px",
+                        borderRadius: "12px",
+                        display: "inline-block",
+                      }}
+                    >
+                      Tracking will be available once your order is shipped.
+                    </div>
+                  )}
               </div>
 
               {/* Pay Now Button (if needed) */}

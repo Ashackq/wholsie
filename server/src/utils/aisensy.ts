@@ -107,3 +107,39 @@ export async function sendInvoiceCampaign(
         },
     });
 }
+
+/* =========================================================
+   INVOICE LINK CAMPAIGN
+   Template Example:
+   "Hi {{1}}, your invoice is ready: {{2}}"
+   (If your template only uses name, invoiceUrl is optional)
+========================================================= */
+export async function sendInvoiceLinkCampaign(
+    apiKey: string,
+    phone: string,
+    firstName?: string,
+    invoiceUrl?: string,
+): Promise<Record<string, unknown>> {
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+    const safeName = firstName && firstName.trim() ? firstName.trim() : "user";
+    const templateParams = invoiceUrl ? [safeName, invoiceUrl] : [safeName];
+
+    return aisensyRequest({
+        data: {
+            apiKey,
+            campaignName: "invoice_link_camp",
+            destination: cleanPhone,
+            userName: "Wholesiii",
+            templateParams,
+            source: "order-system",
+            media: {},
+            buttons: [],
+            carouselCards: [],
+            location: {},
+            attributes: {},
+            paramsFallbackValue: {
+                InvoiceUrl: invoiceUrl || "",
+            },
+        },
+    });
+}

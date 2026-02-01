@@ -552,7 +552,7 @@ export default function Home() {
         )}
       </section>
 
-      {/* Instagram Feed Section */}
+      {/* Instagram Feed Section
       <section className="instagram_feed_section mt_80 mb_80">
         <div className="container">
           <div className="row">
@@ -564,13 +564,13 @@ export default function Home() {
             </div>
           </div>
 
-          {/* <div className="row">
+          <div className="row">
             <div className="col-xl-12">
               <InstagramFeed />
             </div>
-          </div>*/}
+          </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Features Section */}
       <section className="features mt_55">

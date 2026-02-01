@@ -191,6 +191,32 @@ paymentRouter.post("/payments/webhook", async (req, res, next) => {
           console.log(
             `✅ Invoice created: ${invoice.invoiceNumber} - URL: ${invoiceUrl}`,
           );
+
+          // Send invoice link via WhatsApp (Aisensy)
+          try {
+            const apiKey = env.AISENSY_API_KEY;
+            const user = order.userId as any;
+            const phone = user?.phone;
+
+            if (apiKey && phone) {
+              const { sendInvoiceLinkCampaign } = await import(
+                "../utils/aisensy.js"
+              );
+
+              await sendInvoiceLinkCampaign(
+                apiKey,
+                phone,
+                user?.firstName,
+                invoiceUrl,
+              );
+            } else {
+              console.warn(
+                "Aisensy invoice link skipped: missing AISENSY_API_KEY or user phone",
+              );
+            }
+          } catch (waErr) {
+            console.error("⚠️  Failed to send invoice link via Aisensy:", waErr);
+          }
         } catch (emailErr) {
           console.error(
             `⚠️  Failed to create invoice or send email for order ${order.orderId || order._id}:`,
@@ -388,6 +414,32 @@ paymentRouter.post("/payments/verify", async (req, res, next) => {
           console.log(
             `✅ Invoice created: ${invoice.invoiceNumber} - URL: ${invoiceUrl}`,
           );
+
+          // Send invoice link via WhatsApp (Aisensy)
+          try {
+            const apiKey = env.AISENSY_API_KEY;
+            const user = order.userId as any;
+            const phone = user?.phone;
+
+            if (apiKey && phone) {
+              const { sendInvoiceLinkCampaign } = await import(
+                "../utils/aisensy.js"
+              );
+
+              await sendInvoiceLinkCampaign(
+                apiKey,
+                phone,
+                user?.firstName,
+                invoiceUrl,
+              );
+            } else {
+              console.warn(
+                "Aisensy invoice link skipped: missing AISENSY_API_KEY or user phone",
+              );
+            }
+          } catch (waErr) {
+            console.error("⚠️  Failed to send invoice link via Aisensy:", waErr);
+          }
         } catch (invoiceErr) {
           console.error(
             `⚠️  Failed to create invoice for order ${order.orderId || order._id}:`,

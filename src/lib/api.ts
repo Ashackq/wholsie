@@ -2,6 +2,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 type FetchOptions = RequestInit & {
   skipAuth?: boolean;
+  suppressAuthRedirect?: boolean;
 };
 
 interface ApiResponse<T> {
@@ -145,7 +146,7 @@ async function apiCall<T>(
   endpoint: string,
   options: FetchOptions = {},
 ): Promise<T> {
-  const { skipAuth, ...fetchOpts } = options;
+  const { skipAuth, suppressAuthRedirect, ...fetchOpts } = options;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -169,9 +170,11 @@ async function apiCall<T>(
   if (!response.ok) {
     // Handle 401 Unauthorized - redirect to login
     if (response.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+      if (!suppressAuthRedirect) {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
       throw new Error("Authentication required");
     }
     const error = await response
@@ -246,7 +249,9 @@ export async function removeFromCart(
 }
 
 export async function getOrders(): Promise<ApiResponse<Order[]>> {
-  return apiCall<ApiResponse<Order[]>>("/orders");
+  return apiCall<ApiResponse<Order[]>>("/orders", {
+    suppressAuthRedirect: true,
+  });
 }
 
 export async function getOrder(orderId: string): Promise<ApiResponse<Order>> {
@@ -326,7 +331,9 @@ export async function logout(): Promise<ApiResponse<{ message: string }>> {
 }
 
 export async function getCurrentUser(): Promise<ApiResponse<User>> {
-  return apiCall<ApiResponse<User>>("/auth/me");
+  return apiCall<ApiResponse<User>>("/auth/me", {
+    suppressAuthRedirect: true,
+  });
 }
 
 export async function updateProfile(data: {

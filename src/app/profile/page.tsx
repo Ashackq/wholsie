@@ -52,6 +52,9 @@ export default function ProfilePage() {
   const cacheUser = (u: User | null) => {
     if (!u) return;
     setUser(u);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("user", JSON.stringify(u));
+    }
   };
 
   // Check if it's first-time email setup (phone is in email)
@@ -60,6 +63,19 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
+    const cachedUserRaw = localStorage.getItem("user");
+    if (cachedUserRaw) {
+      try {
+        const cachedUser = JSON.parse(cachedUserRaw) as User;
+        if (cachedUser) {
+          cacheUser(cachedUser);
+          setName(cachedUser.name || "");
+          setEmail(cachedUser.email || "");
+        }
+      } catch {
+        // Ignore invalid cache
+      }
+    }
     // Check for profile completion message from checkout/cart
     const savedMessage = localStorage.getItem("profileMessage");
     if (savedMessage) {
@@ -90,20 +106,29 @@ export default function ProfilePage() {
         setName(resolvedUser.name || "");
         setEmail(resolvedUser.email || "");
       }
+    } catch (err) {
+      console.error("Failed to load user data:", err);
+      const cachedUser = localStorage.getItem("user");
+      const token = localStorage.getItem("authToken");
+      if (!cachedUser && !token) {
+        router.push("/login");
+      }
+    }
 
+    try {
       const ordersData = await getOrders();
       const ordersArray = ordersData.data || ordersData || [];
       // Sort orders by date, most recent first
       const sortedOrders = Array.isArray(ordersArray)
         ? ordersArray.sort(
-            (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          )
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        )
         : [];
       setOrders(sortedOrders);
     } catch (err) {
-      console.error("Failed to load user data:", err);
-      router.push("/login");
+      console.error("Failed to load orders:", err);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -479,8 +504,8 @@ export default function ProfilePage() {
                               <td style={{ verticalAlign: "middle" }}>
                                 {order.createdAt
                                   ? new Date(
-                                      order.createdAt,
-                                    ).toLocaleDateString()
+                                    order.createdAt,
+                                  ).toLocaleDateString()
                                   : "N/A"}
                               </td>
                               <td style={{ verticalAlign: "middle" }}>

@@ -149,6 +149,10 @@ router.post(
         return res.status(403).json({ error: "User account is not active" });
       }
 
+      if (user.role !== "admin") {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
       // Create JWT token
       const token = generateToken({
         userId: user._id.toString(),
@@ -401,8 +405,12 @@ router.post(
           .json({ error: "Valid 10-digit phone number required" });
       }
 
-      // Generate 6-digit OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      // Generate 6-digit OTP (or use simulation code)
+      const simulationEnabled = env.OTP_SIMULATION_MODE === true;
+      const simulatedOtp = env.OTP_SIMULATION_CODE || "123456";
+      const otp = simulationEnabled
+        ? simulatedOtp
+        : Math.floor(100000 + Math.random() * 900000).toString();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
       // Store OTP
@@ -413,18 +421,20 @@ router.post(
         attempts: 0,
       });
 
-      // Send OTP via SMS
-      const smsSent = await sendOTP(phone, otp);
+      // Send OTP via SMS (skip in simulation)
+      if (!simulationEnabled) {
+        const smsSent = await sendOTP(phone, otp);
 
-      if (!smsSent) {
-        console.warn(`Failed to send OTP to ${phone}, but continuing...`);
+        if (!smsSent) {
+          console.warn(`Failed to send OTP to ${phone}, but continuing...`);
+        }
       }
 
       return res.json({
         success: true,
         message: "OTP sent to your mobile number",
-        // Remove in production:
-        ...(env.NODE_ENV === "development" && { otp }),
+        // Include OTP in dev or simulation mode
+        ...((env.NODE_ENV === "development" || simulationEnabled) && { otp }),
       });
     } catch (error) {
       next(error);
@@ -444,36 +454,44 @@ router.post(
         return res.status(400).json({ error: "Phone and OTP required" });
       }
 
+      const simulationEnabled = env.OTP_SIMULATION_MODE === true;
+      const simulatedOtp = env.OTP_SIMULATION_CODE || "123456";
+
       // Get stored OTP
-      const storedOTP = otpStore.get(phone);
+      let storedOTP = otpStore.get(phone);
 
       if (!storedOTP) {
-        return res.status(400).json({ error: "OTP expired or not found" });
+        // Allow simulation login without prior request-otp
+        if (!(simulationEnabled && otp === simulatedOtp)) {
+          return res.status(400).json({ error: "OTP expired or not found" });
+        }
+      } else {
+        // Check expiration
+        if (storedOTP.expiresAt < new Date()) {
+          otpStore.delete(phone);
+          return res.status(400).json({ error: "OTP has expired" });
+        }
+
+        // Check attempts
+        if (storedOTP.attempts >= 3) {
+          otpStore.delete(phone);
+          return res.status(400).json({ error: "Too many failed attempts" });
+        }
+
+        // Verify OTP
+        if (storedOTP.otp !== otp) {
+          storedOTP.attempts++;
+          return res.status(400).json({
+            error: "Invalid OTP",
+            attemptsLeft: 3 - storedOTP.attempts,
+          });
+        }
       }
 
-      // Check expiration
-      if (storedOTP.expiresAt < new Date()) {
+      // OTP is valid, clear it if it existed
+      if (storedOTP) {
         otpStore.delete(phone);
-        return res.status(400).json({ error: "OTP has expired" });
       }
-
-      // Check attempts
-      if (storedOTP.attempts >= 3) {
-        otpStore.delete(phone);
-        return res.status(400).json({ error: "Too many failed attempts" });
-      }
-
-      // Verify OTP
-      if (storedOTP.otp !== otp) {
-        storedOTP.attempts++;
-        return res.status(400).json({
-          error: "Invalid OTP",
-          attemptsLeft: 3 - storedOTP.attempts,
-        });
-      }
-
-      // OTP is valid, clear it
-      otpStore.delete(phone);
 
       // Check if user exists
       let user = await db.collection("users").findOne({ phone });

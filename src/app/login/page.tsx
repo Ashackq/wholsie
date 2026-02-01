@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { getCurrentUser } from "@/lib/api";
 
 const showToast = (
   message: string,
@@ -22,9 +22,6 @@ const showToast = (
 export default function LoginPage() {
   const router = useRouter();
   const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
-  const [mode, setMode] = useState<"password" | "otp">("otp");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [mobile, setMobile] = useState("");
   const [otp, setOtp] = useState("");
   const [otpStep, setOtpStep] = useState<"request" | "verify">("request");
@@ -68,43 +65,6 @@ export default function LoginPage() {
         const nextEmptyIndex = Math.min(pastedData.length, 5);
         otpInputRefs.current[nextEmptyIndex]?.focus();
       }, 0);
-    }
-  };
-
-  const handlePasswordLogin = async (e: FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const res = await fetch(`${API}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Login failed");
-      }
-
-      localStorage.setItem("user", JSON.stringify(data.user));
-      if (data.token) {
-        localStorage.setItem("authToken", data.token);
-      }
-      // Redirect admins straight to admin dashboard
-      if (data?.user?.role === "admin") {
-        router.push("/admin");
-      } else {
-        router.push("/");
-      }
-      router.refresh();
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -181,6 +141,15 @@ export default function LoginPage() {
       if (data.token) {
         localStorage.setItem("authToken", data.token);
       }
+      try {
+        const currentUser = await getCurrentUser();
+        const resolvedUser = (currentUser.data || currentUser) as any;
+        if (resolvedUser) {
+          localStorage.setItem("user", JSON.stringify(resolvedUser));
+        }
+      } catch {
+        // Ignore profile fetch failures here
+      }
       showToast("Login successful!", "success");
 
       // Redirect admins to admin dashboard
@@ -232,12 +201,14 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password login */}
-            {mode === "password" && (
-              <div className="col-xxl-4 col-lg-6 col-xl-5 col-md-10 wow fadeInRight">
-                <div className="sign_in_form">
-                  <h3>Sign In to Continue 👋</h3>
-                  <form onSubmit={handlePasswordLogin}>
+            {/* Mobile OTP login */}
+            <div className="col-xxl-4 col-lg-6 col-xl-5 col-md-10 wow fadeInRight">
+              <div className="sign_in_form">
+                <h3>Sign In / Sign Up to Continue 👋</h3>
+
+                {/* Step 1: Request OTP */}
+                {otpStep === "request" && (
+                  <form onSubmit={handleRequestOtp}>
                     {error && (
                       <div className="alert alert-danger" role="alert">
                         {error}
@@ -245,255 +216,164 @@ export default function LoginPage() {
                     )}
                     <div className="row">
                       <div className="col-xl-12">
-                        <div className="single_input" id="eelement">
-                          <label htmlFor="p_email">Email</label>
+                        <div className="single_input" id="mobilenumber_div">
+                          <label htmlFor="mobilenumber">Mobile Number</label>
                           <input
-                            type="email"
-                            id="p_email"
-                            name="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            type="tel"
+                            id="mobilenumber"
+                            name="mobilenumber"
+                            maxLength={10}
+                            value={mobile}
+                            onChange={(e) =>
+                              setMobile(e.target.value.replace(/[^0-9]/g, ""))
+                            }
                             style={{ padding: "18px 18px 6px" }}
                           />
                         </div>
                       </div>
-                      <div className="col-xl-12">
-                        <div className="single_input" id="pwdelement">
-                          <label htmlFor="password">Password</label>
-                          <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            autoComplete="current-password"
-                          />
+                      <div className="col-12">
+                        <div className="forgot">
+                          <div className="form-check">
+                            <input
+                              type="checkbox"
+                              id="ByContinuingYou"
+                              className="form-check-input"
+                              checked={agree}
+                              onChange={(e) => setAgree(e.target.checked)}
+                            />
+                            <label htmlFor="ByContinuingYou">
+                              By continuing, you agree to our Terms of Service
+                              & Privacy Policy
+                            </label>
+                          </div>
                         </div>
                       </div>
-                      {/* Forgot password link hidden for now
-                                            <div className="col-12 mb-3">
-                                                <Link href="/reset-password" style={{ color: "var(--primary)" }}>
-                                                    Forgot your password?
-                                                </Link>
-                                            </div>
-                                            */}
                       <div className="col-xl-12">
                         <button
                           type="submit"
                           className="common_btn"
                           disabled={loading}
                         >
-                          {loading ? "Signing in..." : "Sign In"}{" "}
+                          {loading ? "Sending..." : "Request OTP"}{" "}
                           <i className="fas fa-long-arrow-right" />
                         </button>
                       </div>
                     </div>
                   </form>
-                  <p className="dont_account">
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setMode("otp");
-                      }}
-                    >
-                      Login With Mobile OTP{" "}
-                      <i className="fas fa-long-arrow-right" />
-                    </a>
-                  </p>
-                </div>
-              </div>
-            )}
+                )}
 
-            {/* Mobile OTP login */}
-            {mode === "otp" && (
-              <div className="col-xxl-4 col-lg-6 col-xl-5 col-md-10 wow fadeInRight">
-                <div className="sign_in_form">
-                  <h3>Sign In / Sign Up to Continue 👋</h3>
-
-                  {/* Step 1: Request OTP */}
-                  {otpStep === "request" && (
-                    <form onSubmit={handleRequestOtp}>
-                      {error && (
-                        <div className="alert alert-danger" role="alert">
-                          {error}
-                        </div>
-                      )}
-                      <div className="row">
-                        <div className="col-xl-12">
-                          <div className="single_input" id="mobilenumber_div">
-                            <label htmlFor="mobilenumber">Mobile Number</label>
-                            <input
-                              type="tel"
-                              id="mobilenumber"
-                              name="mobilenumber"
-                              maxLength={10}
-                              value={mobile}
-                              onChange={(e) =>
-                                setMobile(e.target.value.replace(/[^0-9]/g, ""))
-                              }
-                              style={{ padding: "18px 18px 6px" }}
-                            />
-                          </div>
-                        </div>
-                        <div className="col-12">
-                          <div className="forgot">
-                            <div className="form-check">
-                              <input
-                                type="checkbox"
-                                id="ByContinuingYou"
-                                className="form-check-input"
-                                checked={agree}
-                                onChange={(e) => setAgree(e.target.checked)}
-                              />
-                              <label htmlFor="ByContinuingYou">
-                                By continuing, you agree to our Terms of Service
-                                & Privacy Policy
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="col-xl-12">
-                          <button
-                            type="submit"
-                            className="common_btn"
-                            disabled={loading}
-                          >
-                            {loading ? "Sending..." : "Request OTP"}{" "}
-                            <i className="fas fa-long-arrow-right" />
-                          </button>
-                        </div>
+                {/* Step 2: Verify OTP */}
+                {otpStep === "verify" && (
+                  <form onSubmit={handleVerifyOtp}>
+                    {error && (
+                      <div className="alert alert-danger" role="alert">
+                        {error}
                       </div>
-                    </form>
-                  )}
-
-                  {/* Step 2: Verify OTP */}
-                  {otpStep === "verify" && (
-                    <form onSubmit={handleVerifyOtp}>
-                      {error && (
-                        <div className="alert alert-danger" role="alert">
-                          {error}
-                        </div>
-                      )}
-                      <div className="row">
-                        <div className="col-xl-12 mb-3">
-                          <p className="text-muted">
-                            Enter the 6-digit OTP sent to{" "}
-                            <strong>{mobile}</strong>
-                            <button
-                              type="button"
-                              className="btn btn-link btn-sm"
-                              onClick={() => {
-                                setOtpStep("request");
-                                setOtp("");
-                                setError("");
-                              }}
-                            >
-                              Change Number
-                            </button>
-                          </p>
-                        </div>
-                        <div className="col-xl-12">
-                          <div className="single_input">
-                            <label>Enter 6-Digit OTP</label>
-                            <div
-                              className="otp_input_group"
-                              style={{
-                                display: "flex",
-                                gap: "10px",
-                                justifyContent: "center",
-                                marginTop: "15px",
-                                marginBottom: "20px",
-                              }}
-                            >
-                              {Array.from({ length: 6 }).map((_, index) => (
-                                <input
-                                  key={index}
-                                  ref={(el) => {
-                                    otpInputRefs.current[index] = el;
-                                  }}
-                                  type="text"
-                                  inputMode="numeric"
-                                  maxLength={1}
-                                  value={otp[index] || ""}
-                                  onChange={(e) =>
-                                    handleOtpChange(index, e.target.value)
-                                  }
-                                  onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                                  onPaste={handleOtpPaste}
-                                  autoComplete="off"
-                                  style={{
-                                    width: "50px",
-                                    height: "50px",
-                                    fontSize: "24px",
-                                    fontWeight: "bold",
-                                    textAlign: "center",
-                                    border: "2px solid #ddd",
-                                    borderRadius: "8px",
-                                    padding: "0px",
-                                    transition: "all 0.2s",
-                                  }}
-                                  onFocus={(e) => {
-                                    e.target.style.borderColor =
-                                      "var(--primary)";
-                                    e.target.style.boxShadow =
-                                      "0 0 5px rgba(var(--primary-rgb), 0.3)";
-                                  }}
-                                  onBlur={(e) => {
-                                    e.target.style.borderColor = "#ddd";
-                                    e.target.style.boxShadow = "none";
-                                  }}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="col-12 mb-3">
+                    )}
+                    <div className="row">
+                      <div className="col-xl-12 mb-3">
+                        <p className="text-muted">
+                          Enter the 6-digit OTP sent to{" "}
+                          <strong>{mobile}</strong>
                           <button
                             type="button"
-                            className="btn btn-link"
+                            className="btn btn-link btn-sm"
                             onClick={() => {
                               setOtpStep("request");
-                              handleRequestOtp({
-                                preventDefault: () => {},
-                              } as FormEvent);
+                              setOtp("");
+                              setError("");
                             }}
-                            disabled={loading}
                           >
-                            Resend OTP
+                            Change Number
                           </button>
-                        </div>
-                        <div className="col-xl-12">
-                          <button
-                            type="submit"
-                            className="common_btn"
-                            disabled={loading}
+                        </p>
+                      </div>
+                      <div className="col-xl-12">
+                        <div className="single_input">
+                          <label>Enter 6-Digit OTP</label>
+                          <div
+                            className="otp_input_group"
+                            style={{
+                              display: "flex",
+                              gap: "10px",
+                              justifyContent: "center",
+                              marginTop: "15px",
+                              marginBottom: "20px",
+                            }}
                           >
-                            {loading ? "Verifying..." : "Verify & Login"}{" "}
-                            <i className="fas fa-long-arrow-right" />
-                          </button>
+                            {Array.from({ length: 6 }).map((_, index) => (
+                              <input
+                                key={index}
+                                ref={(el) => {
+                                  otpInputRefs.current[index] = el;
+                                }}
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={1}
+                                value={otp[index] || ""}
+                                onChange={(e) =>
+                                  handleOtpChange(index, e.target.value)
+                                }
+                                onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                                onPaste={handleOtpPaste}
+                                autoComplete="off"
+                                style={{
+                                  width: "50px",
+                                  height: "50px",
+                                  fontSize: "24px",
+                                  fontWeight: "bold",
+                                  textAlign: "center",
+                                  border: "2px solid #ddd",
+                                  borderRadius: "8px",
+                                  padding: "0px",
+                                  transition: "all 0.2s",
+                                }}
+                                onFocus={(e) => {
+                                  e.target.style.borderColor =
+                                    "var(--primary)";
+                                  e.target.style.boxShadow =
+                                    "0 0 5px rgba(var(--primary-rgb), 0.3)";
+                                }}
+                                onBlur={(e) => {
+                                  e.target.style.borderColor = "#ddd";
+                                  e.target.style.boxShadow = "none";
+                                }}
+                              />
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </form>
-                  )}
+                      <div className="col-12 mb-3">
+                        <button
+                          type="button"
+                          className="btn btn-link"
+                          onClick={() => {
+                            setOtpStep("request");
+                            handleRequestOtp({
+                              preventDefault: () => { },
+                            } as FormEvent);
+                          }}
+                          disabled={loading}
+                        >
+                          Resend OTP
+                        </button>
+                      </div>
+                      <div className="col-xl-12">
+                        <button
+                          type="submit"
+                          className="common_btn"
+                          disabled={loading}
+                        >
+                          {loading ? "Verifying..." : "Verify & Login"}{" "}
+                          <i className="fas fa-long-arrow-right" />
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                )}
 
-                  <p className="dont_account">
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setMode("password");
-                        setOtpStep("request");
-                        setError("");
-                      }}
-                    >
-                      Login With Email Password{" "}
-                      <i className="fas fa-long-arrow-right" />
-                    </a>
-                  </p>
-                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </section>

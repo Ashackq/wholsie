@@ -21,7 +21,7 @@ export function useAdminAuth() {
                     setError("Admin access required");
                     setIsAdmin(false);
                     // Redirect to login after a short delay
-                    setTimeout(() => router.push("/login"), 1000);
+                    setTimeout(() => router.push("/admin/login"), 1000);
                 } else {
                     const data = await res.json();
                     setIsAdmin(data.isAdmin);

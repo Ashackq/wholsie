@@ -3,6 +3,7 @@ import { Order } from "../models/Order.js";
 import { User } from "../models/User.js";
 import { Product } from "../models/Product.js";
 import { getInvoiceUrl } from "../utils/invoiceGenerator.js";
+import { env } from "../config/env.js";
 
 /**
  * Get all orders (admin)
@@ -131,6 +132,17 @@ export async function updateOrderStatus(
       });
     }
 
+    const existingOrder = await Order.findById(orderId).populate(
+      "userId",
+      "name firstName lastName phone email address",
+    );
+
+    if (!existingOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const previousStatus = existingOrder.status;
+
     const order = await Order.findByIdAndUpdate(
       orderId,
       { status, updatedAt: new Date() },
@@ -139,6 +151,24 @@ export async function updateOrderStatus(
 
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
+    }
+
+    if (status === "shipped" && previousStatus !== "shipped") {
+      try {
+        const apiKey = env.AISENSY_API_KEY;
+        const trackingId = (order as any).delhiveryTrackingId;
+        const phone =
+          (order as any)?.userId?.phone || (order as any)?.customerPhone;
+
+        if (apiKey && trackingId && phone) {
+          const { sendOrderShippedWithTracking } = await import(
+            "../utils/aisensy.js"
+          );
+          await sendOrderShippedWithTracking(apiKey, phone, trackingId);
+        }
+      } catch (waErr) {
+        console.error("⚠️  Failed to send tracking link via Aisensy:", waErr);
+      }
     }
 
     res.json({
