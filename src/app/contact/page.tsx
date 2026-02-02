@@ -27,14 +27,14 @@ export default function ContactPage() {
                             <div className="contact_info">
                                 <span><Image src="/assets/images/call_icon_black.png" alt="call" width={40} height={40} className="img-fluid" /></span>
                                 <h3>Call Us</h3>
-                                <a href="tel:+919423070102">+91 9423070102</a>
+                                <a href="tel:+919209307191">+91 92093 07191</a>
                             </div>
                         </div>
                         <div className="col-xl-4 col-md-6">
                             <div className="contact_info">
                                 <span><Image src="/assets/images/mail_icon_black.png" alt="Mail" width={40} height={40} className="img-fluid" /></span>
                                 <h3>Email Us</h3>
-                                <a href="mailto:wholesiii@gmail.com">wholesiii@gmail.com</a>
+                                <a href="mailto:info@wholesiii.com">info@wholesiii.com</a>
                             </div>
                         </div>
                         <div className="col-xl-4 col-md-6">
