@@ -95,6 +95,7 @@ async function bootstrap() {
   app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📍 Environment: ${env.NODE_ENV}`);
+    console.log(`Otp Mode: `, env.OTP_SIMULATION_MODE === true ? "Simulated" : "Online");
   });
 }
 
