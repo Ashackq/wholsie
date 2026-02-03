@@ -240,15 +240,16 @@ export async function cancelOrder(
       return res.status(404).json({ error: "Order not found" });
     }
 
-    // Only allow cancellation if order is pending/unpaid
+    // Only allow cancellation if order is pending
     if (
       order.paymentStatus === "completed" ||
+      order.status === "processing" ||
       order.status === "shipped" ||
       order.status === "delivered"
     ) {
       return res
         .status(400)
-        .json({ error: "Cannot cancel completed or shipped orders" });
+        .json({ error: "Cannot cancel orders that are processing, shipped, or delivered" });
     }
 
     await order.deleteOne();

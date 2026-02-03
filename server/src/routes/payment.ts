@@ -206,7 +206,6 @@ paymentRouter.post("/payments/webhook", async (req, res, next) => {
               await sendInvoiceLinkCampaign(
                 apiKey,
                 phone,
-                user?.firstName,
                 invoiceUrl,
               );
             } else {
@@ -429,7 +428,6 @@ paymentRouter.post("/payments/verify", async (req, res, next) => {
               await sendInvoiceLinkCampaign(
                 apiKey,
                 phone,
-                user?.firstName,
                 invoiceUrl,
               );
             } else {

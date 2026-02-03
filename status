@@ -1,0 +1,100 @@
+Pickup scheduled
+       "Status": 
+          "Status": "Manifested",
+      
+        "Status": 
+          "Status": "Not Picked",
+
+          
+GET /api/categories 304 - - 252.310 ms
+{
+  "ShipmentData": [
+    {
+      "Shipment": {
+        "PickUpDate": "2026-02-03T12:32:56.865",
+        "Destination": "Pune",
+        "DestRecieveDate": null,
+        "Scans": [
+          {
+            "ScanDetail": {
+              "ScanDateTime": "2026-02-03T12:32:56.9",
+              "ScanType": "UD",
+              "Scan": "Manifested",
+              "StatusDateTime": "2026-02-03T12:32:56.9",
+              "ScannedLocation": "Satara_Ambedkarnagar_D (Maharashtra)",
+              "StatusCode": "X-UCI",
+              "Instructions": "Manifest uploaded"
+            }
+          },
+          {
+            "ScanDetail": {
+              "ScanDateTime": "2026-02-03T12:44:00",
+              "ScanType": "UD",
+              "Scan": "Manifested",
+              "StatusDateTime": "2026-02-03T12:44:00",
+              "ScannedLocation": "Satara_Ambedkarnagar_D (Maharashtra)",
+              "StatusCode": "FMPUR-101",
+              "Instructions": "Pickup scheduled"
+            }
+          },
+          {
+            "ScanDetail": {
+              "ScanDateTime": "2026-02-03T12:45:21.556",
+              "ScanType": "UD",
+              "Scan": "Not Picked",
+              "StatusDateTime": "2026-02-03T12:45:21.556",
+              "ScannedLocation": "Satara_Ambedkarnagar_D (Maharashtra)",
+              "StatusCode": "X-PNP",
+              "Instructions": "Shipment not received from client"
+            }
+          }
+        ],
+        "Status": {
+          "Status": "Not Picked",
+          "StatusLocation": "Satara_Ambedkarnagar_D (Maharashtra)",
+          "StatusDateTime": "2026-02-03T12:45:21.556",
+          "RecievedBy": "",
+          "StatusCode": "X-PNP",
+          "StatusType": "UD",
+          "Instructions": "Shipment not received from client"
+        },
+        "ReturnPromisedDeliveryDate": null,
+        "Ewaybill": [],
+        "InvoiceAmount": 442,
+        "ChargedWeight": null,
+        "PickedupDate": null,
+        "DeliveryDate": null,
+        "SenderName": "c067cc-DIVAINELEAFNEUTRAPRI-do",
+        "AWB": "45783110000792",
+        "DispatchCount": 0,
+        "OrderType": "Pre-paid",
+        "ReturnedDate": null,
+        "ExpectedDeliveryDate": null,
+        "RTOStartedDate": null,
+        "Extras": "",
+        "FirstAttemptDate": null,
+        "ReverseInTransit": false,
+        "Quantity": "4",
+        "Origin": "Satara_Ambedkarnagar_D (Maharashtra)",
+        "Consignee": {
+          "City": "Pune",
+          "Name": "Akash Patel",
+          "Address1": [],
+          "Address2": [],
+          "Address3": "",
+          "PinCode": 411058,
+          "State": "Maharashtra",
+          "Telephone2": "",
+          "Country": "India",
+          "Telephone1": ""
+        },
+        "ReferenceNo": "ORD-1770101904132",
+        "OutDestinationDate": null,
+        "CODAmount": 0,
+        "PromisedDeliveryDate": null,
+        "PickupLocation": "Divaine Leaf Neutra Private Limited",
+        "OriginRecieveDate": null
+      }
+    }
+  ]
+}

@@ -23,8 +23,8 @@ export async function createShipment(req: Request, res: Response) {
     const order = await Order.findOne(
       isObjectId
         ? {
-            $or: [{ _id: orderId }, { orderId: orderId }, { orderNo: orderId }],
-          }
+          $or: [{ _id: orderId }, { orderId: orderId }, { orderNo: orderId }],
+        }
         : { $or: [{ orderId: orderId }, { orderNo: orderId }] },
     )
       .populate("userId shippingAddress")
@@ -177,12 +177,11 @@ export async function createShipment(req: Request, res: Response) {
           order_date:
             order.createdAt?.toISOString() || new Date().toISOString(),
           total_amount: (order.total || 0).toString(),
-          products_desc: `Box ${i + 1}/${mpsBoxCount}: ${
-            order.items
-              ?.map((item: any) => item.name || item.productName)
-              .filter(Boolean)
-              .join(", ") || `${order.items?.length || 1} item(s)`
-          }`,
+          products_desc: `Box ${i + 1}/${mpsBoxCount}: ${order.items
+            ?.map((item: any) => item.name || item.productName)
+            .filter(Boolean)
+            .join(", ") || `${order.items?.length || 1} item(s)`
+            }`,
           quantity: itemsPerBox.toString(),
           weight: boxWeight.toString(),
           shipment_length: boxDimensions.length.toString(),
@@ -521,7 +520,11 @@ export async function getTracking(req: Request, res: Response) {
     }
 
     const result = await delhiveryUtils.getTrackingStatus(waybillsToTrack);
+    //  TODO: Status sync
+    // console.log(JSON.stringify(result, null, 2));
+    // if (result?.ShipmentData?.Shipment?.Status.Status === "Manifested") {
 
+    // }
     return res.status(200).json({
       success: true,
       data: result,

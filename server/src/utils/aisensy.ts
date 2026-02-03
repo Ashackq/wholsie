@@ -117,12 +117,10 @@ export async function sendInvoiceCampaign(
 export async function sendInvoiceLinkCampaign(
     apiKey: string,
     phone: string,
-    firstName?: string,
     invoiceUrl?: string,
 ): Promise<Record<string, unknown>> {
     const cleanPhone = phone.replace(/\D/g, "").slice(-10);
-    const safeName = firstName && firstName.trim() ? firstName.trim() : "user";
-    const templateParams = invoiceUrl ? [safeName, invoiceUrl] : [safeName];
+    const templateParams = invoiceUrl ? [invoiceUrl] : [];
 
     return aisensyRequest({
         data: {
