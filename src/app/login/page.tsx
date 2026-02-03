@@ -2,7 +2,8 @@
 
 import { useState, FormEvent, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { getCurrentUser } from "@/lib/api";
+import { addToCart, getCurrentUser } from "@/lib/api";
+import { clearGuestCart, getGuestCart } from "@/lib/guest-cart";
 
 const showToast = (
   message: string,
@@ -141,6 +142,15 @@ export default function LoginPage() {
       if (data.token) {
         localStorage.setItem("authToken", data.token);
       }
+      const guestCart = getGuestCart();
+      if (guestCart.items.length > 0) {
+        await Promise.all(
+          guestCart.items.map((item) =>
+            addToCart(item.productId, item.quantity, item.variantId),
+          ),
+        );
+        clearGuestCart();
+      }
       try {
         const currentUser = await getCurrentUser();
         const resolvedUser = (currentUser.data || currentUser) as any;
@@ -156,7 +166,13 @@ export default function LoginPage() {
       if (data?.user?.role === "admin") {
         router.push("/admin");
       } else {
-        router.push("/");
+        const redirectTo = localStorage.getItem("postLoginRedirect");
+        if (redirectTo) {
+          localStorage.removeItem("postLoginRedirect");
+          router.push(redirectTo);
+        } else {
+          router.push("/profile");
+        }
       }
       router.refresh();
     } catch (err: any) {

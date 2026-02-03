@@ -39,7 +39,7 @@ export default function PrivacyPolicyPage() {
                                 <p>Cookies help us remember preferences and cart items and analyze website traffic. You can disable cookies in your browser settings, but some features may be affected.</p>
 
                                 <h3>5. Sharing of Information</h3>
-                                <p>We do not sell, rent, or trade your personal information. For any privacy requests, contact us at <a href="mailto:wholesiii@gmail.com">wholesiii@gmail.com</a>.</p>
+                                <p>We do not sell, rent, or trade your personal information. For any privacy requests, contact us at <a href="mailto:info@wholesiii.com">info@wholesiii.com</a>.</p>
 
                                 <p className="last-updated">Last updated: January 6, 2026</p>
                             </div>

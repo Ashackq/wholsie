@@ -11,6 +11,11 @@ import {
   getProduct as getProductDetail,
 } from "@/lib/api";
 import { resolveProductImage, resolveProductPrice } from "@/lib/product-utils";
+import {
+  getGuestCart,
+  removeGuestCartItem,
+  updateGuestCartItem,
+} from "@/lib/guest-cart";
 
 type CartProduct = {
   _id?: string;
@@ -116,6 +121,7 @@ export default function CartPage() {
   const handleProceedToCheckout = () => {
     const userString = localStorage.getItem("user");
     if (!userString) {
+      localStorage.setItem("postLoginRedirect", "/checkout");
       router.push("/login");
       return;
     }
@@ -207,12 +213,57 @@ export default function CartPage() {
     [fullProducts],
   );
 
+  const mapGuestItems = useCallback((items: any[]): CartItem[] => {
+    return items.map((item) => {
+      const productId = item.productId?.toString?.() ?? "";
+      return {
+        _id: `${productId}:${item.variantId ?? ""}`,
+        productId,
+        quantity: Number(item.quantity) || 1,
+        variantIndex:
+          item.variantId !== undefined && item.variantId !== null
+            ? Number(item.variantId)
+            : undefined,
+        price: item.price,
+        name: item.name,
+        product: item.image || item.name ? { image: item.image, name: item.name } : undefined,
+      } as CartItem;
+    });
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     const fetchedProductIds = new Set<string>();
 
     const loadCart = async () => {
       try {
+        const isLoggedIn =
+          !!localStorage.getItem("authToken") ||
+          !!localStorage.getItem("user");
+
+        if (!isLoggedIn) {
+          const guestCart = getGuestCart();
+          const normalized = attachProductDetails({
+            items: mapGuestItems(guestCart.items || []),
+          });
+          if (mounted) setCart(normalized);
+          // Fetch product details for guest items
+          const itemsToFetch = (normalized.items || []).filter((item) => {
+            const fetched = fullProducts[item.productId];
+            return !fetched || !fetched.image;
+          });
+
+          if (itemsToFetch.length > 0) {
+            for (const item of itemsToFetch) {
+              if (mounted && !fetchedProductIds.has(item.productId)) {
+                fetchedProductIds.add(item.productId);
+                await getFullProduct(item.productId);
+              }
+            }
+          }
+          return;
+        }
+
         const response = await getCart();
         const normalized = attachProductDetails(
           (response as any).data || response,
@@ -249,6 +300,16 @@ export default function CartPage() {
   }, []);
 
   const refreshCart = async () => {
+    const isLoggedIn =
+      !!localStorage.getItem("authToken") || !!localStorage.getItem("user");
+    if (!isLoggedIn) {
+      const guestCart = getGuestCart();
+      const normalized = attachProductDetails({
+        items: mapGuestItems(guestCart.items || []),
+      });
+      setCart(normalized);
+      return;
+    }
     const response = await getCart();
     const normalized = attachProductDetails((response as any).data || response);
     setCart(normalized);
@@ -265,6 +326,19 @@ export default function CartPage() {
   ) => {
     const safeQuantity = Math.max(1, Number.isNaN(quantity) ? 1 : quantity);
     setUpdatingItemId(group.mergedIds[0]);
+
+    const isLoggedIn =
+      !!localStorage.getItem("authToken") || !!localStorage.getItem("user");
+    if (!isLoggedIn) {
+      updateGuestCartItem(
+        group.productId,
+        safeQuantity,
+        group.variantIndex !== undefined ? String(group.variantIndex) : undefined,
+      );
+      await refreshCart();
+      setUpdatingItemId(null);
+      return;
+    }
 
     // Optimistic UI update
     setCart((prev) => {
@@ -298,6 +372,16 @@ export default function CartPage() {
   const handleRemoveGroup = async (group: GroupedItem) => {
     setUpdatingItemId(group.mergedIds[0]);
     try {
+      const isLoggedIn =
+        !!localStorage.getItem("authToken") || !!localStorage.getItem("user");
+      if (!isLoggedIn) {
+        removeGuestCartItem(
+          group.productId,
+          group.variantIndex !== undefined ? String(group.variantIndex) : undefined,
+        );
+        await refreshCart();
+        return;
+      }
       for (const id of group.mergedIds) {
         await removeFromCart(id);
       }

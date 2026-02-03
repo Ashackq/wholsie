@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { addToCart } from "@/lib/api";
+import { addToGuestCart } from "@/lib/guest-cart";
 import { useRouter } from "next/navigation";
 
 interface ProductImage {
@@ -86,6 +87,24 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         if (!product) return;
 
         try {
+            const isLoggedIn =
+                typeof window !== "undefined" &&
+                (!!localStorage.getItem("authToken") ||
+                    !!localStorage.getItem("user"));
+            if (!isLoggedIn) {
+                addToGuestCart({
+                    productId: product._id,
+                    quantity,
+                    name: product.name,
+                    price: product.discountPrice || product.price,
+                    image: product.image,
+                });
+                localStorage.setItem("postLoginRedirect", "/cart");
+                setCartMessage("✓ Saved to cart. Please login to continue.");
+                setTimeout(() => setCartMessage(""), 3000);
+                router.push("/login");
+                return;
+            }
             await addToCart(product._id, quantity);
             setCartMessage(`✓ Added ${quantity} ${product.name} to cart!`);
             setTimeout(() => setCartMessage(""), 3000);
@@ -106,6 +125,14 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             // Check user profile data before proceeding
             const userString = localStorage.getItem("user");
             if (!userString) {
+                addToGuestCart({
+                    productId: product._id,
+                    quantity,
+                    name: product.name,
+                    price: product.discountPrice || product.price,
+                    image: product.image,
+                });
+                localStorage.setItem("postLoginRedirect", "/checkout");
                 setCartMessage("✗ Please login first.");
                 setTimeout(() => {
                     setCartMessage("")

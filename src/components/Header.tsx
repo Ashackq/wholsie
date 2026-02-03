@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useLayout } from "../context/LayoutContext";
 import { useRouter } from "next/navigation";
 import { logout } from "@/lib/api";
+import { hasGuestCartItems } from "@/lib/guest-cart";
 
 export default function Header() {
     const { hideHeaderFooter } = useLayout();
@@ -24,6 +25,38 @@ export default function Header() {
             setMobileOpen(false);
         } catch (e) {
             // ignore
+        }
+    };
+
+    const handleCartClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        const loggedIn =
+            !!localStorage.getItem("authToken") ||
+            !!localStorage.getItem("user");
+
+        if (!loggedIn) {
+            // Save redirect if they have guest cart items
+            if (hasGuestCartItems()) {
+                localStorage.setItem("postLoginRedirect", "/cart");
+            }
+            router.push("/login");
+        } else {
+            router.push("/cart");
+        }
+    };
+
+    const handleProfileClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        const loggedIn =
+            !!localStorage.getItem("authToken") ||
+            !!localStorage.getItem("user");
+
+        if (!loggedIn) {
+            // Save redirect for profile
+            localStorage.setItem("postLoginRedirect", "/profile");
+            router.push("/login");
+        } else {
+            router.push("/profile");
         }
     };
 
@@ -74,7 +107,8 @@ export default function Header() {
                                         <li>
                                             <a
                                                 id="cart_count_header"
-                                                href={isLoggedIn ? "/cart" : "/login"}
+                                                href="#"
+                                                onClick={handleCartClick}
                                                 className="nav-icon-item cart_count_header"
                                             >
                                                 <b>
@@ -87,7 +121,7 @@ export default function Header() {
                                             </a>
                                         </li>
                                         <li>
-                                            <a className="user" href={isLoggedIn ? "/profile" : "/login"}>
+                                            <a className="user" href="#" onClick={handleProfileClick}>
                                                 <b>
                                                     <img
                                                         src="/assets/images/user_icon_black.svg"
@@ -202,14 +236,14 @@ export default function Header() {
                                     </ul>
                                     <ul className="menu_icon">
                                         <li>
-                                            <a id="cart_count_header" href={isLoggedIn ? "/cart" : "/login"} className="nav-icon-item cart_count_header">
+                                            <a id="cart_count_header" href="#" onClick={handleCartClick} className="nav-icon-item cart_count_header">
                                                 <b>
                                                     <img src="/assets/images/cart_black.svg" alt="cart" className="img-fluid" />
                                                 </b>
                                             </a>
                                         </li>
                                         <li>
-                                            <a className="user" href={isLoggedIn ? "/profile" : "/login"}>
+                                            <a className="user" href="#" onClick={handleProfileClick}>
                                                 <b>
                                                     <img src="/assets/images/user_icon_black.svg" alt="cart" className="img-fluid" />
                                                 </b>
@@ -244,14 +278,14 @@ export default function Header() {
                     <div className="offcanvas-body p-3">
                         <ul className="mobile_menu_header d-flex flex-wrap gap-3 mb-3">
                             <li>
-                                <a id="cart_count_header" href={isLoggedIn ? "/cart" : "/login"} className="nav-icon-item cart_count_header">
+                                <a id="cart_count_header" href="#" onClick={handleCartClick} className="nav-icon-item cart_count_header">
                                     <b>
                                         <img src="/assets/images/cart_black.svg" alt="cart" className="img-fluid" />
                                     </b>
                                 </a>
                             </li>
                             <li>
-                                <a className="user" href={isLoggedIn ? "/profile" : "/login"}>
+                                <a className="user" href="#" onClick={handleProfileClick}>
                                     <b>
                                         <img src="/assets/images/user_icon_black.svg" alt="cart" className="img-fluid" />
                                     </b>
