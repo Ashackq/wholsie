@@ -8,6 +8,7 @@ type DashboardData = {
   totalRevenue: number;
   totalCustomers: number;
   totalProducts: number;
+  pendingReviews: number;
   orderStatus: Array<{ _id: string; count: number }>;
   recentOrders: Array<any>;
 };
@@ -97,7 +98,7 @@ export default function AdminDashboardPage() {
           <h1>Dashboard</h1>
           <p>Welcome back! Here's what's happening with your store.</p>
         </div>
-      
+
         {/* ✅ Right Side Refresh */}
         <RefreshButton
           onRefresh={loadDashboard}
@@ -172,6 +173,24 @@ export default function AdminDashboardPage() {
             <span>In catalog</span>
           </div>
         </div>
+
+        <div className="admin-stat-card">
+          <div className="admin-stat-header">
+            <div>
+              <div className="admin-stat-label">Pending Reviews</div>
+              <div className="admin-stat-value">{data.pendingReviews}</div>
+            </div>
+            <div className="admin-stat-icon">
+              <i className="fas fa-star"></i>
+            </div>
+          </div>
+          <div className="admin-stat-change">
+            <Link href="/admin/reviews" style={{ textDecoration: "underline", color: "#F05F22" }}>
+              <i className="fas fa-arrow-right"></i>
+              <span>View pending reviews</span>
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Recent Orders Table */}
@@ -199,15 +218,14 @@ export default function AdminDashboardPage() {
                   </td>
                   <td>
                     <span
-                      className={`admin-badge ${
-                        order.status === "delivered"
+                      className={`admin-badge ${order.status === "delivered"
                           ? "success"
                           : order.status === "pending"
                             ? "warning"
                             : order.status === "processing"
                               ? "info"
                               : "danger"
-                      }`}
+                        }`}
                     >
                       {order.status || "pending"}
                     </span>
@@ -220,12 +238,12 @@ export default function AdminDashboardPage() {
                   <td>
                     {order.createdAt
                       ? new Date(order.createdAt).toLocaleDateString("en-IN", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
                       : "-"}
                   </td>
                 </tr>

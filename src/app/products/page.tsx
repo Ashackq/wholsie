@@ -26,6 +26,8 @@ interface Product {
   discount?: number;
   isRecentLaunch?: boolean;
   isCombo?: boolean;
+  rating?: number;
+  totalReviews?: number;
   categoryId?: {
     _id: string;
     name: string;
@@ -864,9 +866,9 @@ function ProductsContent() {
                             basePrice > 0;
                           const discountPercent = hasDiscount
                             ? calculateDiscountPercent(
-                                basePrice,
-                                discounted as number,
-                              )
+                              basePrice,
+                              discounted as number,
+                            )
                             : 0;
                           const finalPrice = hasDiscount
                             ? (discounted as number)
@@ -936,7 +938,7 @@ function ProductsContent() {
                                       color: "#0f172a",
                                     }}
                                   >
-                                    <span style={{ fontWeight: 700 }}>0.0</span>
+                                    <span style={{ fontWeight: 700 }}>{(product.rating || 0).toFixed(1)}</span>
                                     <i
                                       className="fas fa-star"
                                       aria-hidden="true"
@@ -948,7 +950,7 @@ function ProductsContent() {
                                           fontSize: "12px",
                                         }}
                                       >
-                                        (0 reviews)
+                                        ({product.totalReviews || 0} reviews)
                                       </span>
                                     )}
                                   </p>

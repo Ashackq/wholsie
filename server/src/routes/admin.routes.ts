@@ -5,6 +5,7 @@ import * as productController from '../controllers/product.controller.js';
 import * as orderController from '../controllers/order.controller.js';
 import * as delhiveryController from '../controllers/delhivery.controller.js';
 import * as userController from '../controllers/user.controller.js';
+import * as reviewController from '../controllers/review.controller.js';
 
 const router = Router();
 
@@ -51,5 +52,10 @@ router.post('/delhivery/create-shipment', requireAuth, requireAdmin, delhiveryCo
 router.post('/delhivery/cancel-shipment', requireAuth, requireAdmin, delhiveryController.cancelShipment);
 router.post('/delhivery/check-pincode', requireAuth, requireAdmin, delhiveryController.checkPincode);
 router.get('/delhivery/tracking/:waybill', requireAuth, requireAdmin, delhiveryController.getTracking);
+
+// ==================== REVIEWS ====================
+router.get('/reviews', requireAuth, requireAdmin, reviewController.getPendingReviews);
+router.put('/reviews/:reviewId/approve', requireAuth, requireAdmin, reviewController.approveReview);
+router.put('/reviews/:reviewId/reject', requireAuth, requireAdmin, reviewController.rejectReview);
 
 export default router;

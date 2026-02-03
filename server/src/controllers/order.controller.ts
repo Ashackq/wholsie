@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { Order } from "../models/Order.js";
 import { User } from "../models/User.js";
 import { Product } from "../models/Product.js";
+import { Review } from "../models/Review.js";
 import { getInvoiceUrl } from "../utils/invoiceGenerator.js";
 import { env } from "../config/env.js";
 
@@ -216,6 +217,9 @@ export async function getDashboardStats(
     // Total products
     const totalProducts = await Product.countDocuments({ status: "active" });
 
+    // Pending reviews
+    const pendingReviews = await Review.countDocuments({ status: "pending" });
+
     // Order status breakdown
     const orderStatus = await Order.aggregate([
       {
@@ -233,6 +237,7 @@ export async function getDashboardStats(
         totalRevenue,
         totalCustomers,
         totalProducts,
+        pendingReviews,
         orderStatus,
         recentOrders,
       },

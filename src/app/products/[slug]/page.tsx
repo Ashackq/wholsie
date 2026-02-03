@@ -68,6 +68,24 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     const [activeTab, setActiveTab] = useState<'info' | 'reviews'>('info');
     const [cartMessage, setCartMessage] = useState<string>("");
 
+    // Review states
+    const [reviews, setReviews] = useState<any[]>([]);
+    const [reviewsLoading, setReviewsLoading] = useState(false);
+    const [showReviewForm, setShowReviewForm] = useState(false);
+    const [reviewFormData, setReviewFormData] = useState({
+        rating: 5,
+        title: '',
+        comment: ''
+    });
+    const [reviewSubmitting, setReviewSubmitting] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        // Check if user is logged in
+        const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+        setIsLoggedIn(!!token);
+    }, []);
+
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/products/slug/${slug}`)
             .then((res) => res.json())
@@ -84,15 +102,76 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             });
     }, [slug]);
 
+    // Fetch reviews when product is loaded
+    useEffect(() => {
+        if (product?._id) {
+            setReviewsLoading(true);
+            fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/products/${product._id}/reviews`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && Array.isArray(data.data)) {
+                        setReviews(data.data);
+                    }
+                })
+                .catch(err => console.error('Error fetching reviews:', err))
+                .finally(() => setReviewsLoading(false));
+        }
+    }, [product?._id]);
+
+    const handleSubmitReview = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!product || !isLoggedIn) return;
+
+        setReviewSubmitting(true);
+        try {
+            const response = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/products/${product._id}/reviews`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        rating: reviewFormData.rating,
+                        title: reviewFormData.title,
+                        comment: reviewFormData.comment
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Review submitted successfully! It will be displayed after admin approval.');
+                setReviewFormData({ rating: 5, title: '', comment: '' });
+                setShowReviewForm(false);
+                // Refresh reviews
+                const reviewRes = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/products/${product._id}/reviews`
+                );
+                const reviewData = await reviewRes.json();
+                if (reviewData.success) setReviews(reviewData.data);
+            } else {
+                alert(data.error || 'Failed to submit review');
+            }
+        } catch (err) {
+            console.error('Error submitting review:', err);
+            alert('Error submitting review');
+        } finally {
+            setReviewSubmitting(false);
+        }
+    };
+
     const handleAddToCart = async () => {
         if (!product) return;
 
         try {
-            const isLoggedIn =
+            const isLoggedInCart =
                 typeof window !== "undefined" &&
                 (!!localStorage.getItem("authToken") ||
                     !!localStorage.getItem("user"));
-            if (!isLoggedIn) {
+            if (!isLoggedInCart) {
                 addToGuestCart({
                     productId: product._id,
                     quantity,
@@ -582,7 +661,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                         fontSize: '15px'
                                                     }}
                                                 >
-                                                    Reviews ({totalReviews})
+                                                    Reviews ({reviews.length})
                                                 </button>
                                             </li>
                                         </ul>
@@ -661,10 +740,154 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                         {/* Reviews Tab */}
                                         {activeTab === 'reviews' && (
                                             <div className="shop_details_review">
-                                                <h3 style={{ marginBottom: '30px' }}>Customer Reviews</h3>
-                                                {product.reviews && product.reviews.length > 0 ? (
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                                                    <h3>Customer Reviews ({reviews.length})</h3>
+                                                    {isLoggedIn && (
+                                                        <button
+                                                            onClick={() => setShowReviewForm(!showReviewForm)}
+                                                            style={{
+                                                                padding: '10px 20px',
+                                                                backgroundColor: '#F05F22',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '14px'
+                                                            }}
+                                                        >
+                                                            {showReviewForm ? 'Cancel' : 'Write a Review'}
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {!isLoggedIn && (
+                                                    <div style={{
+                                                        backgroundColor: '#fef3c7',
+                                                        padding: '15px',
+                                                        borderRadius: '4px',
+                                                        marginBottom: '20px',
+                                                        textAlign: 'center'
+                                                    }}>
+                                                        <p style={{ margin: 0 }}>
+                                                            <Link href="/login" style={{ color: '#F05F22', textDecoration: 'underline' }}>
+                                                                Sign in
+                                                            </Link>
+                                                            {' '}to write a review
+                                                        </p>
+                                                    </div>
+                                                )}
+
+                                                {showReviewForm && isLoggedIn && (
+                                                    <form
+                                                        onSubmit={handleSubmitReview}
+                                                        style={{
+                                                            backgroundColor: '#f9f9f9',
+                                                            padding: '20px',
+                                                            borderRadius: '4px',
+                                                            marginBottom: '30px'
+                                                        }}
+                                                    >
+                                                        <div style={{ marginBottom: '15px' }}>
+                                                            <label style={{ display: 'block', marginBottom: '12px', fontWeight: 'bold' }}>
+                                                                Rating
+                                                            </label>
+                                                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                                {[1, 2, 3, 4, 5].map(star => (
+                                                                    <button
+                                                                        key={star}
+                                                                        type="button"
+                                                                        onClick={() => setReviewFormData({
+                                                                            ...reviewFormData,
+                                                                            rating: star
+                                                                        })}
+                                                                        style={{
+                                                                            background: 'none',
+                                                                            border: 'none',
+                                                                            fontSize: '32px',
+                                                                            cursor: 'pointer',
+                                                                            padding: '0',
+                                                                            color: star <= reviewFormData.rating ? '#ffa500' : '#ddd',
+                                                                            transition: 'color 0.2s',
+                                                                            lineHeight: '1'
+                                                                        }}
+                                                                        title={`${star} star${star !== 1 ? 's' : ''}`}
+                                                                    >
+                                                                        ★
+                                                                    </button>
+                                                                ))}
+                                                                <span style={{ marginLeft: '12px', fontWeight: '600', color: '#F05F22' }}>
+                                                                    {reviewFormData.rating} / 5
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div style={{ marginBottom: '15px' }}>
+                                                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                                                                Title
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={reviewFormData.title}
+                                                                onChange={(e) => setReviewFormData({
+                                                                    ...reviewFormData,
+                                                                    title: e.target.value
+                                                                })}
+                                                                placeholder="e.g., Great product!"
+                                                                required
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '8px',
+                                                                    border: '1px solid #ddd',
+                                                                    borderRadius: '4px',
+                                                                    boxSizing: 'border-box'
+                                                                }}
+                                                            />
+                                                        </div>
+
+                                                        <div style={{ marginBottom: '15px' }}>
+                                                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                                                                Comment
+                                                            </label>
+                                                            <textarea
+                                                                value={reviewFormData.comment}
+                                                                onChange={(e) => setReviewFormData({
+                                                                    ...reviewFormData,
+                                                                    comment: e.target.value
+                                                                })}
+                                                                placeholder="Share your experience with this product..."
+                                                                rows={4}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '8px',
+                                                                    border: '1px solid #ddd',
+                                                                    borderRadius: '4px',
+                                                                    boxSizing: 'border-box',
+                                                                    fontFamily: 'inherit'
+                                                                }}
+                                                            />
+                                                        </div>
+
+                                                        <button
+                                                            type="submit"
+                                                            disabled={reviewSubmitting}
+                                                            style={{
+                                                                padding: '10px 20px',
+                                                                backgroundColor: '#F05F22',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '4px',
+                                                                cursor: reviewSubmitting ? 'not-allowed' : 'pointer',
+                                                                opacity: reviewSubmitting ? 0.6 : 1
+                                                            }}
+                                                        >
+                                                            {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
+                                                        </button>
+                                                    </form>
+                                                )}
+
+                                                {reviews && reviews.length > 0 ? (
                                                     <div className="single_review_list_area">
-                                                        {product.reviews.map((review) => (
+                                                        {reviews.map((review) => (
                                                             <div
                                                                 key={review._id}
                                                                 style={{
@@ -674,14 +897,25 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                                 }}
                                                             >
                                                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                                                                    <strong>{review.userName}</strong>
+                                                                    <div>
+                                                                        <strong>{review.userId?.name || 'Anonymous'}</strong>
+                                                                        {review.title && (
+                                                                            <p style={{ margin: '5px 0', fontSize: '14px', fontWeight: '500' }}>
+                                                                                {review.title}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
                                                                     <span style={{ color: '#ffa500' }}>
                                                                         {'★'.repeat(review.rating)}
                                                                         {'☆'.repeat(5 - review.rating)}
                                                                     </span>
                                                                 </div>
                                                                 <p style={{ color: '#999', fontSize: '12px', marginBottom: '10px' }}>
-                                                                    {new Date(review.createdAt).toLocaleDateString()}
+                                                                    {new Date(review.createdAt).toLocaleDateString('en-IN', {
+                                                                        year: 'numeric',
+                                                                        month: 'short',
+                                                                        day: 'numeric'
+                                                                    })}
                                                                 </p>
                                                                 <p style={{ lineHeight: '1.6' }}>{review.comment}</p>
                                                             </div>

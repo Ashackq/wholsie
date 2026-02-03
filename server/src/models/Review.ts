@@ -10,6 +10,7 @@ const reviewSchema = new Schema(
         images: [{ type: String }],
         helpful: { type: Number, default: 0 },
         status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+        rejectionReason: { type: String },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
     },

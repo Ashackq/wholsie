@@ -25,6 +25,8 @@ interface Product {
   discount?: number;
   isRecentLaunch?: boolean;
   isCombo?: boolean;
+  rating?: number;
+  totalReviews?: number;
 }
 
 interface Category {
@@ -307,10 +309,10 @@ export default function Home() {
                                 )}
                               </div>
                               <p className="rating" style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px", color: "#0f172a" }}>
-                                <span style={{ fontWeight: 700, marginRight: "-4px" }}>0.0</span>
+                                <span style={{ fontWeight: 700, marginRight: "-4px" }}>{(product.rating || 0).toFixed(1)}</span>
                                 <i className="fas fa-star" aria-hidden="true"></i>
                                 {isMobile ?
-                                  "" : <span style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
+                                  "" : <span style={{ color: "#475569", fontSize: "12px" }}>({product.totalReviews || 0} reviews)</span>
                                 }
                               </p>
                             </div>
@@ -474,10 +476,10 @@ export default function Home() {
                                 )}
                               </div>
                               <p className="rating" style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px", color: "#0f172a" }}>
-                                <span style={{ fontWeight: 700, marginRight: "-4px" }}>0.0</span>
+                                <span style={{ fontWeight: 700, marginRight: "-4px" }}>{(product.rating || 0).toFixed(1)}</span>
                                 <i className="fas fa-star" aria-hidden="true"></i>
                                 {isMobile ?
-                                  "" : <span style={{ color: "#475569", fontSize: "12px" }}>(0 reviews)</span>
+                                  "" : <span style={{ color: "#475569", fontSize: "12px" }}>({product.totalReviews || 0} reviews)</span>
                                 }
                               </p>
                             </div>

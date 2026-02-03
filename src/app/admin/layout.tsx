@@ -31,6 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: "/admin/categories", label: "Categories", icon: "fas fa-folder" },
         { href: "/admin/users", label: "Users", icon: "fas fa-users" },
         { href: "/admin/orders", label: "Orders", icon: "fas fa-shopping-bag" },
+        { href: "/admin/reviews", label: "Reviews", icon: "fa-solid fa-star", style: { color: "#cbd5e1", marginLeft: "-1px" } },
         { href: "/admin/settings", label: "Settings", icon: "fas fa-cog" },
     ];
 
@@ -52,7 +53,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 href={item.href}
                                 className={`admin-nav-item ${isActive ? "active" : ""}`}
                             >
-                                <i className={item.icon}></i>
+                                <i className={item.icon} style={item.style}></i>
                                 <span>{item.label}</span>
                             </Link>
                         );
