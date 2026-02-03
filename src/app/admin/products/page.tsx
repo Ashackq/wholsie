@@ -35,6 +35,7 @@ type Product = {
   dietType?: string;
   storage?: string;
   country?: string;
+  ingredients?: string;
   slug?: string;
   metaTitle?: string;
   metaDescription?: string;
@@ -50,77 +51,78 @@ type Category = {
 };
 
 export default function AdminProductsPage() {
-    const { isAdmin, loading: authLoading, error: authError } = useAdminAuth();
-    const [items, setItems] = useState<Product[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [showModal, setShowModal] = useState(false);
-    const [modalMode, setModalMode] = useState<"create" | "edit" | "view">("create");
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-    const [loadingDetails, setLoadingDetails] = useState(false);
-    const [search, setSearch] = useState("");
-    const [refreshing, setRefreshing] = useState(false);
-    const createEmptyForm = () => ({
-        name: "",
-        price: "",
-        discountPrice: "",
-        stock: "",
-        weight: "",
-        status: "active",
-        isRecentLaunch: false,
-        isCombo: false,
-        categoryId: "",
-        description: "",
-        image: "",
-        images: "",
-    });
-    const [formData, setFormData] = useState(createEmptyForm());
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [togglingId, setTogglingId] = useState<string | null>(null);
-    const [page, setPage] = useState(1);
-    const [total, setTotal] = useState(0);
-    const pageSize = 4;
-    const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+  const { isAdmin, loading: authLoading, error: authError } = useAdminAuth();
+  const [items, setItems] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "view">("create");
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [search, setSearch] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const createEmptyForm = () => ({
+    name: "",
+    price: "",
+    discountPrice: "",
+    stock: "",
+    weight: "",
+    status: "active",
+    isRecentLaunch: false,
+    isCombo: false,
+    categoryId: "",
+    description: "",
+    image: "",
+    images: "",
+    ingredients: "",
+  });
+  const [formData, setFormData] = useState(createEmptyForm());
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 4;
+  const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
-    const loadProducts = async () => {
-      setLoading(true);
-      try {
-        const offset = (page - 1) * pageSize;
-    
-        const [productsRes, categoriesRes] = await Promise.all([
-          fetch(`${API}/admin/products?offset=${offset}&limit=${pageSize}`, {
-            credentials: "include",
-          }),
-          fetch(`${API}/admin/categories?limit=200`, {
-            credentials: "include",
-          }),
-        ]);
-    
-        const productsJson = await productsRes.json();
-        const categoriesJson = await categoriesRes.json();
-    
-        const list = productsJson.data || productsJson.products || [];
-        const totalCount =
-          productsJson.pagination?.total ??
-          (Array.isArray(list) ? offset + list.length : 0);
-    
-        setItems(list);
-        setTotal(totalCount);
-        setCategories(categoriesJson.data || categoriesJson.categories || []);
-      } catch (e: any) {
-        setError(e?.message || "Failed to load products");
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    };
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      const offset = (page - 1) * pageSize;
 
-    useEffect(() => {
-      if (!isAdmin || authLoading) return;
-      loadProducts();
-    }, [isAdmin, authLoading, page]);
+      const [productsRes, categoriesRes] = await Promise.all([
+        fetch(`${API}/admin/products?offset=${offset}&limit=${pageSize}`, {
+          credentials: "include",
+        }),
+        fetch(`${API}/admin/categories?limit=200`, {
+          credentials: "include",
+        }),
+      ]);
+
+      const productsJson = await productsRes.json();
+      const categoriesJson = await categoriesRes.json();
+
+      const list = productsJson.data || productsJson.products || [];
+      const totalCount =
+        productsJson.pagination?.total ??
+        (Array.isArray(list) ? offset + list.length : 0);
+
+      setItems(list);
+      setTotal(totalCount);
+      setCategories(categoriesJson.data || categoriesJson.categories || []);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load products");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isAdmin || authLoading) return;
+    loadProducts();
+  }, [isAdmin, authLoading, page]);
 
   const goToPage = (nextPage: number) => {
     setPage(nextPage);
@@ -161,6 +163,7 @@ export default function AdminProductsPage() {
         images: Array.isArray(fullProduct.images)
           ? fullProduct.images.join(", ")
           : "",
+        ingredients: fullProduct.ingredients || "",
       });
     } catch (e: any) {
       setError(e?.message || "Failed to load product details");
@@ -186,6 +189,7 @@ export default function AdminProductsPage() {
         description: product.description || "",
         image: product.image || "",
         images: Array.isArray(product.images) ? product.images.join(", ") : "",
+        ingredients: product.ingredients || "",
       });
     } finally {
       setLoadingDetails(false);
@@ -238,10 +242,11 @@ export default function AdminProductsPage() {
           image: formData.image || undefined,
           images: formData.images
             ? formData.images
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean)
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
             : undefined,
+          ingredients: formData.ingredients || undefined,
         }),
       });
       if (!res.ok) throw new Error("Save failed");
@@ -299,39 +304,39 @@ export default function AdminProductsPage() {
     }
   };
 
-    const handleToggleCombo = async (product: Product) => {
-        setTogglingId(product._id);
-        try {
-            const res = await fetch(`${API}/admin/products/${product._id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ isCombo: !product.isCombo }),
-            });
-            if (!res.ok) throw new Error("Update failed");
-            const json = await res.json();
-            const savedProduct = json.data || json;
-            setItems((prev) => prev.map((p) => (p._id === product._id ? { ...p, ...savedProduct } : p)));
-            setSuccess(savedProduct.isCombo ? "Marked as combo" : "Removed from combos");
-            setTimeout(() => setSuccess(null), 3000);
-        } catch (e: any) {
-            setError(e?.message || "Failed to update combo flag");
-        } finally {
-            setTogglingId(null);
-        }
-    };
+  const handleToggleCombo = async (product: Product) => {
+    setTogglingId(product._id);
+    try {
+      const res = await fetch(`${API}/admin/products/${product._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ isCombo: !product.isCombo }),
+      });
+      if (!res.ok) throw new Error("Update failed");
+      const json = await res.json();
+      const savedProduct = json.data || json;
+      setItems((prev) => prev.map((p) => (p._id === product._id ? { ...p, ...savedProduct } : p)));
+      setSuccess(savedProduct.isCombo ? "Marked as combo" : "Removed from combos");
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (e: any) {
+      setError(e?.message || "Failed to update combo flag");
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
-    const filteredProducts = items.filter((p) => {
-      const q = search.toLowerCase();
+  const filteredProducts = items.filter((p) => {
+    const q = search.toLowerCase();
 
-      return (
-        (p.name || "").toLowerCase().includes(q) ||
-        (p.sku || "").toLowerCase().includes(q) ||
-        (p.slug || "").toLowerCase().includes(q) ||
-        (p.status || "").toString().toLowerCase().includes(q) ||
-        (p.categoryId?.name || "").toLowerCase().includes(q)
-      );
-    });
+    return (
+      (p.name || "").toLowerCase().includes(q) ||
+      (p.sku || "").toLowerCase().includes(q) ||
+      (p.slug || "").toLowerCase().includes(q) ||
+      (p.status || "").toString().toLowerCase().includes(q) ||
+      (p.categoryId?.name || "").toLowerCase().includes(q)
+    );
+  });
 
   if (authLoading) {
     return (
@@ -367,47 +372,47 @@ export default function AdminProductsPage() {
     );
   }
 
-    return (
+  return (
+    <div>
+      <div
+        className="admin-page-header"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        {/* Left Side */}
         <div>
-            <div
-              className="admin-page-header"
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              {/* Left Side */}
-                <div>
-                  <h1>Products</h1>
-                  <p>Manage your product inventory</p>
+          <h1>Products</h1>
+          <p>Manage your product inventory</p>
 
-                  {/* ✅ Button नीचे आ गया */}
-                  <button
-                    onClick={() => {
-                      setModalMode("create");
-                      setSelectedProduct(null);
-                      setEditingId(null);
-                      setFormData(createEmptyForm());
-                      setShowModal(true);
-                    }}
-                    style={{
-                      padding: "8px 16px",
-                      background: "#0f172a",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: 6,
-                      cursor: "pointer",
-                      marginTop: 10,
-                    }}
-                  >
-                    Add New Product
-                  </button>
-                </div>
-                
-                {/* ✅ Right Side Refresh */}
-                <RefreshButton onRefresh={loadProducts} loading={loading} />
-            </div>
+          {/* ✅ Button नीचे आ गया */}
+          <button
+            onClick={() => {
+              setModalMode("create");
+              setSelectedProduct(null);
+              setEditingId(null);
+              setFormData(createEmptyForm());
+              setShowModal(true);
+            }}
+            style={{
+              padding: "8px 16px",
+              background: "#0f172a",
+              color: "#fff",
+              border: "none",
+              borderRadius: 6,
+              cursor: "pointer",
+              marginTop: 10,
+            }}
+          >
+            Add New Product
+          </button>
+        </div>
+
+        {/* ✅ Right Side Refresh */}
+        <RefreshButton onRefresh={loadProducts} loading={loading} />
+      </div>
 
       {error && (
         <div
@@ -499,7 +504,7 @@ export default function AdminProductsPage() {
                       style={{ fontSize: 11 }}
                     >
                       {selectedProduct.status === 1 ||
-                      selectedProduct.status === "active"
+                        selectedProduct.status === "active"
                         ? "Active"
                         : "Inactive"}
                     </span>
@@ -723,6 +728,70 @@ export default function AdminProductsPage() {
                   selectedProduct.dietType ||
                   selectedProduct.storage ||
                   selectedProduct.country) && (
+                    <div style={{ marginBottom: 24 }}>
+                      <h4
+                        style={{
+                          margin: "0 0 12px 0",
+                          fontSize: 16,
+                          color: "#374151",
+                        }}
+                      >
+                        Specifications
+                      </h4>
+                      <div
+                        style={{
+                          background: "#f9fafb",
+                          padding: 16,
+                          borderRadius: 8,
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(200px, 1fr))",
+                          gap: 12,
+                          fontSize: 14,
+                        }}
+                      >
+                        {selectedProduct.material && (
+                          <div>
+                            <strong>Material:</strong> {selectedProduct.material}
+                          </div>
+                        )}
+                        {selectedProduct.style && (
+                          <div>
+                            <strong>Style:</strong> {selectedProduct.style}
+                          </div>
+                        )}
+                        {selectedProduct.weight && (
+                          <div>
+                            <strong>Weight:</strong> {selectedProduct.weight}
+                          </div>
+                        )}
+                        {selectedProduct.shelfLife && (
+                          <div>
+                            <strong>Shelf Life:</strong>{" "}
+                            {selectedProduct.shelfLife}
+                          </div>
+                        )}
+                        {selectedProduct.dietType && (
+                          <div>
+                            <strong>Diet Type:</strong> {selectedProduct.dietType}
+                          </div>
+                        )}
+                        {selectedProduct.storage && (
+                          <div>
+                            <strong>Storage:</strong> {selectedProduct.storage}
+                          </div>
+                        )}
+                        {selectedProduct.country && (
+                          <div>
+                            <strong>Country:</strong> {selectedProduct.country}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Ingredients */}
+                {selectedProduct.ingredients && (
                   <div style={{ marginBottom: 24 }}>
                     <h4
                       style={{
@@ -731,56 +800,22 @@ export default function AdminProductsPage() {
                         color: "#374151",
                       }}
                     >
-                      Specifications
+                      Ingredients
                     </h4>
                     <div
                       style={{
                         background: "#f9fafb",
                         padding: 16,
                         borderRadius: 8,
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fit, minmax(200px, 1fr))",
-                        gap: 12,
                         fontSize: 14,
+                        lineHeight: 1.6,
                       }}
                     >
-                      {selectedProduct.material && (
-                        <div>
-                          <strong>Material:</strong> {selectedProduct.material}
+                      {selectedProduct.ingredients.split(',').map((ingredient, idx) => (
+                        <div key={idx} style={{ marginBottom: '8px' }}>
+                          • {ingredient.trim()}
                         </div>
-                      )}
-                      {selectedProduct.style && (
-                        <div>
-                          <strong>Style:</strong> {selectedProduct.style}
-                        </div>
-                      )}
-                      {selectedProduct.weight && (
-                        <div>
-                          <strong>Weight:</strong> {selectedProduct.weight}
-                        </div>
-                      )}
-                      {selectedProduct.shelfLife && (
-                        <div>
-                          <strong>Shelf Life:</strong>{" "}
-                          {selectedProduct.shelfLife}
-                        </div>
-                      )}
-                      {selectedProduct.dietType && (
-                        <div>
-                          <strong>Diet Type:</strong> {selectedProduct.dietType}
-                        </div>
-                      )}
-                      {selectedProduct.storage && (
-                        <div>
-                          <strong>Storage:</strong> {selectedProduct.storage}
-                        </div>
-                      )}
-                      {selectedProduct.country && (
-                        <div>
-                          <strong>Country:</strong> {selectedProduct.country}
-                        </div>
-                      )}
+                      ))}
                     </div>
                   </div>
                 )}
@@ -846,45 +881,45 @@ export default function AdminProductsPage() {
                 {(selectedProduct.metaTitle ||
                   selectedProduct.metaDescription ||
                   selectedProduct.metaKeywords) && (
-                  <div style={{ marginBottom: 24 }}>
-                    <h4
-                      style={{
-                        margin: "0 0 12px 0",
-                        fontSize: 16,
-                        color: "#374151",
-                      }}
-                    >
-                      SEO Meta
-                    </h4>
-                    <div
-                      style={{
-                        background: "#f9fafb",
-                        padding: 16,
-                        borderRadius: 8,
-                        fontSize: 14,
-                      }}
-                    >
-                      {selectedProduct.metaTitle && (
-                        <div style={{ marginBottom: 8 }}>
-                          <strong>Meta Title:</strong>{" "}
-                          {selectedProduct.metaTitle}
-                        </div>
-                      )}
-                      {selectedProduct.metaDescription && (
-                        <div style={{ marginBottom: 8 }}>
-                          <strong>Meta Description:</strong>{" "}
-                          {selectedProduct.metaDescription}
-                        </div>
-                      )}
-                      {selectedProduct.metaKeywords && (
-                        <div>
-                          <strong>Meta Keywords:</strong>{" "}
-                          {selectedProduct.metaKeywords}
-                        </div>
-                      )}
+                    <div style={{ marginBottom: 24 }}>
+                      <h4
+                        style={{
+                          margin: "0 0 12px 0",
+                          fontSize: 16,
+                          color: "#374151",
+                        }}
+                      >
+                        SEO Meta
+                      </h4>
+                      <div
+                        style={{
+                          background: "#f9fafb",
+                          padding: 16,
+                          borderRadius: 8,
+                          fontSize: 14,
+                        }}
+                      >
+                        {selectedProduct.metaTitle && (
+                          <div style={{ marginBottom: 8 }}>
+                            <strong>Meta Title:</strong>{" "}
+                            {selectedProduct.metaTitle}
+                          </div>
+                        )}
+                        {selectedProduct.metaDescription && (
+                          <div style={{ marginBottom: 8 }}>
+                            <strong>Meta Description:</strong>{" "}
+                            {selectedProduct.metaDescription}
+                          </div>
+                        )}
+                        {selectedProduct.metaKeywords && (
+                          <div>
+                            <strong>Meta Keywords:</strong>{" "}
+                            {selectedProduct.metaKeywords}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* Timestamps */}
                 <div style={{ marginBottom: 24 }}>
@@ -1045,6 +1080,33 @@ export default function AdminProductsPage() {
                   />
                 </div>
                 <div style={{ marginBottom: 15 }}>
+                  <textarea
+                    placeholder="Ingredients (comma-separated, e.g., flour, sugar, salt)"
+                    value={formData.ingredients}
+                    onChange={(e) =>
+                      setFormData({ ...formData, ingredients: e.target.value })
+                    }
+                    style={{
+                      padding: 10,
+                      border: "1px solid var(--text-2)",
+                      borderRadius: 6,
+                      width: "100%",
+                      minHeight: 80,
+                      fontFamily: "inherit",
+                    }}
+                  />
+                  <small
+                    style={{
+                      color: "#6b7280",
+                      fontSize: 12,
+                      display: "block",
+                      marginTop: 4,
+                    }}
+                  >
+                    Separate multiple ingredients with commas
+                  </small>
+                </div>
+                <div style={{ marginBottom: 15 }}>
                   <input
                     type="text"
                     placeholder="Main Image URL (e.g., product-name.png)"
@@ -1192,163 +1254,163 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-            <div className="admin-table-container">
-                <div
-                  className="admin-table-header"
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 20,
-                  }}
-                >
-                  <div>
-                    <h3 style={{ margin: 0 }}>
-                      All Products ({filteredProducts.length})
-                    </h3>
-              
-                    <div style={{ fontSize: 13, color: "var(--text-2)" }}>
-                      Page {page} · Showing {filteredProducts.length} of {total}
-                    </div>
-                  </div>
-              
-                  {/* ✅ Search */}
-                  <AdminSearchFilter
-                    search={search}
-                    setSearch={setSearch}
-                    placeholder="Search products..."
-                  />
-                </div>
+      <div className="admin-table-container">
+        <div
+          className="admin-table-header"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 20,
+          }}
+        >
+          <div>
+            <h3 style={{ margin: 0 }}>
+              All Products ({filteredProducts.length})
+            </h3>
 
-                <table className="admin-table">
-                    <thead>
-                        <tr>
-                            <th style={{ width: 80 }}>Image</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Status</th>
-                            <th>Recent</th>
-                            <th>Combo</th>
-                            <th style={{ width: 150 }}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredProducts.length > 0 ? (
-                            filteredProducts.map((product) => (
-                                <tr key={product._id}>
-                                    <td>
-                                        {product.image ? (
-                                            <Image
-                                                src={`/${product.image}`}
-                                                alt={product.name || 'Product'}
-                                                width={50}
-                                                height={50}
-                                                style={{ objectFit: 'cover', borderRadius: 6 }}
-                                            />
-                                        ) : (
-                                            <div style={{ width: 50, height: 50, background: 'var(--bg-2)', borderRadius: 6 }}></div>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <strong>{product.name ?? "-"}</strong>
-                                    </td>
-                                    <td>
-                                        {product.discountPrice && product.discountPrice < (product.price || 0) ? (
-                                            <>
-                                                <strong>₹{product.discountPrice}</strong>{' '}
-                                                <del style={{ color: 'var(--text-2)', fontSize: 13 }}>₹{product.price}</del>
-                                            </>
-                                        ) : (
-                                            <strong>₹{product.price ?? 0}</strong>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <span className={`admin-badge ${(product.stock || 0) > 0 ? 'success' : 'danger'}`}>
-                                            {product.stock ?? 0} units
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span className={`admin-badge ${product.status === 1 || product.status === "active" ? 'success' : 'danger'}`}>
-                                            {product.status === 1 || product.status === "active" ? "Active" : "Inactive"}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button
-                                            onClick={() => handleToggleRecentLaunch(product)}
-                                            disabled={togglingId === product._id}
-                                            style={{
-                                                padding: "6px 10px",
-                                                background: product.isRecentLaunch ? "#0ea5e9" : "#e5e7eb",
-                                                color: product.isRecentLaunch ? "#fff" : "#111",
-                                                border: "none",
-                                                borderRadius: 4,
-                                                cursor: togglingId === product._id ? "wait" : "pointer",
-                                                fontSize: 12,
-                                            }}
-                                        >
-                                            {product.isRecentLaunch ? "Recent" : "Not Recent"}
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button
-                                            onClick={() => handleToggleCombo(product)}
-                                            disabled={togglingId === product._id}
-                                            style={{
-                                                padding: "6px 10px",
-                                                background: product.isCombo ? "#8b5cf6" : "#e5e7eb",
-                                                color: product.isCombo ? "#fff" : "#111",
-                                                border: "none",
-                                                borderRadius: 4,
-                                                cursor: togglingId === product._id ? "wait" : "pointer",
-                                                fontSize: 12,
-                                            }}
-                                        >
-                                            {product.isCombo ? "Combo" : "Not Combo"}
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button
-                                            onClick={() => handleEdit(product)}
-                                            style={{
-                                                padding: "6px 12px",
-                                                background: "#3b82f6",
-                                                color: "#fff",
-                                                border: "none",
-                                                borderRadius: 4,
-                                                cursor: "pointer",
-                                                marginRight: 8,
-                                                fontSize: 12,
-                                            }}
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(product._id)}
-                                            style={{
-                                                padding: "6px 12px",
-                                                background: "#ef4444",
-                                                color: "#fff",
-                                                border: "none",
-                                                borderRadius: 4,
-                                                cursor: "pointer",
-                                                fontSize: 12,
-                                            }}
-                                        >
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--text-2)' }}>
-                                    No products found
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+            <div style={{ fontSize: 13, color: "var(--text-2)" }}>
+              Page {page} · Showing {filteredProducts.length} of {total}
+            </div>
+          </div>
+
+          {/* ✅ Search */}
+          <AdminSearchFilter
+            search={search}
+            setSearch={setSearch}
+            placeholder="Search products..."
+          />
+        </div>
+
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th style={{ width: 80 }}>Image</th>
+              <th>Name</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th>Recent</th>
+              <th>Combo</th>
+              <th style={{ width: 150 }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => (
+                <tr key={product._id}>
+                  <td>
+                    {product.image ? (
+                      <Image
+                        src={`/${product.image}`}
+                        alt={product.name || 'Product'}
+                        width={50}
+                        height={50}
+                        style={{ objectFit: 'cover', borderRadius: 6 }}
+                      />
+                    ) : (
+                      <div style={{ width: 50, height: 50, background: 'var(--bg-2)', borderRadius: 6 }}></div>
+                    )}
+                  </td>
+                  <td>
+                    <strong>{product.name ?? "-"}</strong>
+                  </td>
+                  <td>
+                    {product.discountPrice && product.discountPrice < (product.price || 0) ? (
+                      <>
+                        <strong>₹{product.discountPrice}</strong>{' '}
+                        <del style={{ color: 'var(--text-2)', fontSize: 13 }}>₹{product.price}</del>
+                      </>
+                    ) : (
+                      <strong>₹{product.price ?? 0}</strong>
+                    )}
+                  </td>
+                  <td>
+                    <span className={`admin-badge ${(product.stock || 0) > 0 ? 'success' : 'danger'}`}>
+                      {product.stock ?? 0} units
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`admin-badge ${product.status === 1 || product.status === "active" ? 'success' : 'danger'}`}>
+                      {product.status === 1 || product.status === "active" ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      onClick={() => handleToggleRecentLaunch(product)}
+                      disabled={togglingId === product._id}
+                      style={{
+                        padding: "6px 10px",
+                        background: product.isRecentLaunch ? "#0ea5e9" : "#e5e7eb",
+                        color: product.isRecentLaunch ? "#fff" : "#111",
+                        border: "none",
+                        borderRadius: 4,
+                        cursor: togglingId === product._id ? "wait" : "pointer",
+                        fontSize: 12,
+                      }}
+                    >
+                      {product.isRecentLaunch ? "Recent" : "Not Recent"}
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      onClick={() => handleToggleCombo(product)}
+                      disabled={togglingId === product._id}
+                      style={{
+                        padding: "6px 10px",
+                        background: product.isCombo ? "#8b5cf6" : "#e5e7eb",
+                        color: product.isCombo ? "#fff" : "#111",
+                        border: "none",
+                        borderRadius: 4,
+                        cursor: togglingId === product._id ? "wait" : "pointer",
+                        fontSize: 12,
+                      }}
+                    >
+                      {product.isCombo ? "Combo" : "Not Combo"}
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      onClick={() => handleEdit(product)}
+                      style={{
+                        padding: "6px 12px",
+                        background: "#3b82f6",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 4,
+                        cursor: "pointer",
+                        marginRight: 8,
+                        fontSize: 12,
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product._id)}
+                      style={{
+                        padding: "6px 12px",
+                        background: "#ef4444",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 4,
+                        cursor: "pointer",
+                        fontSize: 12,
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--text-2)' }}>
+                  No products found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
 
         <div
           style={{

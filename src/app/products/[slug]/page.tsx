@@ -36,7 +36,7 @@ interface Product {
     stock: number;
     image: string;
     images?: ProductImage[];
-    unit: string;
+    packetCount: number;
     minOrderQty: number;
     maxOrderQty?: number;
     taxPercentage: number;
@@ -47,6 +47,7 @@ interface Product {
     };
     weight?: number;
     variants?: ProductVariant[];
+    ingredients?: string;
     specs?: {
         [key: string]: string;
     };
@@ -602,7 +603,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                             </tr>
                                                             <tr>
                                                                 <th style={{ width: '30%', fontWeight: 'bold' }}>Unit</th>
-                                                                <td>{product.unit}</td>
+                                                                <td>{product.packetCount}</td>
                                                             </tr>
                                                             {product.weight !== undefined && product.weight !== null && (
                                                                 <tr>
@@ -614,10 +615,25 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                                 <th style={{ width: '30%', fontWeight: 'bold' }}>Stock</th>
                                                                 <td>{product.stock > 0 ? `${product.stock} units` : 'Out of Stock'}</td>
                                                             </tr>
-                                                            <tr>
-                                                                <th style={{ width: '30%', fontWeight: 'bold' }}>Min Order Qty</th>
-                                                                <td>{product.minOrderQty}</td>
-                                                            </tr>
+                                                            {product.ingredients && product.ingredients !== " " && (
+                                                                <tr>
+                                                                    <th style={{ width: '30%', fontWeight: 'bold', verticalAlign: 'top', paddingTop: '12px' }}>Ingredients</th>
+                                                                    <td>
+
+                                                                        {product.ingredients.split(',').map((ingredient, idx) => (
+                                                                            <div key={idx} style={{ marginBottom: '8px' }}>
+                                                                                • {ingredient.trim()}
+                                                                            </div>
+                                                                        ))}
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                            {product.minOrderQty && (
+                                                                <tr>
+                                                                    <th style={{ width: '30%', fontWeight: 'bold' }}>Min Order Qty</th>
+                                                                    <td>{product.minOrderQty}</td>
+                                                                </tr>
+                                                            )}
                                                             {product.maxOrderQty && (
                                                                 <tr>
                                                                     <th style={{ width: '30%', fontWeight: 'bold' }}>Max Order Qty</th>

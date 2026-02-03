@@ -10,7 +10,6 @@ const productSchema = new Schema(
     name: { type: String, required: true, index: true },
     title: { type: String, required: true }, // Alias for name
     description: String,
-    sku: { type: String, unique: true, sparse: true },
     categoryId: { type: Schema.Types.ObjectId, ref: "ProductCategory" },
     image: String,
     images: [String],
@@ -31,6 +30,7 @@ const productSchema = new Schema(
     dietType: String,
     storage: String,
     country: String,
+    ingredients: String, // Comma-separated ingredients list
     // Review fields
     rating: { type: Number, default: 0, min: 0, max: 5 },
     reviewCount: { type: Number, default: 0 },
