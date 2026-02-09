@@ -79,60 +79,23 @@ export default function CheckoutPage() {
   const cacheUser = (u: any) => {
     if (!u) return;
     setUser(u);
+    // Also update localStorage for consistent state
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("user", JSON.stringify(u));
+    }
   };
 
   const formatCurrency = (amount: number) => `₹${amount.toFixed(2)}`;
 
-  // Validate user profile data on component mount
+  // Validate user is logged in on mount
   useEffect(() => {
     const userString = localStorage.getItem("user");
     if (!userString) {
       router.push("/login");
       return;
     }
-
-    const user = JSON.parse(userString);
-    const missingFields: string[] = [];
-
-    // Check if name is valid (not default pattern like User1234)
-    if (
-      !user.name ||
-      user.name.trim() === "" ||
-      user.name === "N/A" ||
-      /^user\d*$/i.test(user.name.trim())
-    ) {
-      missingFields.push("name");
-    }
-
-    // Check if email is valid (not default phonenumber@ pattern)
-    if (
-      !user.email ||
-      user.email.trim() === "" ||
-      user.email === "N/A" ||
-      user.email.includes("phonenumber@")
-    ) {
-      missingFields.push("email");
-    }
-
-    // If missing fields or no addresses loaded yet, redirect to profile
-    if (missingFields.length > 0) {
-      localStorage.setItem(
-        "profileMessage",
-        `Please complete your profile to proceed with checkout. Missing: ${missingFields.join(", ")}`,
-      );
-      router.push("/profile");
-      return;
-    }
-
-    // If addresses have finished loading and none exist, force profile/addresses
-    if (addressesLoaded && (!addresses || addresses.length === 0)) {
-      localStorage.setItem(
-        "profileMessage",
-        "Please add a delivery address to continue to checkout.",
-      );
-      router.push("/profile/addresses");
-      return;
-    }
+    // Note: We no longer redirect for missing name/email - 
+    // users can now add this info when creating an address
   }, [router]);
 
   const resolvePrice = (item: CartItem) => {
@@ -657,6 +620,7 @@ export default function CheckoutPage() {
         setLoading(false);
         // If address missing, go straight to address manager
         if (missingFields.includes("address")) {
+          localStorage.setItem("postCheckoutRedirect", "/checkout");
           router.push("/profile/addresses");
         } else {
           router.push("/profile");
@@ -1680,6 +1644,37 @@ export default function CheckoutPage() {
         addresses={addresses}
         selectedAddress={selectedAddress}
         onSelectAddress={setSelectedAddress}
+        onAddressCreated={async () => {
+          // Refresh addresses list after a new address is created
+          try {
+            const resAddr = await fetch(`${API_BASE}/addresses`, {
+              credentials: "include",
+            });
+            const addrJson = await resAddr.json().catch(() => ({ data: [] }));
+            const list = Array.isArray(addrJson?.data)
+              ? addrJson.data
+              : Array.isArray(addrJson)
+                ? addrJson
+                : [];
+            setAddresses(list);
+            if (list.length > 0 && !selectedAddress) {
+              const defaultAddr =
+                list.find((a: any) => a.isDefault || a.is_delivery === "y") ||
+                list[0];
+              setSelectedAddress(defaultAddr);
+            }
+            // Also refresh user data since it may have been updated
+            const userRes = await fetch(`${API_BASE}/auth/me`, { credentials: "include" });
+            if (userRes.ok) {
+              const userData = await userRes.json();
+              if (userData?.data) {
+                cacheUser(userData.data);
+              }
+            }
+          } catch (err) {
+            console.error("Error refreshing addresses:", err);
+          }
+        }}
       />
     </main>
   );

@@ -218,7 +218,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     setCartMessage("")
                     router.push("/login");
 
-                }, 3000);
+                }, 1000);
                 return;
             }
 

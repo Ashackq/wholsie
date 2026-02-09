@@ -39,7 +39,7 @@ export default function AddressesPage() {
     const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         name: "",
-        phone: "",
+        email: "",
         street: "",
         city: "",
         state: "",
@@ -79,6 +79,9 @@ export default function AddressesPage() {
             });
             const data = await res.json();
             setAddresses(data.data || []);
+            if (Array.isArray(data.data) && data.data.length > 0) {
+                localStorage.removeItem("profileMessage");
+            }
         } catch (err) {
             console.error("Error fetching addresses:", err);
         }
@@ -98,7 +101,7 @@ export default function AddressesPage() {
             if (res.ok) {
                 setFormData({
                     name: "",
-                    phone: "",
+                    email: "",
                     street: "",
                     city: "",
                     state: "",
@@ -106,7 +109,18 @@ export default function AddressesPage() {
                     isDefault: false,
                 });
                 setShowForm(false);
+                localStorage.removeItem("profileMessage");
                 fetchAddresses();
+                // Refresh user data in case profile was updated
+                const userData = await getCurrentUser();
+                if (userData?.data) {
+                    localStorage.setItem("user", JSON.stringify(userData.data));
+                }
+                const redirectTo = localStorage.getItem("postCheckoutRedirect");
+                if (redirectTo) {
+                    localStorage.removeItem("postCheckoutRedirect");
+                    router.push(redirectTo);
+                }
             }
         } catch (err) {
             console.error("Error adding address:", err);
@@ -150,7 +164,7 @@ export default function AddressesPage() {
         setEditingAddressId(address._id);
         setFormData({
             name: address.name || "",
-            phone: address.phone || "",
+            email: (address as any).email || "",
             street: address.address || "",  // Map API 'address' to form 'street'
             city: address.city,
             state: address.state,
@@ -176,7 +190,7 @@ export default function AddressesPage() {
             if (res.ok) {
                 setFormData({
                     name: "",
-                    phone: "",
+                    email: "",
                     street: "",
                     city: "",
                     state: "",
@@ -185,7 +199,18 @@ export default function AddressesPage() {
                 });
                 setShowForm(false);
                 setEditingAddressId(null);
+                localStorage.removeItem("profileMessage");
                 fetchAddresses();
+                // Refresh user data in case profile was updated
+                const userData = await getCurrentUser();
+                if (userData?.data) {
+                    localStorage.setItem("user", JSON.stringify(userData.data));
+                }
+                const redirectTo = localStorage.getItem("postCheckoutRedirect");
+                if (redirectTo) {
+                    localStorage.removeItem("postCheckoutRedirect");
+                    router.push(redirectTo);
+                }
             }
         } catch (err) {
             console.error("Error updating address:", err);
@@ -197,7 +222,7 @@ export default function AddressesPage() {
         setEditingAddressId(null);
         setFormData({
             name: "",
-            phone: "",
+            email: "",
             street: "",
             city: "",
             state: "",
@@ -258,15 +283,18 @@ export default function AddressesPage() {
                                                     className="form-control"
                                                 />
                                             </div>
-                                            <div className="col-md-6 mb-3">
-                                                <label className="form-label">Phone *</label>
+
+                                            <div className="col-12 mb-3">
+                                                <label className="form-label">Email *</label>
                                                 <input
-                                                    type="tel"
+                                                    type="email"
                                                     required
-                                                    value={formData.phone}
-                                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                    value={formData.email}
+                                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                                     className="form-control"
+                                                    placeholder="Your email address"
                                                 />
+                                                <small className="text-muted">This will also update your account email</small>
                                             </div>
                                             <div className="col-12 mb-3">
                                                 <label className="form-label">Street Address *</label>
