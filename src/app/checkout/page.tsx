@@ -180,6 +180,18 @@ export default function CheckoutPage() {
     };
   }, []);
 
+  useEffect(() => {
+    document.documentElement.classList.add("checkout-scroll");
+    document.body.classList.add("checkout-scroll");
+
+    return () => {
+      document.documentElement.classList.remove("checkout-scroll");
+      document.body.classList.remove("checkout-scroll");
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   const attachProductDetails = useCallback((payload: any) => {
     const items = (payload?.items ?? []).map((item: CartItem) => {
       const productId =
@@ -567,7 +579,7 @@ export default function CheckoutPage() {
       setError(
         `Payment failed: ${response.error.description || "Please try again"}`,
       );
-      console.error("Payment failed:", response.error);
+      console.error("Payment failed:", response);
     });
     razorpay.open();
   };

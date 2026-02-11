@@ -212,7 +212,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     price: product.discountPrice || product.price,
                     image: product.image,
                 });
-                localStorage.setItem("postLoginRedirect", "/checkout");
+                localStorage.setItem("postLoginRedirect", "/complete-profile");
                 setCartMessage("✗ Please login first.");
                 setTimeout(() => {
                     setCartMessage("")
@@ -239,7 +239,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             if (missingFields.length > 0) {
                 // Store the redirect message in localStorage
                 localStorage.setItem("profileMessage", `Please complete your profile to proceed with checkout. Missing: ${missingFields.join(", ")}`);
-                router.push("/profile");
+                router.push("/complete-profile");
                 return;
             }
 

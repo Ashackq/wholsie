@@ -43,7 +43,12 @@ body {
   color: var(--text);
   background: var(--white);
   line-height: 1.6;
-  overflow: hidden;
+  overflow-y: auto;
+}
+
+html.checkout-scroll,
+body.checkout-scroll {
+  overflow-y: auto !important;
 }
 
 /* Zoom-in animation for images on page load */

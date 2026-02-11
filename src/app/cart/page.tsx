@@ -121,7 +121,7 @@ export default function CartPage() {
   const handleProceedToCheckout = () => {
     const userString = localStorage.getItem("user");
     if (!userString) {
-      localStorage.setItem("postLoginRedirect", "/checkout");
+      localStorage.setItem("postLoginRedirect", "/complete-profile");
       router.push("/login");
       return;
     }
@@ -155,7 +155,7 @@ export default function CartPage() {
         "profileMessage",
         `Please complete your profile to proceed with checkout. Missing: ${missingFields.join(", ")}`,
       );
-      router.push("/profile");
+      router.push("/complete-profile");
       return;
     }
 
