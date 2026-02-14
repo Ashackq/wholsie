@@ -27,7 +27,7 @@ export async function getProducts(
 
     const products = await Product.find(filter)
       .populate("categoryId", "name slug")
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: -1 })
       .limit(parseInt(limit as string))
       .skip(parseInt(offset as string));
 
