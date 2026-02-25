@@ -557,7 +557,7 @@ export default function CheckoutPage() {
       prefill: {
         name: user?.name || "",
         email: user?.email || "",
-        contact: user?.mobile || "",
+        contact: user?.phone || user?.mobile || "",
       },
       theme: {
         color: "#F05F22",

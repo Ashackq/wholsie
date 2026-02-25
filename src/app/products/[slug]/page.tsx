@@ -592,6 +592,18 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                 >
                                                     Add to cart <i className="fas fa-long-arrow-right"></i>
                                                 </button>
+                                                <button
+                                                    className="common_btn btn-continue-shopping"
+                                                    onClick={() => router.push('/products')}
+                                                    style={{
+                                                        backgroundColor: 'transparent',
+                                                        color: '#333',
+                                                        border: '2px solid #333',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    <i className="fas fa-long-arrow-left"></i> Continue Shopping
+                                                </button>
                                             </div>
                                         </div>
 

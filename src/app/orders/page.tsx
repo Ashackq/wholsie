@@ -154,6 +154,8 @@ export default function OrdersPage() {
                       </thead>
                       <tbody>
                         {orders.map((order) => {
+                          console.log(order.invoiceUrl);
+
                           return (
                             <tr key={order._id}>
                               <td style={{ verticalAlign: "middle" }}>
