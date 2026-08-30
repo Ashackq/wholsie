@@ -2077,6 +2077,12 @@ body.checkout-scroll {
   color: var(--text);
 }
 
+.admin-table td img {
+  width: 45px !important;
+  height: 64px !important;
+  object-fit: cover !important;
+}
+
 .admin-table tr:last-child td {
   border-bottom: none;
 }

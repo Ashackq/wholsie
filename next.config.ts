@@ -104,14 +104,21 @@ const nextConfig: NextConfig = {
   },
 
   // Rewrites for API
-  rewrites: async () => ({
-    afterFiles: [
-      {
-        source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/:path*`,
-      },
-    ],
-  }),
+  rewrites: async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    const destination = apiUrl.endsWith("/api")
+      ? `${apiUrl}/:path*`
+      : `${apiUrl}/api/:path*`;
+
+    return {
+      afterFiles: [
+        {
+          source: "/api/:path*",
+          destination,
+        },
+      ],
+    };
+  },
 
   // Experimental features for performance
   experimental: {

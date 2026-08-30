@@ -86,6 +86,105 @@ export default function AdminProductsPage() {
   const pageSize = 4;
   const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
+  const [uploadingMain, setUploadingMain] = useState(false);
+  const [uploadingAdditional, setUploadingAdditional] = useState(false);
+
+  const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const data = new FormData();
+    data.append("file", file);
+
+    setUploadingMain(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const token = localStorage.getItem("authToken");
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${API}/admin/upload?type=product`, {
+        method: "POST",
+        body: data,
+        headers,
+        credentials: "include",
+      });
+
+      const json = await res.json();
+      if (json.success && json.filePath) {
+        let path = json.filePath;
+        if (path.startsWith("/")) {
+          path = path.slice(1);
+        }
+        setFormData(prev => ({ ...prev, image: path }));
+        setSuccess("Main image uploaded successfully");
+      } else {
+        setError(json.error || "Failed to upload image");
+      }
+    } catch (e: any) {
+      setError(e?.message || "Failed to upload image");
+    } finally {
+      setUploadingMain(false);
+    }
+  };
+
+  const handleAdditionalImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setError(null);
+    setSuccess(null);
+    setUploadingAdditional(true);
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const uploadedPaths: string[] = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const data = new FormData();
+        data.append("file", file);
+
+        const res = await fetch(`${API}/admin/upload?type=product`, {
+          method: "POST",
+          body: data,
+          headers,
+          credentials: "include",
+        });
+
+        const json = await res.json();
+        if (json.success && json.filePath) {
+          let path = json.filePath;
+          if (path.startsWith("/")) {
+            path = path.slice(1);
+          }
+          uploadedPaths.push(path);
+        }
+      }
+
+      if (uploadedPaths.length > 0) {
+        const currentImages = formData.images ? formData.images.split(",").map(i => i.trim()).filter(Boolean) : [];
+        const newImages = [...currentImages, ...uploadedPaths].join(", ");
+        setFormData(prev => ({ ...prev, images: newImages }));
+        setSuccess(`Successfully uploaded ${uploadedPaths.length} image(s)`);
+      } else {
+        setError("Failed to upload any images");
+      }
+    } catch (e: any) {
+      setError(e?.message || "Failed to upload images");
+    } finally {
+      setUploadingAdditional(false);
+    }
+  };
+
   const loadProducts = async () => {
     setLoading(true);
     try {
@@ -1121,6 +1220,33 @@ export default function AdminProductsPage() {
                       width: "100%",
                     }}
                   />
+                  <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10 }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleMainImageUpload}
+                      disabled={uploadingMain}
+                      id="product-main-image-upload"
+                      style={{ display: "none" }}
+                    />
+                    <label
+                      htmlFor="product-main-image-upload"
+                      style={{
+                        padding: "6px 12px",
+                        background: "#3b82f6",
+                        color: "#fff",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        fontSize: 13,
+                        display: "inline-block"
+                      }}
+                    >
+                      {uploadingMain ? "Uploading..." : "Upload Main Image"}
+                    </label>
+                    {formData.image && (
+                      <span style={{ fontSize: 12, color: "#10b981" }}>✓ Main image set</span>
+                    )}
+                  </div>
                   <small
                     style={{
                       color: "#6b7280",
@@ -1148,6 +1274,34 @@ export default function AdminProductsPage() {
                       fontFamily: "inherit",
                     }}
                   />
+                  <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10 }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleAdditionalImageUpload}
+                      disabled={uploadingAdditional}
+                      id="product-additional-images-upload"
+                      style={{ display: "none" }}
+                    />
+                    <label
+                      htmlFor="product-additional-images-upload"
+                      style={{
+                        padding: "6px 12px",
+                        background: "#3b82f6",
+                        color: "#fff",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        fontSize: 13,
+                        display: "inline-block"
+                      }}
+                    >
+                      {uploadingAdditional ? "Uploading..." : "Upload Additional Images"}
+                    </label>
+                    {formData.images && (
+                      <span style={{ fontSize: 12, color: "#10b981" }}>✓ Images uploaded</span>
+                    )}
+                  </div>
                   <small
                     style={{
                       color: "#6b7280",
@@ -1176,7 +1330,7 @@ export default function AdminProductsPage() {
                     <option value="inactive">Inactive</option>
                   </select>
                 </div>
-                <label
+                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -1186,6 +1340,7 @@ export default function AdminProductsPage() {
                 >
                   <input
                     type="checkbox"
+                    id="isRecentLaunch"
                     checked={formData.isRecentLaunch}
                     onChange={(e) =>
                       setFormData({
@@ -1193,10 +1348,26 @@ export default function AdminProductsPage() {
                         isRecentLaunch: e.target.checked,
                       })
                     }
+                    style={{ width: "auto", margin: 0, cursor: "pointer" }}
                   />
-                  <span>Mark as Recent Launch</span>
-                </label>
-                <label
+                  <label
+                    htmlFor="isRecentLaunch"
+                    style={{
+                      margin: 0,
+                      padding: 0,
+                      background: "none",
+                      position: "static",
+                      display: "inline-block",
+                      width: "auto",
+                      cursor: "pointer",
+                      fontSize: 14,
+                      color: "#374151"
+                    }}
+                  >
+                    Mark as Recent Launch
+                  </label>
+                </div>
+                <div
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -1206,13 +1377,30 @@ export default function AdminProductsPage() {
                 >
                   <input
                     type="checkbox"
+                    id="isCombo"
                     checked={formData.isCombo}
                     onChange={(e) =>
                       setFormData({ ...formData, isCombo: e.target.checked })
                     }
+                    style={{ width: "auto", margin: 0, cursor: "pointer" }}
                   />
-                  <span>Mark as Combo (Health Hamper)</span>
-                </label>
+                  <label
+                    htmlFor="isCombo"
+                    style={{
+                      margin: 0,
+                      padding: 0,
+                      background: "none",
+                      position: "static",
+                      display: "inline-block",
+                      width: "auto",
+                      cursor: "pointer",
+                      fontSize: 14,
+                      color: "#374151"
+                    }}
+                  >
+                    Mark as Combo (Health Hamper)
+                  </label>
+                </div>
                 <div style={{ display: "flex", gap: 10 }}>
                   <button
                     type="submit"
@@ -1302,14 +1490,14 @@ export default function AdminProductsPage() {
                   <td>
                     {product.image ? (
                       <Image
-                        src={`/${product.image}`}
+                        src={product.image.startsWith('/') ? product.image : `/${product.image}`}
                         alt={product.name || 'Product'}
-                        width={50}
-                        height={50}
-                        style={{ objectFit: 'cover', borderRadius: 6 }}
+                        width={45}
+                        height={64}
+                        style={{ objectFit: 'cover', borderRadius: 6, width: 45, height: 64 }}
                       />
                     ) : (
-                      <div style={{ width: 50, height: 50, background: 'var(--bg-2)', borderRadius: 6 }}></div>
+                      <div style={{ width: 45, height: 64, background: 'var(--bg-2)', borderRadius: 6 }}></div>
                     )}
                   </td>
                   <td>

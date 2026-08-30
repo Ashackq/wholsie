@@ -32,12 +32,51 @@ export default function AdminCategoriesPage() {
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [formData, setFormData] = useState({ name: "", status: "active", image: "" });
     const [search, setSearch] = useState("");
+    const [uploading, setUploading] = useState(false);
     const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
     const createEmptyForm = () => ({
       name: "",
       status: "active",
       image: "",
     });
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const data = new FormData();
+      data.append("file", file);
+
+      setUploading(true);
+      setError(null);
+      setSuccess(null);
+      try {
+        const token = localStorage.getItem("authToken");
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const res = await fetch(`${API}/admin/upload?type=category`, {
+          method: "POST",
+          body: data,
+          headers,
+          credentials: "include",
+        });
+
+        const json = await res.json();
+        if (json.success && json.filePath) {
+          setFormData({ ...formData, image: json.filePath });
+          setSuccess("Image uploaded successfully");
+        } else {
+          setError(json.error || "Failed to upload image");
+        }
+      } catch (e: any) {
+        setError(e?.message || "Failed to upload image");
+      } finally {
+        setUploading(false);
+      }
+    };
 
     const loadCategories = async () => {
       setLoading(true);
@@ -364,6 +403,33 @@ export default function AdminCategoriesPage() {
                                         onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                                         style={{ padding: 10, border: "1px solid var(--text-2)", borderRadius: 6, width: "100%" }}
                                     />
+                                    <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 10 }}>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            disabled={uploading}
+                                            id="category-image-upload"
+                                            style={{ display: "none" }}
+                                        />
+                                        <label
+                                            htmlFor="category-image-upload"
+                                            style={{
+                                                padding: "6px 12px",
+                                                background: "#3b82f6",
+                                                color: "#fff",
+                                                borderRadius: 6,
+                                                cursor: "pointer",
+                                                fontSize: 13,
+                                                display: "inline-block"
+                                            }}
+                                        >
+                                            {uploading ? "Uploading..." : "Upload Image"}
+                                        </label>
+                                        {formData.image && (
+                                            <span style={{ fontSize: 12, color: "#10b981" }}>✓ Image selected</span>
+                                        )}
+                                    </div>
                                     <small style={{ color: "#6b7280", fontSize: 12, display: "block", marginTop: 4 }}>Path will be: /assets/uploaded/menu_category/your-image.png</small>
                                 </div>
                                 <div style={{ marginBottom: 15 }}>

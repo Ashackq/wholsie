@@ -219,7 +219,7 @@ export default function Header() {
                                                 <li key={cat._id}>
                                                     <a href={`/products?category=${cat.slug}`}>
                                                         <span>
-                                                            <img src={`${(cat as any).image || 'default.png'}`} alt={cat.name} />
+                                                             <img src={(!cat.image || (cat as any).image.includes('MISSING') || (cat as any).image.includes('undefined')) ? '/assets/images/placeholder.svg' : (cat as any).image} alt={cat.name} />
                                                         </span>
                                                         {cat.name}
                                                     </a>

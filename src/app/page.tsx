@@ -36,6 +36,16 @@ interface Category {
   image?: string;
 }
 
+const resolveProductImage = (imagePath?: string) => {
+  if (!imagePath || imagePath.includes("MISSING") || imagePath.includes("undefined") || imagePath.trim() === "") {
+    return "/assets/images/placeholder.svg";
+  }
+  if (imagePath.startsWith("/") || imagePath.startsWith("http")) {
+    return imagePath;
+  }
+  return `/${imagePath}`;
+};
+
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [recentLaunches, setRecentLaunches] = useState<Product[]>([]);
@@ -184,7 +194,10 @@ export default function Home() {
       <section className="add_banner pt_55">
         <div className="container">
           <div className="row">
-            {categories.slice(0, 2).map((category, index) => (
+            {categories
+              .filter((cat) => ["makhana", "jowar-puffs"].includes(cat.slug))
+              .sort((a, b) => (a.slug === "makhana" ? -1 : 1))
+              .map((category, index) => (
               <div key={category._id} className={`col-lg-6 col-md-6 col-6 wow fadeInUp `} style={{ marginBottom: "0px" }} data-wow-delay={`${index * 0.2}s`}>
                 <div
                   className="add_banner_item"
@@ -320,7 +333,7 @@ export default function Home() {
                             <Link href={`/products/${product.slug}`} style={{ display: "block", borderRadius: "12px", overflow: "hidden", background: "#f8fafc" }}>
                               <div className="img" style={{ position: "relative" }}>
                                 <Image
-                                  src={`/${product.image}`}
+                                  src={resolveProductImage(product.image)}
                                   alt={product.name || product.title || "Product"}
                                   width={300}
                                   height={250}
@@ -487,7 +500,7 @@ export default function Home() {
                             <Link href={`/products/${product.slug}`} style={{ display: "block", borderRadius: "12px", overflow: "hidden", background: "#f8fafc" }}>
                               <div className="img" style={{ position: "relative" }}>
                                 <Image
-                                  src={`/${product.image}`}
+                                  src={resolveProductImage(product.image)}
                                   alt={product.name || product.title || "Product"}
                                   width={300}
                                   height={250}
