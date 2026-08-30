@@ -105,10 +105,25 @@ const nextConfig: NextConfig = {
 
   // Rewrites for API
   rewrites: async () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-    const destination = apiUrl.endsWith("/api")
-      ? `${apiUrl}/:path*`
-      : `${apiUrl}/api/:path*`;
+    let apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    
+    // Clean trailing slash
+    if (apiUrl.endsWith("/")) {
+      apiUrl = apiUrl.slice(0, -1);
+    }
+
+    // Determine target URL
+    let targetUrl = apiUrl;
+    if (apiUrl === "/api" || apiUrl === "/api/api") {
+      targetUrl = process.env.NODE_ENV === "production"
+        ? "https://api.wholesiii.com"
+        : "http://localhost:4000";
+    }
+
+    // Ensure we proxy to the backend's /api path, but avoid doubling it
+    const destination = targetUrl.endsWith("/api")
+      ? `${targetUrl}/:path*`
+      : `${targetUrl}/api/:path*`;
 
     return {
       afterFiles: [

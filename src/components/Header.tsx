@@ -9,7 +9,7 @@ export default function Header() {
     const { hideHeaderFooter } = useLayout();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [showCategories, setShowCategories] = useState(false);
-    const [categories, setCategories] = useState<Array<{ _id: string; name: string; slug?: string }>>([]);
+    const [categories, setCategories] = useState<Array<{ _id: string; name: string; slug?: string; image?: string }>>([]);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const API = process.env.NEXT_PUBLIC_API_URL;
     const router = useRouter();

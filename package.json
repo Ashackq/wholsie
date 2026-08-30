@@ -9,7 +9,8 @@
         "dev:backend": "cd server && npm run dev",
         "install:all": "npm install && cd server && npm install",
         "build:frontend": "next build",
-        "build:backend": "cd server && npm run build"
+        "build:backend": "cd server && npm run build",
+        "build": "next build"
     },
     "dependencies": {
         "@headlessui/react": "^2.2.9",
