@@ -32,6 +32,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: "/admin/users", label: "Users", icon: "fas fa-users" },
         { href: "/admin/orders", label: "Orders", icon: "fas fa-shopping-bag" },
         { href: "/admin/reviews", label: "Reviews", icon: "fa-solid fa-star", style: { color: "#cbd5e1", marginLeft: "-1px" } },
+        { href: "/admin/offers", label: "Offers", icon: "fas fa-tag" },
+        { href: "/admin/coupons", label: "Coupons", icon: "fas fa-ticket-alt" },
+        { href: "/admin/media", label: "Homepage Media", icon: "fas fa-photo-video" },
         { href: "/admin/settings", label: "Settings", icon: "fas fa-cog" },
     ];
 

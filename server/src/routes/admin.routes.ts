@@ -6,6 +6,8 @@ import * as orderController from '../controllers/order.controller.js';
 import * as delhiveryController from '../controllers/delhivery.controller.js';
 import * as userController from '../controllers/user.controller.js';
 import * as reviewController from '../controllers/review.controller.js';
+import * as adminOfferController from '../controllers/admin-offer.controller.js';
+import * as adminCouponController from '../controllers/admin-coupon.controller.js';
 
 const router = Router();
 import * as uploadController from '../controllers/upload.controller.js';
@@ -61,5 +63,21 @@ router.get('/delhivery/tracking/:waybill', requireAuth, requireAdmin, delhiveryC
 router.get('/reviews', requireAuth, requireAdmin, reviewController.getPendingReviews);
 router.put('/reviews/:reviewId/approve', requireAuth, requireAdmin, reviewController.approveReview);
 router.put('/reviews/:reviewId/reject', requireAuth, requireAdmin, reviewController.rejectReview);
+
+// ==================== OFFERS ====================
+router.get('/offers', requireAuth, requireAdmin, adminOfferController.getOffers);
+router.get('/offers/:offerId', requireAuth, requireAdmin, adminOfferController.getOffer);
+router.post('/offers', requireAuth, requireAdmin, adminOfferController.createOffer);
+router.put('/offers/:offerId', requireAuth, requireAdmin, adminOfferController.updateOffer);
+router.patch('/offers/:offerId/toggle-active', requireAuth, requireAdmin, adminOfferController.toggleOfferActive);
+router.delete('/offers/:offerId', requireAuth, requireAdmin, adminOfferController.deleteOffer);
+
+// ==================== COUPONS ====================
+router.get('/coupons', requireAuth, requireAdmin, adminCouponController.getCoupons);
+router.get('/coupons/:couponId', requireAuth, requireAdmin, adminCouponController.getCoupon);
+router.post('/coupons', requireAuth, requireAdmin, adminCouponController.createCoupon);
+router.put('/coupons/:couponId', requireAuth, requireAdmin, adminCouponController.updateCoupon);
+router.patch('/coupons/:couponId/toggle-active', requireAuth, requireAdmin, adminCouponController.toggleCouponActive);
+router.delete('/coupons/:couponId', requireAuth, requireAdmin, adminCouponController.deleteCoupon);
 
 export default router;
