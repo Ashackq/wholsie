@@ -13,6 +13,7 @@ import * as shippingController from "../controllers/shipping.controller.js";
 // Public controllers
 import * as publicProductController from "../controllers/public-product.controller.js";
 import * as publicCategoryController from "../controllers/public-category.controller.js";
+import * as publicMediaController from "../controllers/public-media.controller.js";
 
 // User controllers
 import * as cartController from "../controllers/cart.controller.js";
@@ -68,6 +69,9 @@ router.post("/shipping/calculate", shippingController.calculateShipping);
 
 // Reviews (public read)
 router.get("/products/:productId/reviews", reviewController.getProductReviews);
+
+// Homepage Media (public)
+router.get("/media", publicMediaController.getPublicMedia);
 
 // ==================== USER ROUTES (AUTH REQUIRED) ====================
 

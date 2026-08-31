@@ -8,6 +8,7 @@ import * as userController from '../controllers/user.controller.js';
 import * as reviewController from '../controllers/review.controller.js';
 import * as adminOfferController from '../controllers/admin-offer.controller.js';
 import * as adminCouponController from '../controllers/admin-coupon.controller.js';
+import * as adminMediaController from '../controllers/admin-media.controller.js';
 
 const router = Router();
 import * as uploadController from '../controllers/upload.controller.js';
@@ -79,5 +80,26 @@ router.post('/coupons', requireAuth, requireAdmin, adminCouponController.createC
 router.put('/coupons/:couponId', requireAuth, requireAdmin, adminCouponController.updateCoupon);
 router.patch('/coupons/:couponId/toggle-active', requireAuth, requireAdmin, adminCouponController.toggleCouponActive);
 router.delete('/coupons/:couponId', requireAuth, requireAdmin, adminCouponController.deleteCoupon);
+
+// ==================== HOMEPAGE MEDIA ====================
+// POST and PUT use uploadMedia (50 MB limit) with two optional file fields: file + thumbnail
+router.get('/media', requireAuth, requireAdmin, adminMediaController.getMediaItems);
+router.get('/media/:mediaId', requireAuth, requireAdmin, adminMediaController.getMediaItem);
+router.post(
+  '/media',
+  requireAuth,
+  requireAdmin,
+  uploadController.uploadMedia.fields([{ name: 'file', maxCount: 1 }, { name: 'thumbnail', maxCount: 1 }]),
+  adminMediaController.createMediaItem,
+);
+router.put(
+  '/media/:mediaId',
+  requireAuth,
+  requireAdmin,
+  uploadController.uploadMedia.fields([{ name: 'file', maxCount: 1 }, { name: 'thumbnail', maxCount: 1 }]),
+  adminMediaController.updateMediaItem,
+);
+router.patch('/media/:mediaId/toggle-active', requireAuth, requireAdmin, adminMediaController.toggleMediaActive);
+router.delete('/media/:mediaId', requireAuth, requireAdmin, adminMediaController.deleteMediaItem);
 
 export default router;
