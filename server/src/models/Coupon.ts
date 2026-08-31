@@ -17,6 +17,9 @@ const couponSchema = new Schema(
         validFrom: { type: Date, required: true },
         validTo: { type: Date, required: true },
         isActive: { type: Boolean, default: true },
+        // ── Mutual exclusion with offers ─────────────────────────────────────
+        // When true (default), this coupon CANNOT be combined with an active offer.
+        cannotCombineWithOffers: { type: Boolean, default: true },
         createdAt: { type: Date, default: Date.now },
         updatedAt: { type: Date, default: Date.now },
     },
@@ -24,3 +27,4 @@ const couponSchema = new Schema(
 );
 
 export const Coupon = model("Coupon", couponSchema);
+

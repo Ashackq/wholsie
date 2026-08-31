@@ -7,7 +7,29 @@ const orderItemSchema = new Schema({
   quantity: Number,
   weight: Number, // Product weight in grams (snapshot at order creation)
   image: String,
+  isFreeItem: { type: Boolean, default: false }, // true for items granted by buy_x_get_y_free
 });
+
+// Snapshot of the winning offer applied at order creation time
+const appliedOfferSnapshotSchema = new Schema(
+  {
+    offerId: { type: Schema.Types.ObjectId, ref: "Offer" },
+    offerTitle: String,
+    offerSlug: String,
+    discountAmount: Number,
+  },
+  { _id: false }
+);
+
+// Snapshot of the coupon applied at order creation time
+const appliedCouponSnapshotSchema = new Schema(
+  {
+    couponId: { type: Schema.Types.ObjectId, ref: "Coupon" },
+    code: String,
+    discountAmount: Number,
+  },
+  { _id: false }
+);
 
 const orderSchema = new Schema(
   {
@@ -42,10 +64,21 @@ const orderSchema = new Schema(
     paymentMethod: { type: String, default: "razorpay" },
     razorpayOrderId: String,
     razorpayPaymentId: String,
+
+    // ── Price breakdown (all server-computed) ─────────────────────────────────
     subtotal: Number,
     shippingCost: Number,
-    discount: Number,
-    total: Number,
+    discount: Number,    // legacy field (kept for backward-compat)
+    offerDiscount: { type: Number, default: 0 },
+    couponDiscount: { type: Number, default: 0 },
+    total: Number,       // legacy field (= subtotal + shipping before discounts)
+    netAmount: Number,   // final amount charged: subtotal + shipping - offerDiscount - couponDiscount
+
+    // ── Offer / coupon snapshots ───────────────────────────────────────────────
+    // Stored so historical orders retain discount provenance even after offer/coupon changes.
+    appliedOffers: [appliedOfferSnapshotSchema],   // max 1 entry
+    appliedCoupon: appliedCouponSnapshotSchema,
+
     // Delhivery shipment tracking
     delhiveryTrackingId: String,
     mpsWaybills: [String], // For Multi-Package Shipments
@@ -65,3 +98,4 @@ const orderSchema = new Schema(
 );
 
 export const Order = model("Order", orderSchema);
+
