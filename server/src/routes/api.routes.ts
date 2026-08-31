@@ -14,6 +14,7 @@ import * as shippingController from "../controllers/shipping.controller.js";
 import * as publicProductController from "../controllers/public-product.controller.js";
 import * as publicCategoryController from "../controllers/public-category.controller.js";
 import * as publicMediaController from "../controllers/public-media.controller.js";
+import * as offerController from "../controllers/offer.controller.js";
 
 // User controllers
 import * as cartController from "../controllers/cart.controller.js";
@@ -72,6 +73,12 @@ router.get("/products/:productId/reviews", reviewController.getProductReviews);
 
 // Homepage Media (public)
 router.get("/media", publicMediaController.getPublicMedia);
+
+// Offers (public) — /offers/products MUST come before /offers/:slug
+router.get("/offers/products", offerController.getOfferProducts);
+router.get("/offers", offerController.getPublicOffers);
+router.get("/offers/:slug", offerController.getPublicOfferBySlug);
+router.post("/offers/:offerId/click", offerController.recordOfferClick);
 
 // ==================== USER ROUTES (AUTH REQUIRED) ====================
 
