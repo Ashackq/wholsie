@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation, EffectFade } from "swiper/modules";
 import InstagramFeed from "@/components/InstagramFeed";
+import VideoGifSection from "@/components/VideoGifSection";
 
 import "swiper/css";
 import "swiper/css/pagination";
@@ -189,6 +190,9 @@ export default function Home() {
         </div>
 
       </section>
+
+      {/* Homepage Video/GIF Section (Phase 10) — renders nothing when no active media */}
+      <VideoGifSection />
 
       {/* Category Banners */}
       <section className="add_banner pt_55">
