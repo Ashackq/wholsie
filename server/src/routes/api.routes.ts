@@ -83,6 +83,10 @@ router.delete(
 );
 router.delete("/cart", requireAuth, checkActiveUser, cartController.clearCart);
 
+// Cart coupon endpoints (Phase 5)
+router.post("/cart/coupon", requireAuth, checkActiveUser, cartController.applyCouponToCart);
+router.delete("/cart/coupon", requireAuth, checkActiveUser, cartController.removeCouponFromCart);
+
 // Orders
 router.post("/orders", requireAuth, checkActiveUser, userOrderController.createOrder);
 router.get("/orders", requireAuth, checkActiveUser, userOrderController.getUserOrders);
