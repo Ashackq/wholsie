@@ -12,6 +12,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { calculateDiscountPercent } from "@/lib/product-utils";
+import OfferBadge from "@/components/OfferBadge";
 
 interface Product {
   _id: string;
@@ -33,6 +34,8 @@ interface Product {
     name: string;
     slug: string;
   };
+  /** Populated only from /api/offers/products */
+  offers?: Array<{ title: string; badgeText?: string }>;
 }
 
 interface Category {
@@ -60,6 +63,10 @@ function ProductsContent() {
   const [allProductsCount, setAllProductsCount] = useState(0);
   const [activeCategory, setActiveCategory] = useState("");
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  // Offers tab state
+  const isOffersTab = categorySlug === "offers";
+  const [offerProductCount, setOfferProductCount] = useState(0);
 
   // Mobile filter modal state
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -118,7 +125,11 @@ function ProductsContent() {
     setPage(1);
     setProducts([]);
     setIsFetching(false);
-    fetchProducts(1, true);
+    if (categorySlug === "offers") {
+      fetchOfferProducts();
+    } else {
+      fetchProducts(1, true);
+    }
   }, [categorySlug, searchQuery]);
 
   useEffect(() => {
@@ -154,6 +165,32 @@ function ProductsContent() {
   const clearFilters = () => {
     setTempCategory("");
   };
+
+  /**
+   * Fetches products from /api/offers/products for the Offers virtual tab.
+   * All offer products are returned in one request (no pagination).
+   */
+  const fetchOfferProducts = useCallback(() => {
+    setLoading(true);
+    setIsFetching(true);
+    setHasMore(false);
+    const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/offers/products`;
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        const items: Product[] = data.data || [];
+        setProducts(items);
+        setTotalCount(items.length);
+        setOfferProductCount(items.length);
+        setLoading(false);
+        setIsFetching(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching offer products:", err);
+        setLoading(false);
+        setIsFetching(false);
+      });
+  }, []);
 
   const fetchProducts = useCallback(
     (pageNum: number, reset = false) => {
@@ -274,6 +311,70 @@ function ProductsContent() {
   // Filter sidebar content (reused in desktop and modal)
   const FilterContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <>
+      {/* Offers virtual tab */}
+      <div className="sidebar_category" style={{ marginBottom: 0, paddingBottom: 0 }}>
+        <ul>
+          <li
+            className={
+              (!isMobile ? activeCategory === "offers" : tempCategory === "offers")
+                ? "current"
+                : ""
+            }
+            style={{
+              color: (!isMobile ? activeCategory === "offers" : tempCategory === "offers")
+                ? "var(--primary)"
+                : "inherit",
+            }}
+          >
+            {isMobile ? (
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setTempCategory("offers");
+                }}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  {tempCategory === "offers" && (
+                    <i
+                      className="fa-solid fa-check"
+                      style={{ color: "var(--primary)", fontSize: "12px" }}
+                    />
+                  )}
+                  <i
+                    className="fas fa-tag"
+                    style={{
+                      fontSize: "12px",
+                      color: "#ff6b35",
+                    }}
+                    aria-hidden="true"
+                  />
+                  Offers
+                </span>
+                {offerProductCount > 0 && <span>({offerProductCount})</span>}
+              </a>
+            ) : (
+              <Link href="/products?category=offers">
+                <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <i
+                    className="fas fa-tag"
+                    style={{ fontSize: "12px", color: "#ff6b35" }}
+                    aria-hidden="true"
+                  />
+                  Offers
+                </span>
+                {offerProductCount > 0 && <span>({offerProductCount})</span>}
+              </Link>
+            )}
+          </li>
+        </ul>
+        <hr style={{ margin: "8px 0 12px", border: "none", borderTop: "1px solid #eee" }} />
+      </div>
       <div className="sidebar_category">
         <h3>Categories</h3>
         <ul>
@@ -742,9 +843,11 @@ function ProductsContent() {
                 <h3>
                   {searchQuery
                     ? `Search Results for "${searchQuery}"`
-                    : currentCategory
-                      ? currentCategory.name
-                      : "All Products"}
+                    : isOffersTab
+                      ? "🏷️ Active Offers"
+                      : currentCategory
+                        ? currentCategory.name
+                        : "All Products"}
                 </h3>
                 <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                   {/* Mobile Filter Button */}
@@ -926,6 +1029,9 @@ function ProductsContent() {
                                       <span className="product-badge product-badge-discount">
                                         {discountPercent}% Off
                                       </span>
+                                    )}
+                                    {product.offers && product.offers.length > 0 && (
+                                      <OfferBadge offers={product.offers} />
                                     )}
                                   </div>
                                   <p
@@ -1115,8 +1221,8 @@ function ProductsContent() {
                     )}
                   </div>
 
-                  {/* Load More Button */}
-                  {hasMore && products.length > 0 && (
+                  {/* Load More Button — hidden on offers tab (all results fetched at once) */}
+                  {!isOffersTab && hasMore && products.length > 0 && (
                     <div
                       ref={loadMoreRef}
                       style={{ textAlign: "center", marginTop: "40px" }}
@@ -1133,6 +1239,22 @@ function ProductsContent() {
                       >
                         {loading ? "Loading..." : "Load More"}
                       </button>
+                    </div>
+                  )}
+
+                  {/* Offers tab footer CTA */}
+                  {isOffersTab && products.length > 0 && (
+                    <div style={{ textAlign: "center", marginTop: "40px" }}>
+                      <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "12px" }}>
+                        These products have active promotional offers
+                      </p>
+                      <Link
+                        href="/offers"
+                        className="common_btn"
+                        style={{ display: "inline-block" }}
+                      >
+                        View All Offers
+                      </Link>
                     </div>
                   )}
                 </>
