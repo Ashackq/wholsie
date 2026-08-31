@@ -12,6 +12,7 @@ import {
   api,
 } from "@/lib/api";
 import AddressModals from "@/components/AddressModals";
+import AuthModal from "@/components/AuthModal";
 
 declare global {
   interface Window {
@@ -64,6 +65,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showCreateAddressModal, setShowCreateAddressModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Order calculation states
   const [subtotal, setSubtotal] = useState(0);
@@ -91,12 +93,10 @@ export default function CheckoutPage() {
   useEffect(() => {
     const userString = localStorage.getItem("user");
     if (!userString) {
-      router.push("/login");
-      return;
+      // Per implementation plan §14: show inline OTP modal instead of redirecting
+      setShowAuthModal(true);
     }
-    // Note: We no longer redirect for missing name/email - 
-    // users can now add this info when creating an address
-  }, [router]);
+  }, []);
 
   const resolvePrice = (item: CartItem) => {
     const variant = item.product?.variants?.[item.variantIndex ?? 0];
@@ -761,6 +761,20 @@ export default function CheckoutPage() {
 
   return (
     <main style={{ minHeight: "100vh" }}>
+      {/* Inline OTP auth modal (Phase 11) — shown when user not logged in */}
+      {showAuthModal && (
+        <AuthModal
+          onSuccess={() => {
+            setShowAuthModal(false);
+            // Reload checkout data now that the user is authenticated
+            loadCheckoutData();
+          }}
+          onClose={() => {
+            // If user dismisses without logging in, send them back to cart
+            router.push("/cart");
+          }}
+        />
+      )}
       <style>{`
                 .page_banner {
                     background: url('/assets/images/bannerOther.jpg') center/cover no-repeat;

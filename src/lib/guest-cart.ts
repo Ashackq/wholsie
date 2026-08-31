@@ -9,16 +9,31 @@ export type GuestCartItem = {
 
 type GuestCart = {
   items: GuestCartItem[];
+  /** ISO timestamp of when the cart was first created */
+  createdAt?: string;
 };
 
 const GUEST_CART_KEY = "guestCart";
+/** 7 days in milliseconds */
+const EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
 const safeParse = (value: string | null): GuestCart => {
   if (!value) return { items: [] };
   try {
     const parsed = JSON.parse(value);
     if (parsed && Array.isArray(parsed.items)) {
-      return { items: parsed.items } as GuestCart;
+      // Enforce 7-day expiry
+      if (parsed.createdAt) {
+        const age = Date.now() - new Date(parsed.createdAt).getTime();
+        if (age > EXPIRY_MS) {
+          // Cart is stale — clear it silently
+          if (typeof window !== "undefined") {
+            localStorage.removeItem(GUEST_CART_KEY);
+          }
+          return { items: [] };
+        }
+      }
+      return { items: parsed.items, createdAt: parsed.createdAt } as GuestCart;
     }
   } catch {
     // ignore
@@ -35,6 +50,10 @@ export const getGuestCart = (): GuestCart => {
 
 const saveGuestCart = (cart: GuestCart) => {
   if (!canUseStorage()) return;
+  // Stamp createdAt on first write so the 7-day expiry clock starts
+  if (!cart.createdAt) {
+    cart.createdAt = new Date().toISOString();
+  }
   localStorage.setItem(GUEST_CART_KEY, JSON.stringify(cart));
 };
 

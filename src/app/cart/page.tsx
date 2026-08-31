@@ -9,6 +9,8 @@ import {
   removeFromCart,
   updateCartItem,
   getProduct as getProductDetail,
+  applyCouponToCart,
+  removeCouponFromCart,
 } from "@/lib/api";
 import { resolveProductImage, resolveProductPrice } from "@/lib/product-utils";
 import {
@@ -118,48 +120,21 @@ export default function CartPage() {
     {},
   );
 
+  // Enriched cart fields from server (Phase 11)
+  const [offerDiscount, setOfferDiscount] = useState(0);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [appliedOffers, setAppliedOffers] = useState<Array<{ offerTitle: string; discountAmount: number; offerSlug?: string }>>([]);
+  const [freeItems, setFreeItems] = useState<Array<{ productName: string; quantity: number; isOutOfStock: boolean; unitPrice: number }>>([]);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
+  const [couponWarnings, setCouponWarnings] = useState<string[]>([]);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccess, setCouponSuccess] = useState("");
+
   const handleProceedToCheckout = () => {
-    const userString = localStorage.getItem("user");
-    if (!userString) {
-      localStorage.setItem("postLoginRedirect", "/complete-profile");
-      router.push("/login");
-      return;
-    }
-
-    const user = JSON.parse(userString);
-    const missingFields: string[] = [];
-
-    // Check if name is valid (not default pattern like User1234)
-    if (
-      !user.name ||
-      user.name.trim() === "" ||
-      user.name === "N/A" ||
-      /^user\d*$/i.test(user.name.trim())
-    ) {
-      missingFields.push("name");
-    }
-
-    // Check if email is valid (not default phonenumber@ pattern)
-    if (
-      !user.email ||
-      user.email.trim() === "" ||
-      user.email === "N/A" ||
-      user.email.includes("phonenumber@")
-    ) {
-      missingFields.push("email");
-    }
-
-    // If missing fields, redirect to profile with message
-    if (missingFields.length > 0) {
-      localStorage.setItem(
-        "profileMessage",
-        `Please complete your profile to proceed with checkout. Missing: ${missingFields.join(", ")}`,
-      );
-      router.push("/complete-profile");
-      return;
-    }
-
-    // All good, proceed to checkout
+    // Per implementation plan §14: always navigate to /checkout.
+    // If the user is not logged in, the checkout page shows an inline AuthModal.
     router.push("/checkout");
   };
 
@@ -265,10 +240,21 @@ export default function CartPage() {
         }
 
         const response = await getCart();
-        const normalized = attachProductDetails(
-          (response as any).data || response,
-        );
-        if (mounted) setCart(normalized);
+        const payload = (response as any).data || response;
+        const normalized = attachProductDetails(payload);
+        if (mounted) {
+          setCart(normalized);
+          // Pull enriched fields from the server response (Phase 11)
+          setOfferDiscount(payload.offerDiscount ?? 0);
+          setCouponDiscount(payload.couponDiscount ?? 0);
+          setAppliedOffers(payload.appliedOffers ?? []);
+          setFreeItems(payload.freeItems ?? []);
+          setAppliedCoupon(payload.appliedCoupon ?? null);
+          setCouponWarnings(payload.warnings ?? []);
+          if (payload.appliedCoupon?.code) {
+            setCouponInput(payload.appliedCoupon.code);
+          }
+        }
 
         // Fetch full product details for items without complete data
         const itemsToFetch = (normalized.items || []).filter((item) => {
@@ -311,8 +297,16 @@ export default function CartPage() {
       return;
     }
     const response = await getCart();
-    const normalized = attachProductDetails((response as any).data || response);
+    const payload = (response as any).data || response;
+    const normalized = attachProductDetails(payload);
     setCart(normalized);
+    // Refresh enriched fields too
+    setOfferDiscount(payload.offerDiscount ?? 0);
+    setCouponDiscount(payload.couponDiscount ?? 0);
+    setAppliedOffers(payload.appliedOffers ?? []);
+    setFreeItems(payload.freeItems ?? []);
+    setAppliedCoupon(payload.appliedCoupon ?? null);
+    setCouponWarnings(payload.warnings ?? []);
   };
 
   const groups = useMemo(
@@ -398,8 +392,50 @@ export default function CartPage() {
       (sum, g) => sum + g.unitPrice * g.quantity,
       0,
     );
-    return { subtotal, total: subtotal };
-  }, [groups]);
+    const adjustedSubtotal = Math.max(0, subtotal - offerDiscount - couponDiscount);
+    return { subtotal, offerDiscount, couponDiscount, total: adjustedSubtotal };
+  }, [groups, offerDiscount, couponDiscount]);
+
+  const isLoggedInUser = () =>
+    typeof window !== "undefined" &&
+    (!!localStorage.getItem("authToken") || !!localStorage.getItem("user"));
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponError("");
+    setCouponSuccess("");
+    try {
+      const res = await applyCouponToCart(couponInput.trim().toUpperCase());
+      if (res.success) {
+        setCouponSuccess(res.message || "Coupon applied!");
+        await refreshCart();
+      } else {
+        setCouponError(res.error || "Failed to apply coupon.");
+      }
+    } catch (err: any) {
+      setCouponError(err.message || "Failed to apply coupon.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    setCouponLoading(true);
+    setCouponError("");
+    setCouponSuccess("");
+    try {
+      await removeCouponFromCart();
+      setCouponInput("");
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+      await refreshCart();
+    } catch (err: any) {
+      setCouponError(err.message || "Failed to remove coupon.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -678,11 +714,61 @@ export default function CartPage() {
                           </li>
                         );
                       })}
+
+                      {/* Free items from offer engine */}
+                      {freeItems.map((fi, idx) => (
+                        <li key={`free-${idx}`} style={{ opacity: fi.isOutOfStock ? 0.6 : 1 }}>
+                          <div className="img" style={{ background: "#f0fdf4", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", minWidth: 60, minHeight: 60 }}>
+                            <i className="fas fa-gift" style={{ color: "#16a34a", fontSize: 22 }} aria-hidden="true" />
+                          </div>
+                          <div className="text">
+                            <a style={{ color: "#16a34a", fontWeight: 600 }}>
+                              {fi.productName}
+                              {fi.isOutOfStock && <span style={{ fontSize: 11, color: "#f97316", marginLeft: 6 }}>(OOS)</span>}
+                            </a>
+                            <p>{fi.quantity} x FREE 🎁</p>
+                          </div>
+                          <h6 style={{ color: "#16a34a" }}>₹0.00</h6>
+                        </li>
+                      ))}
                     </ul>
+
+                    {/* Offer discount banner */}
+                    {appliedOffers.length > 0 && (
+                      <div style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", border: "1px solid #bbf7d0", borderRadius: 10, padding: "10px 14px", marginBottom: 10, display: "flex", alignItems: "center", gap: 10 }}>
+                        <i className="fas fa-tag" style={{ color: "#16a34a", fontSize: 16 }} aria-hidden="true" />
+                        <div style={{ flex: 1 }}>
+                          <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: "#15803d" }}>
+                            {appliedOffers[0].offerTitle}
+                          </p>
+                          <p style={{ margin: 0, fontSize: 12, color: "#16a34a" }}>
+                            You save {formatCurrency(appliedOffers[0].discountAmount)}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Warnings */}
+                    {couponWarnings.length > 0 && couponWarnings.map((w, i) => (
+                      <div key={i} style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 8, padding: "8px 12px", marginBottom: 8, fontSize: 12, color: "#c2410c", display: "flex", gap: 8 }}>
+                        <i className="fas fa-exclamation-triangle" style={{ flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+                        {w}
+                      </div>
+                    ))}
 
                     <h6 className="total-item">
                       Subtotal <span>{formatCurrency(summary.subtotal)}</span>
                     </h6>
+                    {summary.offerDiscount > 0 && (
+                      <h6 className="total-item" style={{ color: "#16a34a" }}>
+                        Offer Discount <span>-{formatCurrency(summary.offerDiscount)}</span>
+                      </h6>
+                    )}
+                    {summary.couponDiscount > 0 && (
+                      <h6 className="total-item" style={{ color: "#16a34a" }}>
+                        Coupon Discount <span>-{formatCurrency(summary.couponDiscount)}</span>
+                      </h6>
+                    )}
                     <h4>
                       Total <span>{formatCurrency(summary.total)}</span>
                     </h4>
@@ -696,6 +782,71 @@ export default function CartPage() {
                     >
                       Shipping charges calculated at checkout
                     </p>
+
+                    {/* Coupon input — only shown to logged-in users; hidden if offer active */}
+                    {isLoggedInUser() && (
+                      <div style={{ marginTop: 18, borderTop: "1px solid #eee", paddingTop: 16 }}>
+                        <p style={{ margin: "0 0 10px", fontWeight: 600, fontSize: 13, color: "#374151" }}>
+                          Have a coupon?
+                        </p>
+
+                        {appliedCoupon ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "8px 12px" }}>
+                            <i className="fas fa-ticket-alt" style={{ color: "#16a34a" }} aria-hidden="true" />
+                            <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: "#15803d" }}>{appliedCoupon.code}</span>
+                            <button
+                              onClick={handleRemoveCoupon}
+                              disabled={couponLoading}
+                              style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 13, fontWeight: 600 }}
+                              aria-label="Remove coupon"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : appliedOffers.length > 0 ? (
+                          <p style={{ fontSize: 12, color: "#64748b", fontStyle: "italic", margin: 0 }}>
+                            Coupons cannot be combined with active offers.
+                          </p>
+                        ) : (
+                          <>
+                            <div style={{ display: "flex", gap: 6 }}>
+                              <input
+                                id="cart-coupon-input"
+                                type="text"
+                                value={couponInput}
+                                onChange={(e) => {
+                                  setCouponInput(e.target.value.toUpperCase());
+                                  setCouponError("");
+                                  setCouponSuccess("");
+                                }}
+                                onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                                placeholder="Enter coupon code"
+                                style={{ flex: 1, border: "1.5px solid #e2e8f0", borderRadius: 8, padding: "8px 12px", fontSize: 13, fontFamily: "monospace", letterSpacing: 1, textTransform: "uppercase", outline: "none" }}
+                                disabled={couponLoading}
+                              />
+                              <button
+                                onClick={handleApplyCoupon}
+                                disabled={couponLoading || !couponInput.trim()}
+                                className="common_btn"
+                                style={{ padding: "8px 14px", fontSize: 13, border: "none", cursor: couponLoading || !couponInput.trim() ? "not-allowed" : "pointer", opacity: couponLoading || !couponInput.trim() ? 0.6 : 1 }}
+                              >
+                                {couponLoading ? "…" : "Apply"}
+                              </button>
+                            </div>
+                            {couponError && (
+                              <p style={{ margin: "6px 0 0", fontSize: 12, color: "#dc2626" }}>
+                                <i className="fas fa-exclamation-circle" style={{ marginRight: 4 }} aria-hidden="true" />{couponError}
+                              </p>
+                            )}
+                            {couponSuccess && (
+                              <p style={{ margin: "6px 0 0", fontSize: 12, color: "#16a34a" }}>
+                                <i className="fas fa-check-circle" style={{ marginRight: 4 }} aria-hidden="true" />{couponSuccess}
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

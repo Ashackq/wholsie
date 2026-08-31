@@ -586,6 +586,31 @@ export async function bulkCreateShipments(data: {
   });
 }
 
+// ── Coupon API (Phase 11) ─────────────────────────────────────────────────────
+
+/**
+ * POST /api/cart/coupon
+ * Applies a coupon code to the authenticated user's cart.
+ * Returns { success, message, data: { appliedCoupon, couponDiscount } } on success.
+ * Returns { success: false, error } when blocked (e.g. active offer, invalid code).
+ */
+export async function applyCouponToCart(
+  couponCode: string,
+): Promise<any> {
+  return apiCall<any>("/cart/coupon", {
+    method: "POST",
+    body: JSON.stringify({ couponCode }),
+  });
+}
+
+/**
+ * DELETE /api/cart/coupon
+ * Removes the applied coupon from the authenticated user's cart.
+ */
+export async function removeCouponFromCart(): Promise<any> {
+  return apiCall<any>("/cart/coupon", { method: "DELETE" });
+}
+
 export const api = {
   // Products
   getProducts,
@@ -597,6 +622,8 @@ export const api = {
   addToCart,
   updateCartItem,
   removeFromCart,
+  applyCouponToCart,
+  removeCouponFromCart,
 
   // Orders
   getOrders,
