@@ -45,14 +45,19 @@ export const resolveProductImage = (product?: ProductImage | null): string => {
         imagePath = product.image;
     }
 
-    if (!imagePath) return "/assets/images/makhana.png";
+    if (!imagePath || imagePath.includes("MISSING") || imagePath.includes("undefined") || imagePath.trim() === "") {
+        return "/assets/images/makhana.png";
+    }
 
-    // Handle absolute URLs
+    // Handle URLs / relative paths
     if (typeof imagePath === "string") {
-        if (imagePath.startsWith("http")) return imagePath;
-        if (imagePath.startsWith("/")) return imagePath;
-        // Relative path - prepend upload directory
-        return `/assets/uploaded/item/${imagePath}`;
+        if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+            return imagePath;
+        }
+        if (imagePath.startsWith("/")) {
+            return imagePath;
+        }
+        return `/${imagePath}`;
     }
 
     return "/assets/images/makhana.png";

@@ -16,6 +16,7 @@ import {
   removeCartOffer,
 } from "@/lib/api";
 import AddressModals from "@/components/AddressModals";
+import { resolveProductImage } from "@/lib/product-utils";
 
 declare global {
   interface Window {
@@ -1439,10 +1440,21 @@ const getProductIdString = (raw: any): string => {
                           <a
                             href="#"
                             className="img"
-                            style={{ display: "block" }}
+                            style={{
+                              display: "block",
+                              width: "60px",
+                              height: "60px",
+                              minWidth: "60px",
+                              minHeight: "60px",
+                              maxWidth: "60px",
+                              maxHeight: "60px",
+                              borderRadius: "6px",
+                              overflow: "hidden",
+                              flexShrink: 0,
+                            }}
                           >
                             <Image
-                              src={"/" + imageSrc}
+                              src={resolveProductImage(group.product || { image: imageSrc })}
                               alt={name}
                               width={60}
                               height={60}
@@ -1557,72 +1569,128 @@ const getProductIdString = (raw: any): string => {
                           padding: "10px 12px",
                           borderRadius: "8px",
                           border: "1px dashed #86efac",
-                          marginBottom: "12px",
+                          marginBottom: "10px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
+                          gap: "12px",
+                          opacity: fi.isOutOfStock ? 0.6 : 1,
                         }}
                       >
                         <div
                           style={{
                             display: "flex",
                             alignItems: "center",
-                            gap: "10px",
+                            gap: "12px",
+                            flex: 1,
+                            minWidth: 0,
                           }}
                         >
-                          {fi.productImage ? (
-                            <Image
-                              src={"/" + fi.productImage.replace(/^\/+/, "")}
-                              alt={fi.productName}
-                              width={48}
-                              height={48}
-                              style={{
-                                width: "48px",
-                                height: "48px",
-                                objectFit: "cover",
-                                borderRadius: "6px",
-                                flexShrink: 0,
-                              }}
-                            />
-                          ) : (
-                            <span
-                              style={{
-                                background: "#16a34a",
-                                color: "#fff",
-                                fontSize: "10px",
-                                fontWeight: 700,
-                                padding: "2px 6px",
-                                borderRadius: "4px",
-                                letterSpacing: "0.5px",
-                                flexShrink: 0,
-                              }}
-                            >
-                              FREE GIFT
-                            </span>
-                          )}
-                          <div>
+                          <div
+                            className="img"
+                            style={{
+                              position: "relative",
+                              width: "60px",
+                              height: "60px",
+                              minWidth: "60px",
+                              minHeight: "60px",
+                              maxWidth: "60px",
+                              maxHeight: "60px",
+                              borderRadius: "6px",
+                              overflow: "hidden",
+                              background: "#e2f9e8",
+                              flexShrink: 0,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {fi.productImage ? (
+                              <Image
+                                src={resolveProductImage({ image: fi.productImage })}
+                                alt={fi.productName}
+                                width={60}
+                                height={60}
+                                style={{
+                                  width: "60px",
+                                  height: "60px",
+                                  objectFit: "cover",
+                                  borderRadius: "6px",
+                                  display: "block",
+                                }}
+                              />
+                            ) : (
+                              <span
+                                style={{
+                                  background: "#16a34a",
+                                  color: "#fff",
+                                  fontSize: "10px",
+                                  fontWeight: 700,
+                                  padding: "2px 6px",
+                                  borderRadius: "4px",
+                                  letterSpacing: "0.5px",
+                                  flexShrink: 0,
+                                  textAlign: "center",
+                                }}
+                              >
+                                FREE GIFT
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
                             <div
                               style={{
-                                fontSize: "14px",
+                                fontSize: "15px",
                                 fontWeight: 600,
                                 color: "#15803d",
+                                wordBreak: "break-word",
+                                lineHeight: "1.3",
+                                marginBottom: "3px",
                               }}
                             >
                               {fi.productName}
+                              {fi.isOutOfStock && (
+                                <span
+                                  style={{
+                                    fontSize: "11px",
+                                    color: "#f97316",
+                                    marginLeft: "6px",
+                                  }}
+                                >
+                                  (OOS)
+                                </span>
+                              )}
                             </div>
                             <div
                               style={{
-                                fontSize: "12px",
+                                fontSize: "13px",
                                 color: "#166534",
+                                fontWeight: 500,
                               }}
                             >
                               Qty: {fi.quantity} (FREE 🎁)
                             </div>
                           </div>
                         </div>
-                        <span style={{ fontWeight: 700, color: "#16a34a" }}>
-                          ₹0.00
-                        </span>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              color: "#16a34a",
+                              minWidth: "60px",
+                              textAlign: "right",
+                            }}
+                          >
+                            ₹0.00
+                          </span>
+                        </div>
                       </li>
                     ))}
                   </ul>

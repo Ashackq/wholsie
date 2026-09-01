@@ -1095,10 +1095,10 @@ export default function CartPage() {
                       {/* Free items from offer engine (shown only when offer is availed) */}
                       {isOfferAvailed && freeItems.map((fi: any, idx) => (
                         <li key={`free-${idx}`} style={{ opacity: fi.isOutOfStock ? 0.6 : 1 }}>
-                          <div className="img" style={{ position: "relative", width: 60, height: 60, borderRadius: 8, overflow: "hidden", background: "#f0fdf4", flexShrink: 0 }}>
+                          <div className="img" style={{ position: "relative", width: 60, height: 60, minWidth: 60, minHeight: 60, maxWidth: 60, maxHeight: 60, borderRadius: 8, overflow: "hidden", background: "#f0fdf4", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                             {fi.productImage ? (
                               <Image
-                                src={"/" + fi.productImage.replace(/^\/+/, "")}
+                                src={resolveProductImage({ image: fi.productImage })}
                                 alt={fi.productName}
                                 width={60}
                                 height={60}
