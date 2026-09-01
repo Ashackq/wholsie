@@ -66,6 +66,16 @@ type CartResponse = {
 
 const formatCurrency = (amount: number) => `₹${amount.toFixed(2)}`;
 
+const getProductIdString = (raw: any): string => {
+  if (!raw) return "";
+  if (typeof raw === "string") return raw;
+  if (typeof raw === "object") {
+    if (raw._id) return getProductIdString(raw._id);
+    if (raw.id) return getProductIdString(raw.id);
+  }
+  return String(raw);
+};
+
 // Merge duplicate items by productId + variantIndex
 // Use fetched products for complete data
 const groupCartItems = (
@@ -74,10 +84,15 @@ const groupCartItems = (
 ): GroupedItem[] => {
   const map = new Map<string, GroupedItem>();
   for (const item of items) {
-    const key = `${item.productId}:${item.variantIndex ?? -1}`;
+    const pid = getProductIdString(item.productId);
+    const vIdx =
+      item.variantIndex !== undefined && item.variantIndex !== null
+        ? item.variantIndex
+        : -1;
+    const key = `${pid}:${vIdx}`;
 
     // Get fetched product for complete details
-    const fullProduct = fullProducts[item.productId] || item.product;
+    const fullProduct = (pid ? fullProducts[pid] : null) || item.product;
 
     // Use price from fetched product if available
     const unitPrice = fullProduct
@@ -87,18 +102,20 @@ const groupCartItems = (
     const existing = map.get(key);
     if (existing) {
       existing.quantity += item.quantity;
-      existing.mergedIds.push(item._id);
+      if (item._id && !existing.mergedIds.includes(item._id)) {
+        existing.mergedIds.push(item._id);
+      }
       // Prefer fetched product over API data
       existing.product =
-        fullProducts[item.productId] || existing.product || item.product;
+        (pid ? fullProducts[pid] : null) || existing.product || item.product;
       existing.name = existing.name || item.name || fullProduct?.name;
       // If unit price was 0 and we found a non-zero, update
       if (!existing.unitPrice && unitPrice) existing.unitPrice = unitPrice;
     } else {
       map.set(key, {
         key,
-        mergedIds: [item._id],
-        productId: item.productId,
+        mergedIds: item._id ? [item._id] : [],
+        productId: pid,
         variantIndex: item.variantIndex,
         quantity: item.quantity,
         product: fullProduct,
@@ -124,7 +141,7 @@ export default function CartPage() {
   const [offerDiscount, setOfferDiscount] = useState(0);
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [appliedOffers, setAppliedOffers] = useState<Array<{ offerTitle: string; discountAmount: number; offerSlug?: string }>>([]);
-  const [freeItems, setFreeItems] = useState<Array<{ productName: string; quantity: number; isOutOfStock: boolean; unitPrice: number }>>([]);
+  const [freeItems, setFreeItems] = useState<Array<{ productName: string; productImage?: string; quantity: number; isOutOfStock: boolean; unitPrice: number }>>([]);
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
   const [couponWarnings, setCouponWarnings] = useState<string[]>([]);
   const [couponInput, setCouponInput] = useState("");
@@ -162,14 +179,11 @@ export default function CartPage() {
 
   const attachProductDetails = useCallback(
     (payload: any): CartResponse => {
-      const items = (payload?.items ?? []).map((item: CartItem) => {
-        const productId =
-          (
-            item.productId ||
-            (item.product as any)?._id ||
-            item._id
-          )?.toString?.() ?? "";
-        const fullProduct = fullProducts[productId];
+      const items = (payload?.items ?? []).map((item: any) => {
+        const productId = getProductIdString(
+          item.productId || (item.product as any)?._id
+        );
+        const fullProduct = productId ? fullProducts[productId] : undefined;
         const mergedProduct = {
           ...(fullProduct || {}),
           ...(item.product || {}),
@@ -178,7 +192,8 @@ export default function CartPage() {
 
         return {
           ...item,
-          productId: productId || item.productId,
+          _id: item._id?.toString?.() || `${productId}:${item.variantIndex ?? ""}`,
+          productId,
           product: mergedProduct,
         } as CartItem;
       });
@@ -190,15 +205,20 @@ export default function CartPage() {
 
   const mapGuestItems = useCallback((items: any[]): CartItem[] => {
     return items.map((item) => {
-      const productId = item.productId?.toString?.() ?? "";
+      const productId = getProductIdString(item.productId);
+      const vId =
+        item.variantId !== undefined &&
+        item.variantId !== null &&
+        item.variantId !== "undefined" &&
+        item.variantId !== -1 &&
+        item.variantId !== "-1"
+          ? String(item.variantId)
+          : "";
       return {
-        _id: `${productId}:${item.variantId ?? ""}`,
+        _id: `${productId}:${vId}`,
         productId,
         quantity: Number(item.quantity) || 1,
-        variantIndex:
-          item.variantId !== undefined && item.variantId !== null
-            ? Number(item.variantId)
-            : undefined,
+        variantIndex: vId !== "" ? Number(vId) : undefined,
         price: item.price,
         name: item.name,
         product: item.image || item.name ? { image: item.image, name: item.name } : undefined,
@@ -218,10 +238,40 @@ export default function CartPage() {
 
         if (!isLoggedIn) {
           const guestCart = getGuestCart();
+          const guestItems = guestCart.items || [];
           const normalized = attachProductDetails({
-            items: mapGuestItems(guestCart.items || []),
+            items: mapGuestItems(guestItems),
           });
           if (mounted) setCart(normalized);
+
+          if (guestItems.length > 0) {
+            try {
+              const calcRes = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/cart/calculate`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ items: guestItems }),
+                }
+              );
+              const calcJson = await calcRes.json();
+              if (mounted && calcJson.success && calcJson.data) {
+                setOfferDiscount(calcJson.data.offerDiscount ?? 0);
+                setAppliedOffers(calcJson.data.appliedOffers ?? []);
+                setFreeItems(calcJson.data.freeItems ?? []);
+                setCouponWarnings(calcJson.data.warnings ?? []);
+              }
+            } catch {
+              // ignore
+            }
+          } else {
+            if (mounted) {
+              setOfferDiscount(0);
+              setAppliedOffers([]);
+              setFreeItems([]);
+            }
+          }
+
           // Fetch product details for guest items
           const itemsToFetch = (normalized.items || []).filter((item) => {
             const fetched = fullProducts[item.productId];
@@ -290,10 +340,37 @@ export default function CartPage() {
       !!localStorage.getItem("authToken") || !!localStorage.getItem("user");
     if (!isLoggedIn) {
       const guestCart = getGuestCart();
+      const guestItems = guestCart.items || [];
       const normalized = attachProductDetails({
-        items: mapGuestItems(guestCart.items || []),
+        items: mapGuestItems(guestItems),
       });
       setCart(normalized);
+
+      if (guestItems.length > 0) {
+        try {
+          const calcRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/cart/calculate`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ items: guestItems }),
+            }
+          );
+          const calcJson = await calcRes.json();
+          if (calcJson.success && calcJson.data) {
+            setOfferDiscount(calcJson.data.offerDiscount ?? 0);
+            setAppliedOffers(calcJson.data.appliedOffers ?? []);
+            setFreeItems(calcJson.data.freeItems ?? []);
+            setCouponWarnings(calcJson.data.warnings ?? []);
+          }
+        } catch {
+          // ignore
+        }
+      } else {
+        setOfferDiscount(0);
+        setAppliedOffers([]);
+        setFreeItems([]);
+      }
       return;
     }
     const response = await getCart();
@@ -364,20 +441,24 @@ export default function CartPage() {
   };
 
   const handleRemoveGroup = async (group: GroupedItem) => {
-    setUpdatingItemId(group.mergedIds[0]);
+    setUpdatingItemId(group.mergedIds[0] || group.key);
     try {
       const isLoggedIn =
         !!localStorage.getItem("authToken") || !!localStorage.getItem("user");
       if (!isLoggedIn) {
         removeGuestCartItem(
           group.productId,
-          group.variantIndex !== undefined ? String(group.variantIndex) : undefined,
+          group.variantIndex !== undefined && group.variantIndex !== null
+            ? String(group.variantIndex)
+            : undefined,
         );
         await refreshCart();
         return;
       }
       for (const id of group.mergedIds) {
-        await removeFromCart(id);
+        if (id && !id.includes(":")) {
+          await removeFromCart(id);
+        }
       }
       await refreshCart();
     } catch (e: any) {
@@ -716,10 +797,23 @@ export default function CartPage() {
                       })}
 
                       {/* Free items from offer engine */}
-                      {freeItems.map((fi, idx) => (
+                      {freeItems.map((fi: any, idx) => (
                         <li key={`free-${idx}`} style={{ opacity: fi.isOutOfStock ? 0.6 : 1 }}>
-                          <div className="img" style={{ background: "#f0fdf4", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", minWidth: 60, minHeight: 60 }}>
-                            <i className="fas fa-gift" style={{ color: "#16a34a", fontSize: 22 }} aria-hidden="true" />
+                          <div className="img" style={{ position: "relative", width: 60, height: 60, borderRadius: 8, overflow: "hidden", background: "#f0fdf4", flexShrink: 0 }}>
+                            {fi.productImage ? (
+                              <Image
+                                src={"/" + fi.productImage.replace(/^\/+/, "")}
+                                alt={fi.productName}
+                                width={60}
+                                height={60}
+                                className="img-fluid w-100"
+                                style={{ objectFit: "cover", width: "60px", height: "60px" }}
+                              />
+                            ) : (
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%" }}>
+                                <i className="fas fa-gift" style={{ color: "#16a34a", fontSize: 22 }} aria-hidden="true" />
+                              </div>
+                            )}
                           </div>
                           <div className="text">
                             <a style={{ color: "#16a34a", fontWeight: 600 }}>
@@ -741,8 +835,12 @@ export default function CartPage() {
                           <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: "#15803d" }}>
                             {appliedOffers[0].offerTitle}
                           </p>
-                          <p style={{ margin: 0, fontSize: 12, color: "#16a34a" }}>
-                            You save {formatCurrency(appliedOffers[0].discountAmount)}
+                          <p style={{ margin: 0, fontSize: 12, color: "#166534" }}>
+                            {appliedOffers[0].discountAmount > 0
+                              ? `You save ${formatCurrency(appliedOffers[0].discountAmount)}`
+                              : freeItems.length > 0
+                              ? "🎁 Free gift added to your cart!"
+                              : "Offer applied successfully"}
                           </p>
                         </div>
                       </div>

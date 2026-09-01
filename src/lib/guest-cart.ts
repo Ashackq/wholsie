@@ -62,11 +62,17 @@ export const clearGuestCart = () => {
   localStorage.removeItem(GUEST_CART_KEY);
 };
 
+const normalizeItemKey = (productId: any, variantId?: any): string => {
+  const pid = (typeof productId === "object" && productId?._id ? productId._id : productId)?.toString?.() || "";
+  const vid = variantId !== undefined && variantId !== null && variantId !== "undefined" && variantId !== -1 && variantId !== "-1" ? String(variantId) : "";
+  return `${pid}:${vid}`;
+};
+
 export const addToGuestCart = (item: GuestCartItem) => {
   const cart = getGuestCart();
-  const key = `${item.productId}:${item.variantId ?? ""}`;
+  const key = normalizeItemKey(item.productId, item.variantId);
   const existing = cart.items.find(
-    (it) => `${it.productId}:${it.variantId ?? ""}` === key,
+    (it) => normalizeItemKey(it.productId, it.variantId) === key,
   );
   if (existing) {
     existing.quantity += item.quantity;
@@ -83,10 +89,10 @@ export const updateGuestCartItem = (
   variantId?: string,
 ) => {
   const cart = getGuestCart();
-  const key = `${productId}:${variantId ?? ""}`;
+  const key = normalizeItemKey(productId, variantId);
   cart.items = cart.items
     .map((it) => {
-      if (`${it.productId}:${it.variantId ?? ""}` !== key) return it;
+      if (normalizeItemKey(it.productId, it.variantId) !== key) return it;
       return { ...it, quantity };
     })
     .filter((it) => it.quantity > 0);
@@ -96,9 +102,9 @@ export const updateGuestCartItem = (
 
 export const removeGuestCartItem = (productId: string, variantId?: string) => {
   const cart = getGuestCart();
-  const key = `${productId}:${variantId ?? ""}`;
+  const key = normalizeItemKey(productId, variantId);
   cart.items = cart.items.filter(
-    (it) => `${it.productId}:${it.variantId ?? ""}` !== key,
+    (it) => normalizeItemKey(it.productId, it.variantId) !== key,
   );
   saveGuestCart(cart);
   return cart;

@@ -209,8 +209,8 @@ export async function createOrder(
     const offerDiscount = offerResult.offerDiscount;
     const warnings: string[] = [...offerResult.warnings];
 
-    // free_shipping offer: override resolved shipping cost to 0
-    if (offerResult.freeShipping) {
+    // free_shipping offer or subtotal >= 500: override resolved shipping cost to 0
+    if (offerResult.freeShipping || subtotal >= 500) {
       shippingCost = 0;
     }
 

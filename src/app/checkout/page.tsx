@@ -10,6 +10,8 @@ import {
   removeFromCart,
   getProduct,
   api,
+  applyCouponToCart,
+  removeCouponFromCart,
 } from "@/lib/api";
 import AddressModals from "@/components/AddressModals";
 import AuthModal from "@/components/AuthModal";
@@ -58,6 +60,26 @@ export default function CheckoutPage() {
   const [orderNotes, setOrderNotes] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [offerDiscount, setOfferDiscount] = useState(0);
+  const [appliedOffers, setAppliedOffers] = useState<
+    Array<{ offerTitle: string; discountAmount: number; offerSlug?: string }>
+  >([]);
+  const [freeItems, setFreeItems] = useState<
+    Array<{
+      productName: string;
+      productImage?: string;
+      quantity: number;
+      isOutOfStock: boolean;
+      unitPrice: number;
+    }>
+  >([]);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discountAmount: number;
+  } | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponSuccess, setCouponSuccess] = useState("");
   const [useWallet, setUseWallet] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("1");
@@ -82,7 +104,7 @@ export default function CheckoutPage() {
     if (!u) return;
     setUser(u);
     // Also update localStorage for consistent state
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.setItem("user", JSON.stringify(u));
     }
   };
@@ -98,16 +120,17 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  const resolvePrice = (item: CartItem) => {
-    const variant = item.product?.variants?.[item.variantIndex ?? 0];
+  const resolvePrice = (item: any) => {
+    const product = item?.product || item;
+    const variant = product?.variants?.[item?.variantIndex ?? 0];
     const rawPrice =
       variant?.price ??
-      (item.product as any)?.discountedPrice ??
-      (item.product as any)?.discountPrice ??
-      (item.product as any)?.salePrice ??
-      (item.product as any)?.basePrice ??
-      (item.product as any)?.price ??
-      item.price ??
+      product?.discountedPrice ??
+      product?.discountPrice ??
+      product?.salePrice ??
+      product?.basePrice ??
+      product?.price ??
+      item?.price ??
       0;
     return Number(rawPrice) || 0;
   };
@@ -123,10 +146,24 @@ export default function CheckoutPage() {
     unitPrice: number;
   };
 
+const getProductIdString = (raw: any): string => {
+  if (!raw) return "";
+  if (typeof raw === "string") return raw;
+  if (typeof raw === "object") {
+    if (raw._id) return getProductIdString(raw._id);
+    if (raw.id) return getProductIdString(raw.id);
+  }
+  return String(raw);
+};
+
   const groupCartItems = async (items: CartItem[]): Promise<GroupedItem[]> => {
     const map = new Map<string, GroupedItem>();
     for (const item of items) {
-      const pid = (item.productId?._id || item.productId || "").toString();
+      const pid = getProductIdString(item.productId);
+      const vIdx =
+        item.variantIndex !== undefined && item.variantIndex !== null
+          ? item.variantIndex
+          : -1;
 
       // Fetch product data from API
       let product = item.product;
@@ -139,19 +176,25 @@ export default function CheckoutPage() {
         }
       }
 
-      const key = `${pid}:${item.variantIndex ?? -1}`;
-      const unitPrice = resolvePrice(product);
+      const key = `${pid}:${vIdx}`;
+      const unitPrice = resolvePrice({
+        product,
+        variantIndex: (item as any).variantIndex,
+        price: item.price,
+      });
       const existing = map.get(key);
       if (existing) {
         existing.quantity += item.quantity ?? 1;
-        existing.mergedIds.push(item._id);
+        if (item._id && !existing.mergedIds.includes(item._id)) {
+          existing.mergedIds.push(item._id);
+        }
         existing.product = existing.product || product;
         existing.name = existing.name || item.name || product?.name;
         if (!existing.unitPrice && unitPrice) existing.unitPrice = unitPrice;
       } else {
         map.set(key, {
           key,
-          mergedIds: [item._id],
+          mergedIds: item._id ? [item._id] : [],
           productId: pid,
           variantIndex: (item as any).variantIndex,
           quantity: item.quantity ?? 1,
@@ -193,14 +236,20 @@ export default function CheckoutPage() {
   }, []);
 
   const attachProductDetails = useCallback((payload: any) => {
-    const items = (payload?.items ?? []).map((item: CartItem) => {
-      const productId =
-        (item.productId?._id || item.productId || item._id)?.toString?.() ?? "";
+    const items = (payload?.items ?? []).map((item: any) => {
+      const productId = getProductIdString(
+        item.productId || (item.product as any)?._id
+      );
       const mergedProduct = {
         ...((item as any).product || {}),
         _id: productId,
       };
-      return { ...item, productId, product: mergedProduct } as CartItem;
+      return {
+        ...item,
+        _id: item._id?.toString?.() || `${productId}:${item.variantIndex ?? ""}`,
+        productId,
+        product: mergedProduct,
+      } as CartItem;
     });
     return { ...(payload || {}), items };
   }, []);
@@ -208,10 +257,22 @@ export default function CheckoutPage() {
   const loadCheckoutData = async () => {
     try {
       const res = await getCart();
-      if (!res.data) throw new Error("Failed to load cart");
+      const payload = (res as any)?.data || res;
+      if (!payload) throw new Error("Failed to load cart");
 
-      const normalized = attachProductDetails(res.data);
+      const normalized = attachProductDetails(payload);
       setCart(normalized);
+
+      // Populate enriched offer, coupon and free item state
+      setOfferDiscount(payload.offerDiscount ?? 0);
+      setCouponDiscount(payload.couponDiscount ?? 0);
+      setAppliedOffers(payload.appliedOffers ?? []);
+      setFreeItems(payload.freeItems ?? []);
+      setAppliedCoupon(payload.appliedCoupon ?? null);
+      setWarnings(payload.warnings ?? []);
+      if (payload.appliedCoupon?.code) {
+        setCouponCode(payload.appliedCoupon.code);
+      }
 
       // Load user data from API or use mock data
       try {
@@ -440,37 +501,34 @@ export default function CheckoutPage() {
     serviceability?.serviceable,
   ]);
 
-  const calculateTotal = () => {
-    let total =
-      subtotal + shippingCharge + packagingCharges;
-    total = total - couponDiscount;
-
-    if (useWallet && walletBalance > 0) {
-      const walletDeduction = Math.min(walletBalance, total);
-      total = total - walletDeduction;
-    }
-
-    return Math.max(0, total);
-  };
-
   const calculateWalletDeduction = () => {
     if (!useWallet || walletBalance <= 0) return 0;
+    const preWalletTotal = Math.max(
+      0,
+      summary.subtotal + shippingCharge - offerDiscount - couponDiscount,
+    );
+    return Math.min(walletBalance, preWalletTotal);
+  };
+
+  const calculateTotal = () => {
+    const deduction = calculateWalletDeduction();
     const total =
       summary.subtotal +
-      shippingCharge +
-      packagingCharges +
-      couponDiscount;
-    return Math.min(walletBalance, total);
+      shippingCharge -
+      offerDiscount -
+      couponDiscount -
+      deduction;
+    return Math.max(1, total);
   };
 
   const handleRemoveGroup = async (group: { mergedIds: string[] }) => {
     try {
       for (const id of group.mergedIds) {
-        await removeFromCart(id);
+        if (id && !id.includes(":")) {
+          await removeFromCart(id);
+        }
       }
-      const res = await getCart();
-      const normalized = attachProductDetails(res.data);
-      setCart(normalized);
+      await loadCheckoutData();
     } catch (err) {
       setError("Failed to remove item");
     }
@@ -481,29 +539,38 @@ export default function CheckoutPage() {
       setError("Please enter a coupon code");
       return;
     }
-
+    setCouponLoading(true);
+    setError("");
+    setCouponSuccess("");
     try {
-      // Validate coupon via API
-      const res = await fetch("/api/coupon/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: couponCode.trim(),
-          subtotal: subtotal,
-        }),
-      });
-
-      const data = await res.json();
-      if (data.valid) {
-        setError("");
-        setCouponDiscount(data.discount || 0);
+      const res = await applyCouponToCart(couponCode.trim().toUpperCase());
+      if (res.success) {
+        setCouponSuccess(res.message || "Coupon applied successfully!");
+        await loadCheckoutData();
       } else {
-        setError(data.message || "Invalid coupon code");
-        setCouponDiscount(0);
+        setError(res.error || "Failed to apply coupon");
       }
-    } catch (err) {
-      setError("Failed to validate coupon");
+    } catch (err: any) {
+      setError(err.message || "Failed to apply coupon");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    setCouponLoading(true);
+    setError("");
+    setCouponSuccess("");
+    try {
+      await removeCouponFromCart();
+      setCouponCode("");
+      setAppliedCoupon(null);
       setCouponDiscount(0);
+      await loadCheckoutData();
+    } catch (err: any) {
+      setError(err.message || "Failed to remove coupon");
+    } finally {
+      setCouponLoading(false);
     }
   };
 
@@ -1444,22 +1511,214 @@ export default function CheckoutPage() {
                         </li>
                       );
                     })}
+                    {/* Free Items from Active Offers */}
+                    {freeItems.map((fi, idx) => (
+                      <li
+                        key={`free-${idx}`}
+                        style={{
+                          background: "#f0fdf4",
+                          padding: "10px 12px",
+                          borderRadius: "8px",
+                          border: "1px dashed #86efac",
+                          marginBottom: "12px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                          }}
+                        >
+                          {fi.productImage ? (
+                            <Image
+                              src={"/" + fi.productImage.replace(/^\/+/, "")}
+                              alt={fi.productName}
+                              width={48}
+                              height={48}
+                              style={{
+                                width: "48px",
+                                height: "48px",
+                                objectFit: "cover",
+                                borderRadius: "6px",
+                                flexShrink: 0,
+                              }}
+                            />
+                          ) : (
+                            <span
+                              style={{
+                                background: "#16a34a",
+                                color: "#fff",
+                                fontSize: "10px",
+                                fontWeight: 700,
+                                padding: "2px 6px",
+                                borderRadius: "4px",
+                                letterSpacing: "0.5px",
+                                flexShrink: 0,
+                              }}
+                            >
+                              FREE GIFT
+                            </span>
+                          )}
+                          <div>
+                            <div
+                              style={{
+                                fontSize: "14px",
+                                fontWeight: 600,
+                                color: "#15803d",
+                              }}
+                            >
+                              {fi.productName}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                color: "#166534",
+                              }}
+                            >
+                              Qty: {fi.quantity} (FREE 🎁)
+                            </div>
+                          </div>
+                        </div>
+                        <span style={{ fontWeight: 700, color: "#16a34a" }}>
+                          ₹0.00
+                        </span>
+                      </li>
+                    ))}
                   </ul>
 
-                  {/* Coupon Code */}
-                  <div className="coupon-section">
-                    <input
-                      type="text"
-                      placeholder="Coupone Code"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                    />
-                    <button type="button" onClick={applyCoupon}>
-                      Apply
-                    </button>
-                  </div>
+                  {/* Applied Offer Banner */}
+                  {appliedOffers.length > 0 && (
+                    <div
+                      style={{
+                        background: "#f0fdf4",
+                        border: "1px solid #bbf7d0",
+                        color: "#166534",
+                        padding: "10px 14px",
+                        borderRadius: "8px",
+                        marginBottom: "16px",
+                        fontSize: "13px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <i className="fas fa-tag" style={{ color: "#16a34a" }} />
+                      <div>
+                        <strong>{appliedOffers[0].offerTitle}</strong> applied!
+                        {offerDiscount > 0
+                          ? ` You save ₹${offerDiscount.toFixed(2)}`
+                          : freeItems.length > 0
+                          ? " 🎁 Free gift included!"
+                          : ""}
+                      </div>
+                    </div>
+                  )}
 
-                  {/* Order Summary */}
+                  {/* Coupon Code */}
+                  {appliedOffers.length > 0 && (offerDiscount > 0 || freeItems.length > 0) ? (
+                    <div
+                      style={{
+                        background: "#f8fafc",
+                        padding: "10px 14px",
+                        borderRadius: "6px",
+                        border: "1px solid #e2e8f0",
+                        marginBottom: "16px",
+                        fontSize: "12px",
+                        color: "#64748b",
+                      }}
+                    >
+                      <i
+                        className="fas fa-info-circle"
+                        style={{ marginRight: "6px", color: "#3b82f6" }}
+                      />
+                      Promotional offer is active. Coupon codes cannot be
+                      combined with active offers.
+                    </div>
+                  ) : appliedCoupon ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        background: "#f0fdf4",
+                        border: "1px solid #bbf7d0",
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      <div>
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            color: "#15803d",
+                            fontSize: "13px",
+                          }}
+                        >
+                          {appliedCoupon.code}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "#166534",
+                            marginLeft: "8px",
+                          }}
+                        >
+                          (-₹{couponDiscount.toFixed(2)})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveCoupon}
+                        disabled={couponLoading}
+                        style={{
+                          border: "none",
+                          background: "transparent",
+                          color: "#dc2626",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="coupon-section">
+                      <input
+                        type="text"
+                        placeholder="Coupon Code"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        disabled={couponLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={applyCoupon}
+                        disabled={couponLoading}
+                      >
+                        {couponLoading ? "Applying..." : "Apply"}
+                      </button>
+                    </div>
+                  )}
+
+                  {couponSuccess && (
+                    <p
+                      style={{
+                        color: "#16a34a",
+                        fontSize: "12px",
+                        margin: "4px 0 12px",
+                      }}
+                    >
+                      {couponSuccess}
+                    </p>
+                  )}
+
+                  {/* Order Summary Breakdown */}
                   <h6>
                     <span>Subtotal</span>
                     <div>
@@ -1467,41 +1726,54 @@ export default function CheckoutPage() {
                     </div>
                   </h6>
 
-                  <h6>
-                    <span>Shipping Charge</span>
-                    <div>
-                      <span>
-                        {shippingLoading
-                          ? "Calculating…"
-                          : formatCurrency(shippingCharge)}
-                      </span>
-                    </div>
-                  </h6>
+                  {offerDiscount > 0 && (
+                    <h6 style={{ color: "#16a34a" }}>
+                      <span>Offer Discount</span>
+                      <div>
+                        <span>- {formatCurrency(offerDiscount)}</span>
+                      </div>
+                    </h6>
+                  )}
+
                   {couponDiscount > 0 && (
-                    <h6 style={{ color: "#31A56D" }}>
+                    <h6 style={{ color: "#16a34a" }}>
                       <span>Coupon Discount</span>
                       <div>
                         <span>- {formatCurrency(couponDiscount)}</span>
                       </div>
                     </h6>
                   )}
-                  {packagingCharges > 0 && (
-                    <h6>
-                      <span>Packaging Charges</span>
-                      <div>
-                        <span>{formatCurrency(packagingCharges)}</span>
-                      </div>
-                    </h6>
-                  )}
+
+                  <h6>
+                    <span>Shipping Charge</span>
+                    <div>
+                      <span
+                        style={{
+                          color: shippingCharge === 0 ? "#16a34a" : "inherit",
+                          fontWeight: shippingCharge === 0 ? 700 : 400,
+                        }}
+                      >
+                        {shippingLoading
+                          ? "Calculating…"
+                          : shippingCharge === 0
+                          ? "FREE"
+                          : formatCurrency(shippingCharge)}
+                      </span>
+                    </div>
+                  </h6>
+
                   <h4>
                     <span>Grand Total</span>
                     <div style={{ color: "#F05F22" }}>
                       <span>
                         {formatCurrency(
-                          summary.subtotal +
-                          shippingCharge +
-                          packagingCharges +
-                          couponDiscount,
+                          Math.max(
+                            0,
+                            summary.subtotal +
+                              shippingCharge -
+                              offerDiscount -
+                              couponDiscount,
+                          ),
                         )}
                       </span>
                     </div>
@@ -1509,10 +1781,10 @@ export default function CheckoutPage() {
 
                   {/* Wallet */}
                   {walletBalance > 0 && (
-                    <div className="wallet-row">
+                    <div className="wallet-row" style={{ marginTop: "15px" }}>
                       <div className="wallet-row-l">
                         <span style={{ color: "#333", fontWeight: "500" }}>
-                          Wallets
+                          Wallet Balance
                         </span>
                         <label className="toggle-switch">
                           <input
@@ -1529,26 +1801,27 @@ export default function CheckoutPage() {
                     </div>
                   )}
                   {walletDeduction > 0 && (
-                    <p
-                      style={{
-                        fontSize: "12px",
-                        color: "#31A56D",
-                        marginTop: "5px",
-                        marginBottom: "0",
-                      }}
-                    >
-                      {formatCurrency(walletDeduction)} will be deducted from
-                      wallet
-                    </p>
-                  )}
+                    <>
+                      <p
+                        style={{
+                          fontSize: "12px",
+                          color: "#31A56D",
+                          marginTop: "5px",
+                          marginBottom: "0",
+                        }}
+                      >
+                        {formatCurrency(walletDeduction)} will be deducted from
+                        wallet
+                      </p>
 
-                  {/* Amount to Pay */}
-                  <h4 style={{ marginTop: "20px" }}>
-                    <span>Amount To Pay</span>
-                    <div style={{ color: "#F05F22" }}>
-                      <span>{formatCurrency(total)}</span>
-                    </div>
-                  </h4>
+                      <h4 style={{ marginTop: "15px" }}>
+                        <span>Amount To Pay</span>
+                        <div style={{ color: "#F05F22" }}>
+                          <span>{formatCurrency(total)}</span>
+                        </div>
+                      </h4>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

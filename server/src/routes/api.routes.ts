@@ -68,6 +68,9 @@ router.get("/delhivery/track/:waybill", delhiveryController.getTracking);
 // Shipping calculation
 router.post("/shipping/calculate", shippingController.calculateShipping);
 
+// Guest Cart calculation (public)
+router.post("/cart/calculate", cartController.calculateGuestCart);
+
 // Reviews (public read)
 router.get("/products/:productId/reviews", reviewController.getProductReviews);
 

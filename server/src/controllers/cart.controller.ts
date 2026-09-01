@@ -60,6 +60,7 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
         // ── Enrich items from DB ───────────────────────────────────────────────
         const enrichedItems = await enrichCartItems(
             cart.items.map((item: any) => ({
+                _id: item._id,
                 productId: item.productId,
                 variantId: item.variantId,
                 name: item.name,
@@ -433,4 +434,92 @@ export async function clearCart(req: Request, res: Response, next: NextFunction)
         next(error);
     }
 }
+
+/**
+ * Calculate guest cart pricing, active offers, and shipping estimate.
+ * POST /api/cart/calculate
+ * Body: { items: Array<{ productId: string, variantId?: string, quantity: number }> }
+ */
+export async function calculateGuestCart(req: Request, res: Response, next: NextFunction) {
+    try {
+        const rawItems = Array.isArray(req.body.items) ? req.body.items : [];
+
+        if (!rawItems.length) {
+            return res.json({
+                success: true,
+                data: {
+                    items: [],
+                    subtotal: 0,
+                    offerDiscount: 0,
+                    couponDiscount: 0,
+                    adjustedSubtotal: 0,
+                    shippingEstimate: 0,
+                    appliedOffers: [],
+                    freeItems: [],
+                    appliedCoupon: null,
+                    warnings: [],
+                },
+            });
+        }
+
+        // Enrich items from DB
+        const enrichedItems = await enrichCartItems(
+            rawItems.map((item: any) => ({
+                productId: item.productId,
+                variantId: item.variantId,
+                name: item.name,
+                price: item.price,
+                quantity: Number(item.quantity) || 1,
+                image: item.image,
+            })),
+        );
+
+        const subtotal = enrichedItems.reduce(
+            (sum, i) => sum + (i.dbPrice ?? 0) * i.quantity,
+            0,
+        );
+
+        // Run offer engine
+        const offerResult = await evaluateOffers(enrichedItems);
+        const offerDiscount = offerResult.offerDiscount;
+
+        let shippingEstimate = 0;
+        if (!offerResult.freeShipping) {
+            shippingEstimate = subtotal >= 500 ? 0 : 50;
+        }
+
+        const adjustedSubtotal = Math.max(0, subtotal - offerDiscount);
+
+        return res.json({
+            success: true,
+            data: {
+                items: enrichedItems.map((i) => ({
+                    ...i,
+                    price: i.dbPrice ?? 0,
+                })),
+                subtotal,
+                offerDiscount,
+                couponDiscount: 0,
+                adjustedSubtotal,
+                shippingEstimate,
+                appliedOffers: offerResult.appliedOffer
+                    ? [
+                        {
+                            offerId: offerResult.appliedOffer.offerId,
+                            offerTitle: offerResult.appliedOffer.offerTitle,
+                            offerSlug: offerResult.appliedOffer.offerSlug,
+                            discountAmount: offerResult.appliedOffer.discountAmount,
+                        },
+                    ]
+                    : [],
+                freeItems: offerResult.freeItems,
+                appliedCoupon: null,
+                warnings: offerResult.warnings,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
 

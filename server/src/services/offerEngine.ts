@@ -16,6 +16,7 @@ import { Product } from "../models/Product.js";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface CartItem {
+    _id?: any;
     productId: Types.ObjectId | string;
     variantId?: string;
     name?: string;
@@ -32,6 +33,7 @@ export interface CartItem {
 export interface FreeItem {
     productId: Types.ObjectId | string;
     productName: string;
+    productImage?: string;
     quantity: number;
     unitPrice: number;    // price of the item (for display; order saves it at ₹0)
     isOutOfStock: boolean;
@@ -81,10 +83,10 @@ async function getActiveOffers(): Promise<any[]> {
             { $or: [{ endDate: null }, { endDate: { $gte: nowDate } }] },
         ],
     })
-        .populate("applicableProducts", "_id categoryId salePrice price weight stock name")
+        .populate("applicableProducts", "_id categoryId salePrice price weight stock name image")
         .populate("applicableCategories", "_id")
-        .populate("rule.getFreeProductId", "_id name salePrice price weight stock")
-        .populate("rule.comboProducts", "_id categoryId salePrice price weight stock")
+        .populate("rule.getFreeProductId", "_id name salePrice price weight stock image")
+        .populate("rule.comboProducts", "_id categoryId salePrice price weight stock image")
         .lean();
 
     // Further filter: respect maxUsageTotal
@@ -134,6 +136,7 @@ function eligibleItems(offer: any, cartItems: CartItem[]): CartItem[] {
 
 interface EvalResult {
     discountAmount: number;
+    rankingValue: number;
     freeItems: FreeItem[];
     warnings: string[];
     freeShipping: boolean;
@@ -141,6 +144,7 @@ interface EvalResult {
 
 const ZERO_RESULT: EvalResult = {
     discountAmount: 0,
+    rankingValue: 0,
     freeItems: [],
     warnings: [],
     freeShipping: false,
@@ -161,6 +165,7 @@ function evalBuyXGetYFree(offer: any, eligible: CartItem[]): EvalResult {
     let freeProductDoc: any = null;
     let freeProductId: string;
     let freeProductName: string;
+    let freeProductImage: string = "";
     let freeUnitPrice: number;
     let isOutOfStock = false;
 
@@ -169,6 +174,7 @@ function evalBuyXGetYFree(offer: any, eligible: CartItem[]): EvalResult {
         freeProductDoc = getFreeProductId; // populated
         freeProductId = productIdStr(freeProductDoc._id);
         freeProductName = freeProductDoc.name ?? "Free Item";
+        freeProductImage = freeProductDoc.image ?? "";
         freeUnitPrice = productPrice(freeProductDoc);
         isOutOfStock = (freeProductDoc.stock ?? freeProductDoc.quantity ?? 0) <= 0;
     } else {
@@ -177,11 +183,12 @@ function evalBuyXGetYFree(offer: any, eligible: CartItem[]): EvalResult {
         const cheapest = sorted[0];
         freeProductId = productIdStr(cheapest.productId);
         freeProductName = cheapest.name ?? "Free Item";
+        freeProductImage = cheapest.image ?? "";
         freeUnitPrice = cheapest.dbPrice ?? 0;
         isOutOfStock = (cheapest.stock ?? 0) <= 0;
     }
 
-    const discountAmount = freeQty * freeUnitPrice;
+    const freeItemValue = freeQty * freeUnitPrice;
     const warnings: string[] = [];
     if (isOutOfStock) {
         warnings.push(
@@ -190,11 +197,13 @@ function evalBuyXGetYFree(offer: any, eligible: CartItem[]): EvalResult {
     }
 
     return {
-        discountAmount,
+        discountAmount: 0, // Free items are awarded at ₹0.00, not as a cash reduction from the paid items subtotal
+        rankingValue: freeItemValue,
         freeItems: [
             {
                 productId: freeProductId,
                 productName: freeProductName,
+                productImage: freeProductImage,
                 quantity: freeQty,
                 unitPrice: freeUnitPrice,
                 isOutOfStock,
@@ -219,7 +228,7 @@ function evalPercentageDiscount(offer: any, eligible: CartItem[]): EvalResult {
         discountAmount = maxDiscountAmount;
     }
 
-    return { discountAmount, freeItems: [], warnings: [], freeShipping: false };
+    return { discountAmount, rankingValue: discountAmount, freeItems: [], warnings: [], freeShipping: false };
 }
 
 function evalFixedDiscount(offer: any, eligible: CartItem[]): EvalResult {
@@ -232,7 +241,7 @@ function evalFixedDiscount(offer: any, eligible: CartItem[]): EvalResult {
         0
     );
     const discountAmount = Math.min(discountValue, eligibleSubtotal);
-    return { discountAmount, freeItems: [], warnings: [], freeShipping: false };
+    return { discountAmount, rankingValue: discountAmount, freeItems: [], warnings: [], freeShipping: false };
 }
 
 function evalComboDiscount(offer: any, cartItems: CartItem[]): EvalResult {
@@ -253,7 +262,7 @@ function evalComboDiscount(offer: any, cartItems: CartItem[]): EvalResult {
         .reduce((s, i) => s + (i.dbPrice ?? 0) * i.quantity, 0);
 
     const discountAmount = Math.max(0, eligibleSubtotal - comboPrice);
-    return { discountAmount, freeItems: [], warnings: [], freeShipping: false };
+    return { discountAmount, rankingValue: discountAmount, freeItems: [], warnings: [], freeShipping: false };
 }
 
 function evalMinimumCartDiscount(
@@ -276,7 +285,7 @@ function evalMinimumCartDiscount(
         discountAmount = Math.min(discountValue, cartSubtotal);
     }
 
-    return { discountAmount, freeItems: [], warnings: [], freeShipping: false };
+    return { discountAmount, rankingValue: discountAmount, freeItems: [], warnings: [], freeShipping: false };
 }
 
 function evalFreeShipping(offer: any, eligible: CartItem[]): EvalResult {
@@ -285,6 +294,7 @@ function evalFreeShipping(offer: any, eligible: CartItem[]): EvalResult {
 
     return {
         discountAmount: 0, // shipping = 0 is handled separately via freeShipping flag
+        rankingValue: 50,
         freeItems: [],
         warnings: [],
         freeShipping: true,
@@ -352,7 +362,7 @@ export async function evaluateOffers(cartItems: CartItem[]): Promise<OfferResult
                 continue;
         }
 
-        if (result.discountAmount > 0 || result.freeShipping) {
+        if (result.discountAmount > 0 || result.freeItems.length > 0 || result.freeShipping) {
             candidates.push({ offer, result });
         }
     }
@@ -367,10 +377,10 @@ export async function evaluateOffers(cartItems: CartItem[]): Promise<OfferResult
         };
     }
 
-    // Sort: highest discountAmount first, then highest priority as tiebreaker
+    // Sort: highest rankingValue first, then highest priority as tiebreaker
     candidates.sort((a, b) => {
-        if (b.result.discountAmount !== a.result.discountAmount) {
-            return b.result.discountAmount - a.result.discountAmount;
+        if (b.result.rankingValue !== a.result.rankingValue) {
+            return b.result.rankingValue - a.result.rankingValue;
         }
         return (b.offer.priority ?? 0) - (a.offer.priority ?? 0);
     });
@@ -401,6 +411,7 @@ export async function evaluateOffers(cartItems: CartItem[]): Promise<OfferResult
  */
 export async function enrichCartItems(
     rawItems: Array<{
+        _id?: any;
         productId: Types.ObjectId | string;
         variantId?: string;
         name?: string;
@@ -411,9 +422,12 @@ export async function enrichCartItems(
 ): Promise<CartItem[]> {
     if (!rawItems.length) return [];
 
-    const productIds = rawItems.map((i) => i.productId);
+    const productIds = rawItems
+        .map((i) => (typeof i.productId === "object" && (i.productId as any)?._id ? (i.productId as any)._id : i.productId))
+        .filter(Boolean);
+
     const products = await Product.find({ _id: { $in: productIds } })
-        .select("_id name salePrice price weight categoryId stock quantity")
+        .select("_id name salePrice price weight categoryId stock quantity image")
         .lean();
 
     const productMap = new Map<string, any>(
@@ -421,10 +435,15 @@ export async function enrichCartItems(
     );
 
     return rawItems.map((item) => {
-        const p = productMap.get(item.productId.toString());
+        const rawPid = typeof item.productId === "object" && (item.productId as any)?._id ? (item.productId as any)._id : item.productId;
+        const pidStr = rawPid?.toString?.() ?? "";
+        const p = productMap.get(pidStr);
         return {
             ...item,
-            dbPrice: p ? (p.salePrice ?? p.price ?? 0) : 0,
+            _id: item._id ? item._id.toString() : undefined,
+            productId: pidStr || item.productId,
+            image: item.image || p?.image || "",
+            dbPrice: p ? (p.salePrice ?? p.price ?? 0) : (item.price ?? 0),
             dbWeight: p ? (p.weight ?? 100) : 100,
             categoryId: p?.categoryId,
             stock: p ? (p.stock ?? p.quantity ?? 0) : 0,
