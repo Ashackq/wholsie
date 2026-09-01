@@ -128,8 +128,19 @@ export default function AdminMediaPage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError(null);
+
+    if (modalMode === "create" && isHosted(form.mediaType) && !fileInput) {
+      setError(`Please select a ${form.mediaType === "video" ? "video" : "image/GIF"} file to upload`);
+      return;
+    }
+
+    if (!isHosted(form.mediaType) && !form.embedUrl?.trim()) {
+      setError(`Please enter a valid ${form.mediaType === "youtube" ? "YouTube" : "Instagram"} URL`);
+      return;
+    }
+
+    setSaving(true);
     try {
       const fd = new FormData();
 
@@ -191,15 +202,9 @@ export default function AdminMediaPage() {
   }
 
   function mediaPreview(item: MediaItem) {
-    if (item.mediaType === "video" && item.filePath) {
-      return <video src={item.filePath} style={{ width: 64, height: 44, objectFit: "cover", borderRadius: 4 }} muted />;
-    }
-    if ((item.mediaType === "image" || item.mediaType === "gif") && item.filePath) {
-      return <img src={item.filePath} alt={item.title || "Media"} style={{ width: 64, height: 44, objectFit: "cover", borderRadius: 4 }} />;
-    }
-    if (item.thumbnail) {
-      return <img src={item.thumbnail} alt="Thumbnail" style={{ width: 64, height: 44, objectFit: "cover", borderRadius: 4 }} />;
-    }
+    const rawPath = item.filePath || item.thumbnail;
+    const src = rawPath ? (rawPath.startsWith("/") ? rawPath : `/${rawPath}`) : "";
+
     const icons: Record<string, string> = {
       youtube: "fa-youtube",
       instagram: "fa-instagram",
@@ -207,6 +212,28 @@ export default function AdminMediaPage() {
       gif: "fa-image",
       image: "fa-image",
     };
+
+    if (item.mediaType === "video" && src) {
+      return (
+        <video
+          src={src}
+          style={{ width: 64, height: 44, objectFit: "cover", borderRadius: 4 }}
+          muted
+        />
+      );
+    }
+    if ((item.mediaType === "image" || item.mediaType === "gif") && src) {
+      return (
+        <img
+          src={src}
+          alt={item.title || "Media"}
+          style={{ width: 64, height: 44, objectFit: "cover", borderRadius: 4 }}
+          onError={(e) => {
+            (e.target as HTMLElement).style.display = "none";
+          }}
+        />
+      );
+    }
     return (
       <div
         style={{

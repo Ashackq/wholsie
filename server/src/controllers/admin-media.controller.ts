@@ -94,6 +94,14 @@ export async function createMediaItem(req: Request, res: Response, next: NextFun
             return res.status(400).json({ error: "mediaType is required" });
         }
 
+        if (["image", "gif", "video"].includes(mediaType) && !files?.file?.[0]) {
+            return res.status(400).json({ error: `Please upload a file for this ${mediaType} item` });
+        }
+
+        if (["youtube", "instagram"].includes(mediaType) && !embedUrl?.trim()) {
+            return res.status(400).json({ error: `An embed URL is required for ${mediaType}` });
+        }
+
         // Resolve file path from uploaded file (hosted types) or embedUrl (embeds)
         let filePath: string | undefined;
         let thumbnail: string | undefined;

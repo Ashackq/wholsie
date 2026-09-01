@@ -395,8 +395,14 @@ export default function CartPage() {
     group: GroupedItem,
     quantity: number,
   ) => {
-    const safeQuantity = Math.max(1, Number.isNaN(quantity) ? 1 : quantity);
-    setUpdatingItemId(group.mergedIds[0]);
+    // If quantity is reduced to 0 or less, remove the item from cart
+    if (quantity <= 0) {
+      await handleRemoveGroup(group);
+      return;
+    }
+
+    const safeQuantity = Number.isNaN(quantity) ? 1 : quantity;
+    setUpdatingItemId(group.mergedIds[0] || group.key);
 
     const isLoggedIn =
       !!localStorage.getItem("authToken") || !!localStorage.getItem("user");
@@ -680,7 +686,7 @@ export default function CartPage() {
                                         )
                                       }
                                       disabled={
-                                        updatingItemId === group.mergedIds[0]
+                                        updatingItemId === (group.mergedIds[0] || group.key)
                                       }
                                       style={{
                                         padding: "6px 10px",
@@ -700,7 +706,7 @@ export default function CartPage() {
                                         )
                                       }
                                       disabled={
-                                        updatingItemId === group.mergedIds[0]
+                                        updatingItemId === (group.mergedIds[0] || group.key)
                                       }
                                       style={{
                                         width: 64,
@@ -717,7 +723,7 @@ export default function CartPage() {
                                         )
                                       }
                                       disabled={
-                                        updatingItemId === group.mergedIds[0]
+                                        updatingItemId === (group.mergedIds[0] || group.key)
                                       }
                                       style={{
                                         padding: "6px 10px",
@@ -736,7 +742,7 @@ export default function CartPage() {
                                     className="remove_btn"
                                     onClick={() => handleRemoveGroup(group)}
                                     disabled={
-                                      updatingItemId === group.mergedIds[0]
+                                      updatingItemId === (group.mergedIds[0] || group.key)
                                     }
                                     style={{
                                       background: "transparent",

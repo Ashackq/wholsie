@@ -7,13 +7,24 @@ import fs from "fs";
 const uploadDir = path.join(process.cwd(), "../public/assets/uploaded");
 
 // ── Allowed MIME types per upload type ────────────────────────────────────────
-const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+const IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+  "image/jfif",
+  "image/pjpeg",
+  "image/x-png",
+];
 const MEDIA_TYPES = [
   ...IMAGE_TYPES,
   "video/mp4",
   "video/webm",
   "video/ogg",
-  "image/gif", // GIFs allowed explicitly for media section
+  "video/quicktime",
+  "video/x-matroska",
 ];
 
 // ── Destination folder resolution ─────────────────────────────────────────────
@@ -81,6 +92,24 @@ const fileFilter = (req: Request, file: Express.Multer.File | any, cb: any) => {
     }
 };
 
+const mediaStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const type = (req.query.type as string) || "media";
+        const targetFolder = resolveDestination(type);
+
+        // Ensure directory exists
+        if (!fs.existsSync(targetFolder)) {
+            fs.mkdirSync(targetFolder, { recursive: true });
+        }
+        cb(null, targetFolder);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        const ext = path.extname(file.originalname);
+        cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+    },
+});
+
 // ── Multer instances ───────────────────────────────────────────────────────────
 // Standard image upload (5 MB)
 export const upload = multer({
@@ -91,7 +120,7 @@ export const upload = multer({
 
 // Media/video upload (50 MB) — used for offer banners and homepage media
 export const uploadMedia = multer({
-    storage,
+    storage: mediaStorage,
     fileFilter,
     limits: { fileSize: 50 * 1024 * 1024 },
 });

@@ -28,16 +28,51 @@ interface MediaItem {
 
 // ── YouTube embed URL helper ───────────────────────────────────────────────────
 
-function toYouTubeEmbed(url: string): string {
-  // Accept: https://www.youtube.com/watch?v=ID  |  https://youtu.be/ID  |  already an embed
+function extractYouTubeId(url: string): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+
+  // If already an 11-char video ID
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  // Handles watch, shorts, embed, youtu.be, live, nocookie
   const match =
-    url.match(/[?&]v=([^&#]+)/) ||
-    url.match(/youtu\.be\/([^?#]+)/) ||
-    url.match(/embed\/([^?#]+)/);
-  const id = match?.[1];
-  return id
-    ? `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&modestbranding=1`
-    : url;
+    trimmed.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts|live)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/) ||
+    trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/) ||
+    trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/) ||
+    trimmed.match(/\/(?:embed|shorts|v|live)\/([a-zA-Z0-9_-]{11})/);
+
+  return match ? match[1] : null;
+}
+
+function toYouTubeEmbed(url: string): string {
+  const id = extractYouTubeId(url);
+  if (id) {
+    return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=1&modestbranding=1&rel=0&playsinline=1`;
+  }
+  return url;
+}
+
+function toInstagramEmbed(url: string): string {
+  if (!url) return "";
+  const trimmed = url.trim();
+
+  // Match /p/SHORTCODE, /reel/SHORTCODE, or /tv/SHORTCODE
+  const match = trimmed.match(/instagram\.com\/(p|reel|tv)\/([a-zA-Z0-9_-]+)/i);
+  if (match) {
+    const type = match[1].toLowerCase();
+    const shortcode = match[2];
+    return `https://www.instagram.com/${type}/${shortcode}/embed`;
+  }
+
+  // Fallback: strip query params and trailing slash, then append /embed
+  const cleanUrl = trimmed.split("?")[0].replace(/\/+$/, "");
+  if (cleanUrl.endsWith("/embed")) {
+    return cleanUrl;
+  }
+  return `${cleanUrl}/embed`;
 }
 
 // ── Single media card ─────────────────────────────────────────────────────────
@@ -50,21 +85,29 @@ function MediaCard({
   fullWidth?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(item.muted !== false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // IntersectionObserver: play video when in viewport, pause when out
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    video.muted = isMuted;
+    video.defaultMuted = isMuted;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            video.play().catch(() => {
-              /* autoplay blocked — silent fail */
-            });
+            if (item.autoplay !== false) {
+              video.play().then(() => setIsPlaying(true)).catch(() => {
+                /* autoplay blocked — silent fail */
+              });
+            }
           } else {
             video.pause();
+            setIsPlaying(false);
           }
         });
       },
@@ -73,13 +116,34 @@ function MediaCard({
 
     observer.observe(video);
     return () => observer.disconnect();
-  }, []);
+  }, [isMuted, item.autoplay]);
 
-  const src = item.filePath
-    ? item.filePath.startsWith("/")
-      ? item.filePath
-      : `/${item.filePath}`
-    : "";
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!videoRef.current) return;
+    const nextMuted = !isMuted;
+    videoRef.current.muted = nextMuted;
+    setIsMuted(nextMuted);
+  };
+
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+    } else {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const resolveMediaSrc = (pathStr?: string) => {
+    if (!pathStr) return "";
+    return pathStr.startsWith("/") ? pathStr : `/${pathStr}`;
+  };
+
+  const src = resolveMediaSrc(item.filePath);
+  const thumbSrc = resolveMediaSrc(item.thumbnail);
 
   const cardStyle: React.CSSProperties = {
     position: "relative",
@@ -112,28 +176,65 @@ function MediaCard({
     switch (item.mediaType) {
       case "video":
         return (
-          <video
-            ref={videoRef}
-            src={src}
-            poster={item.thumbnail || undefined}
-            muted={item.muted !== false}
-            loop={item.loop !== false}
-            playsInline
-            preload="metadata"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
+          <div
+            style={{ position: "relative", width: "100%", height: "100%", cursor: "pointer" }}
+            onClick={togglePlay}
+          >
+            <video
+              ref={videoRef}
+              src={src}
+              poster={thumbSrc || undefined}
+              muted={isMuted}
+              loop={item.loop !== false}
+              playsInline
+              preload="metadata"
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+            {/* Audio Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleMute}
+              style={{
+                position: "absolute",
+                top: 14,
+                right: 14,
+                zIndex: 4,
+                background: "rgba(0, 0, 0, 0.6)",
+                backdropFilter: "blur(4px)",
+                color: "#fff",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderRadius: "50%",
+                width: 34,
+                height: 34,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                fontSize: 13,
+                transition: "all 0.2s",
+              }}
+              title={isMuted ? "Unmute" : "Mute"}
+              aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+            >
+              <i className={`fas ${isMuted ? "fa-volume-mute" : "fa-volume-up"}`} />
+            </button>
+          </div>
         );
 
       case "gif":
-      case "image":
+      case "image": {
+        const imageSource = src || thumbSrc;
+        if (!imageSource) return null;
         return (
           <img
-            src={src || item.thumbnail || ""}
+            src={imageSource}
             alt={item.title || "Media"}
             style={{
               width: "100%",
@@ -142,40 +243,51 @@ function MediaCard({
               display: "block",
             }}
             loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLElement).style.display = "none";
+            }}
           />
         );
+      }
 
-      case "youtube":
+      case "youtube": {
+        const embedSrc = toYouTubeEmbed(item.embedUrl || "");
         return (
           <iframe
-            src={toYouTubeEmbed(item.embedUrl || "")}
+            src={embedSrc}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            loading="lazy"
+            style={{
+              width: "100%",
+              height: "100%",
+              border: "none",
+              display: "block",
+            }}
+            title={item.title || "YouTube Video"}
+          />
+        );
+      }
+
+      case "instagram": {
+        const instagramEmbed = toInstagramEmbed(item.embedUrl || "");
+        if (!instagramEmbed) return null;
+        return (
+          <iframe
+            src={instagramEmbed}
             allow="autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
+            scrolling="no"
             style={{
               width: "100%",
               height: "100%",
               border: "none",
               display: "block",
             }}
-            title={item.title || "Video"}
+            title={item.title || "Instagram Post"}
           />
         );
-
-      case "instagram":
-        return (
-          <iframe
-            src={`${item.embedUrl}/embed`}
-            allow="autoplay; encrypted-media"
-            allowFullScreen
-            style={{
-              width: "100%",
-              height: "100%",
-              border: "none",
-              display: "block",
-            }}
-            title={item.title || "Instagram"}
-          />
-        );
+      }
 
       default:
         return null;
@@ -294,7 +406,6 @@ export default function VideoGifSection() {
 
   // ── 2–4 items: responsive grid ──────────────────────────────────────────────
   if (items.length >= 2 && items.length <= 4) {
-    const cols = items.length === 2 ? 2 : items.length === 3 ? 3 : 2;
     return (
       <section
         style={{
@@ -307,8 +418,8 @@ export default function VideoGifSection() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${cols}, 1fr)`,
-            gap: "12px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))",
+            gap: "14px",
             padding: "16px",
           }}
         >
