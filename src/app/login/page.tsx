@@ -27,6 +27,7 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [otpStep, setOtpStep] = useState<"request" | "verify">("request");
   const [agree, setAgree] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -129,7 +130,7 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ phone: mobile, otp }),
+        body: JSON.stringify({ phone: mobile, otp, rememberMe }),
       });
 
       const data = await res.json();
@@ -262,6 +263,18 @@ export default function LoginPage() {
                               & Privacy Policy
                             </label>
                           </div>
+                          <div className="form-check mt-2">
+                            <input
+                              type="checkbox"
+                              id="keepMeLoggedInLogin"
+                              className="form-check-input"
+                              checked={rememberMe}
+                              onChange={(e) => setRememberMe(e.target.checked)}
+                            />
+                            <label htmlFor="keepMeLoggedInLogin">
+                              Keep me logged in
+                            </label>
+                          </div>
                         </div>
                       </div>
                       <div className="col-xl-12">
@@ -357,6 +370,20 @@ export default function LoginPage() {
                               />
                             ))}
                           </div>
+                        </div>
+                      </div>
+                      <div className="col-12 mb-3">
+                        <div className="form-check">
+                          <input
+                            type="checkbox"
+                            id="keepMeLoggedInOtp"
+                            className="form-check-input"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                          />
+                          <label htmlFor="keepMeLoggedInOtp">
+                            Keep me logged in
+                          </label>
                         </div>
                       </div>
                       <div className="col-12 mb-3">

@@ -51,15 +51,20 @@ export type CouponResult = CouponSuccess | CouponFailure;
  *
  * @param rawCode     The coupon code submitted by the customer (will be normalised)
  * @param cartItems   Enriched cart items (must have dbPrice and categoryId set)
- * @param offerDiscount  Amount already discounted by the offer engine (0 if none)
+ * @param offerDiscountOrActive  Amount already discounted or boolean indicating if an offer is active
  * @param userId      The authenticated user's ObjectId (for per-user usage check)
  */
 export async function applyCoupon(
     rawCode: string,
     cartItems: CouponCartItem[],
-    offerDiscount: number,
+    offerDiscountOrActive: number | boolean,
     userId: Types.ObjectId | string
 ): Promise<CouponResult> {
+    const isOfferActive =
+        typeof offerDiscountOrActive === "boolean"
+            ? offerDiscountOrActive
+            : offerDiscountOrActive > 0;
+
     // ── Step 1: Normalise ────────────────────────────────────────────────────
     const code = rawCode.trim().toUpperCase();
     if (!code) {
@@ -101,7 +106,7 @@ export async function applyCoupon(
     }
 
     // ── Step 5: Mutual exclusion with active offers ────────────────────────────
-    if (coupon.cannotCombineWithOffers && offerDiscount > 0) {
+    if (coupon.cannotCombineWithOffers && isOfferActive) {
         return {
             success: false,
             code,

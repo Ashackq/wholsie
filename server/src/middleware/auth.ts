@@ -61,6 +61,8 @@ export function requireActive(req: Request, res: Response, next: NextFunction) {
     next();
 }
 
-export function generateToken(payload: JWTPayload): string {
-    return jwt.sign(payload, env.JWT_SECRET, { expiresIn: "7d" });
+export function generateToken(payload: JWTPayload, rememberMe: boolean = true): string {
+    return jwt.sign(payload, env.JWT_SECRET, {
+        expiresIn: rememberMe ? "7d" : "1d",
+    });
 }

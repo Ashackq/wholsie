@@ -28,6 +28,7 @@ export default function AuthModal({ onSuccess, onClose }: AuthModalProps) {
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState<"request" | "verify">("request");
   const [agree, setAgree] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -112,7 +113,7 @@ export default function AuthModal({ onSuccess, onClose }: AuthModalProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ phone: mobile, otp }),
+        body: JSON.stringify({ phone: mobile, otp, rememberMe }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Invalid OTP");
@@ -341,41 +342,62 @@ export default function AuthModal({ onSuccess, onClose }: AuthModalProps) {
                 </div>
               </div>
 
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "10px",
-                  fontSize: "12px",
-                  color: "#64748b",
-                  cursor: "pointer",
-                  marginBottom: "20px",
-                  lineHeight: 1.5,
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={agree}
-                  onChange={(e) => setAgree(e.target.checked)}
-                  style={{ marginTop: "2px", flexShrink: 0 }}
-                />
-                I agree to the{" "}
-                <a
-                  href="/terms"
-                  target="_blank"
-                  style={{ color: "var(--primary)" }}
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "10px",
+                    fontSize: "12px",
+                    color: "#64748b",
+                    cursor: "pointer",
+                    lineHeight: 1.5,
+                  }}
                 >
-                  Terms of Service
-                </a>{" "}
-                &amp;{" "}
-                <a
-                  href="/privacy"
-                  target="_blank"
-                  style={{ color: "var(--primary)" }}
+                  <input
+                    type="checkbox"
+                    checked={agree}
+                    onChange={(e) => setAgree(e.target.checked)}
+                    style={{ marginTop: "2px", flexShrink: 0 }}
+                  />
+                  I agree to the{" "}
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    style={{ color: "var(--primary)" }}
+                  >
+                    Terms of Service
+                  </a>{" "}
+                  &amp;{" "}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    style={{ color: "var(--primary)" }}
+                  >
+                    Privacy Policy
+                  </a>
+                </label>
+
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    fontSize: "12px",
+                    color: "#475569",
+                    cursor: "pointer",
+                    userSelect: "none",
+                  }}
                 >
-                  Privacy Policy
-                </a>
-              </label>
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    style={{ flexShrink: 0 }}
+                  />
+                  Keep me logged in
+                </label>
+              </div>
 
               <button
                 type="submit"
@@ -398,7 +420,7 @@ export default function AuthModal({ onSuccess, onClose }: AuthModalProps) {
           {/* ── Step 2: OTP entry ── */}
           {step === "verify" && (
             <form onSubmit={handleVerifyOtp}>
-              <div style={{ marginBottom: "24px" }}>
+              <div style={{ marginBottom: "20px" }}>
                 <label
                   style={{
                     display: "block",
@@ -449,6 +471,27 @@ export default function AuthModal({ onSuccess, onClose }: AuthModalProps) {
                   ))}
                 </div>
               </div>
+
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  fontSize: "13px",
+                  color: "#475569",
+                  cursor: "pointer",
+                  marginBottom: "18px",
+                  justifyContent: "center",
+                  userSelect: "none",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                Keep me logged in
+              </label>
 
               <button
                 type="submit"

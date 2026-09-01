@@ -229,7 +229,7 @@ export async function createOrder(
       });
     }
 
-    // ── 9. COUPON ENGINE (only when no active offer discount) ─────────────────
+    // ── 9. COUPON ENGINE (only when no active offer) ─────────────────────────
     let couponDiscount = 0;
     let appliedCouponSnapshot: {
       couponId: any;
@@ -237,7 +237,12 @@ export async function createOrder(
       discountAmount: number;
     } | null = null;
 
-    if (couponCode && typeof couponCode === "string" && offerDiscount === 0) {
+    const isOfferActive =
+      offerDiscount > 0 ||
+      offerResult.appliedOffer != null ||
+      offerResult.freeItems.length > 0;
+
+    if (couponCode && typeof couponCode === "string" && !isOfferActive) {
       const couponResult = await applyCoupon(
         couponCode,
         enrichedItems.map((i) => ({
@@ -246,7 +251,7 @@ export async function createOrder(
           dbPrice: i.dbPrice ?? 0,
           quantity: i.quantity,
         })),
-        offerDiscount,
+        isOfferActive,
         userId,
       );
 
@@ -261,7 +266,7 @@ export async function createOrder(
         // Non-fatal: surface coupon rejection reason as a warning
         warnings.push(`Coupon not applied: ${couponResult.reason}`);
       }
-    } else if (couponCode && offerDiscount > 0) {
+    } else if (couponCode && isOfferActive) {
       // Mutual exclusion: offer is active; coupon silently skipped
       warnings.push(
         "Coupon not applied: coupon codes cannot be combined with active promotional offers.",

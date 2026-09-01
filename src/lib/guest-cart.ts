@@ -55,11 +55,13 @@ const saveGuestCart = (cart: GuestCart) => {
     cart.createdAt = new Date().toISOString();
   }
   localStorage.setItem(GUEST_CART_KEY, JSON.stringify(cart));
+  window.dispatchEvent(new Event("cart-updated"));
 };
 
 export const clearGuestCart = () => {
   if (!canUseStorage()) return;
   localStorage.removeItem(GUEST_CART_KEY);
+  window.dispatchEvent(new Event("cart-updated"));
 };
 
 const normalizeItemKey = (productId: any, variantId?: any): string => {

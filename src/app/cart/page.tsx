@@ -150,9 +150,16 @@ export default function CartPage() {
   const [couponSuccess, setCouponSuccess] = useState("");
 
   const handleProceedToCheckout = () => {
-    // Per implementation plan §14: always navigate to /checkout.
-    // If the user is not logged in, the checkout page shows an inline AuthModal.
-    router.push("/checkout");
+    const isLoggedIn =
+      typeof window !== "undefined" &&
+      (!!localStorage.getItem("authToken") || !!localStorage.getItem("user"));
+
+    if (!isLoggedIn) {
+      localStorage.setItem("postLoginRedirect", "/checkout");
+      router.push("/login");
+    } else {
+      router.push("/checkout");
+    }
   };
 
   // Fetch full product details if not already fetched
@@ -489,6 +496,10 @@ export default function CartPage() {
 
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) return;
+    if (!isLoggedInUser()) {
+      setCouponError("Please sign in at checkout to apply coupons.");
+      return;
+    }
     setCouponLoading(true);
     setCouponError("");
     setCouponSuccess("");

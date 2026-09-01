@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLayout } from "../context/LayoutContext";
 import { useRouter } from "next/navigation";
-import { logout } from "@/lib/api";
-import { hasGuestCartItems } from "@/lib/guest-cart";
+import { getCart, logout } from "@/lib/api";
+import { getGuestCart, hasGuestCartItems } from "@/lib/guest-cart";
 
 export default function Header() {
     const { hideHeaderFooter } = useLayout();
@@ -11,8 +11,58 @@ export default function Header() {
     const [showCategories, setShowCategories] = useState(false);
     const [categories, setCategories] = useState<Array<{ _id: string; name: string; slug?: string; image?: string }>>([]);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [cartCount, setCartCount] = useState<number>(0);
     const API = process.env.NEXT_PUBLIC_API_URL;
     const router = useRouter();
+
+    const updateCartCount = useCallback(async () => {
+        const loggedIn =
+            typeof window !== "undefined" &&
+            (!!localStorage.getItem("authToken") || !!localStorage.getItem("user"));
+
+        if (loggedIn) {
+            try {
+                const res = await getCart();
+                const payload = (res as any)?.data || res;
+                const items = payload?.items || [];
+                const totalQty = items.reduce(
+                    (sum: number, item: any) => sum + (Number(item.quantity) || 1),
+                    0
+                );
+                setCartCount(totalQty);
+            } catch {
+                const guest = getGuestCart();
+                const count = (guest.items || []).reduce(
+                    (sum, item) => sum + (Number(item.quantity) || 1),
+                    0
+                );
+                setCartCount(count);
+            }
+        } else {
+            const guest = getGuestCart();
+            const count = (guest.items || []).reduce(
+                (sum, item) => sum + (Number(item.quantity) || 1),
+                0
+            );
+            setCartCount(count);
+        }
+    }, []);
+
+    useEffect(() => {
+        updateCartCount();
+
+        const handleCartUpdate = () => {
+            updateCartCount();
+        };
+
+        window.addEventListener("cart-updated", handleCartUpdate);
+        window.addEventListener("storage", handleCartUpdate);
+
+        return () => {
+            window.removeEventListener("cart-updated", handleCartUpdate);
+            window.removeEventListener("storage", handleCartUpdate);
+        };
+    }, [updateCartCount]);
 
     const handleLogout = async () => {
         try {
@@ -21,6 +71,7 @@ export default function Header() {
             localStorage.removeItem("authToken");
             sessionStorage.clear();
             setIsLoggedIn(false);
+            setCartCount(0);
             router.push("/");
             setMobileOpen(false);
         } catch (e) {
@@ -30,19 +81,8 @@ export default function Header() {
 
     const handleCartClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         e.preventDefault();
-        const loggedIn =
-            !!localStorage.getItem("authToken") ||
-            !!localStorage.getItem("user");
-
-        if (!loggedIn) {
-            // Save redirect if they have guest cart items
-            if (hasGuestCartItems()) {
-                localStorage.setItem("postLoginRedirect", "/cart");
-            }
-            router.push("/login");
-        } else {
-            router.push("/cart");
-        }
+        setMobileOpen(false);
+        router.push("/cart");
     };
 
     const handleProfileClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -88,6 +128,36 @@ export default function Header() {
 
     if (hideHeaderFooter) return null;
 
+    const renderCartBadge = () => {
+        if (cartCount <= 0) return null;
+        return (
+            <span
+                style={{
+                    position: "absolute",
+                    top: "-6px",
+                    right: "-8px",
+                    backgroundColor: "#e11d48",
+                    color: "#ffffff",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    minWidth: "18px",
+                    height: "18px",
+                    borderRadius: "999px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "0 4px",
+                    lineHeight: 1,
+                    boxShadow: "0 2px 6px rgba(225, 29, 72, 0.45)",
+                    pointerEvents: "none",
+                    zIndex: 2,
+                }}
+            >
+                {cartCount > 99 ? "99+" : cartCount}
+            </span>
+        );
+    };
+
     return (
         <>
             <div>
@@ -110,6 +180,7 @@ export default function Header() {
                                                 href="#"
                                                 onClick={handleCartClick}
                                                 className="nav-icon-item cart_count_header"
+                                                style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
                                             >
                                                 <b>
                                                     <img
@@ -118,6 +189,7 @@ export default function Header() {
                                                         className="img-fluid"
                                                     />
                                                 </b>
+                                                {renderCartBadge()}
                                             </a>
                                         </li>
                                         <li>
@@ -236,10 +308,17 @@ export default function Header() {
                                     </ul>
                                     <ul className="menu_icon">
                                         <li>
-                                            <a id="cart_count_header" href="#" onClick={handleCartClick} className="nav-icon-item cart_count_header">
+                                            <a
+                                                id="cart_count_header"
+                                                href="#"
+                                                onClick={handleCartClick}
+                                                className="nav-icon-item cart_count_header"
+                                                style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
+                                            >
                                                 <b>
                                                     <img src="/assets/images/cart_black.svg" alt="cart" className="img-fluid" />
                                                 </b>
+                                                {renderCartBadge()}
                                             </a>
                                         </li>
                                         <li>
@@ -278,10 +357,17 @@ export default function Header() {
                     <div className="offcanvas-body p-3">
                         <ul className="mobile_menu_header d-flex flex-wrap gap-3 mb-3">
                             <li>
-                                <a id="cart_count_header" href="#" onClick={handleCartClick} className="nav-icon-item cart_count_header">
+                                <a
+                                    id="cart_count_header"
+                                    href="#"
+                                    onClick={handleCartClick}
+                                    className="nav-icon-item cart_count_header"
+                                    style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
+                                >
                                     <b>
                                         <img src="/assets/images/cart_black.svg" alt="cart" className="img-fluid" />
                                     </b>
+                                    {renderCartBadge()}
                                 </a>
                             </li>
                             <li>

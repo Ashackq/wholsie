@@ -87,28 +87,71 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
             shippingEstimate = subtotal >= 500 ? 0 : 50; // rough estimate only
         }
 
-        // ── Mutual exclusion: if offer just applied and coupon was set, clear it ─
+        // ── Check if any promotional offer is currently active ───────────────
+        const isOfferActive =
+            offerDiscount > 0 ||
+            offerResult.appliedOffer != null ||
+            offerResult.freeItems.length > 0;
+
+        // ── Re-evaluate or clear applied coupon ───────────────────────────────
         let appliedCoupon = cart.appliedCoupon ?? null;
-        let couponDiscount = cart.couponDiscount ?? 0;
+        let couponDiscount = 0;
         let couponMessage: string | null = null;
 
-        if (offerDiscount > 0 && appliedCoupon) {
-            const warning = buildOfferOverridesCouponWarning(
-                (appliedCoupon as any).code ?? 'your coupon',
-            );
-            warnings.push(warning);
-            // Clear coupon from cart
-            (cart as any).appliedCoupon = undefined;
-            cart.couponDiscount = 0;
-            (cart as any).couponCode = '';
-            cart.discount = 0;
-            await cart.save();
-            appliedCoupon = null;
-            couponDiscount = 0;
-        }
+        if (appliedCoupon && (appliedCoupon as any).code) {
+            const couponCode = (appliedCoupon as any).code;
 
-        if (appliedCoupon) {
-            couponMessage = `Coupon ${(appliedCoupon as any).code} applied — ₹${couponDiscount} off`;
+            if (isOfferActive) {
+                // Promotional offer is active; clear coupon and warn
+                const warning = buildOfferOverridesCouponWarning(couponCode);
+                warnings.push(warning);
+                (cart as any).appliedCoupon = undefined;
+                cart.couponDiscount = 0;
+                (cart as any).couponCode = '';
+                cart.discount = 0;
+                await cart.save();
+                appliedCoupon = null;
+                couponDiscount = 0;
+            } else {
+                // Re-evaluate coupon against current cart items to ensure eligibility and fresh discount
+                const couponResult = await applyCoupon(
+                    couponCode,
+                    enrichedItems.map((i) => ({
+                        productId: i.productId,
+                        categoryId: i.categoryId,
+                        dbPrice: i.dbPrice ?? 0,
+                        quantity: i.quantity,
+                    })),
+                    isOfferActive,
+                    userId,
+                );
+
+                if (couponResult.success) {
+                    couponDiscount = couponResult.discountAmount;
+                    appliedCoupon = {
+                        couponId: couponResult.couponId as any,
+                        code: couponResult.code,
+                        discountAmount: couponResult.discountAmount,
+                    };
+                    if (cart.couponDiscount !== couponDiscount) {
+                        (cart as any).appliedCoupon = appliedCoupon;
+                        cart.couponDiscount = couponDiscount;
+                        cart.discount = couponDiscount;
+                        await cart.save();
+                    }
+                    couponMessage = `Coupon ${couponResult.code} applied — ₹${couponDiscount} off`;
+                } else {
+                    // Coupon is no longer eligible for current cart items
+                    warnings.push(`Coupon ${couponCode} removed: ${couponResult.reason}`);
+                    (cart as any).appliedCoupon = undefined;
+                    cart.couponDiscount = 0;
+                    (cart as any).couponCode = '';
+                    cart.discount = 0;
+                    await cart.save();
+                    appliedCoupon = null;
+                    couponDiscount = 0;
+                }
+            }
         }
 
         // ── Persist latest offer engine output on the cart doc ────────────────
@@ -201,6 +244,10 @@ export async function applyCouponToCart(req: Request, res: Response, next: NextF
         );
 
         const offerResult = await evaluateOffers(enrichedItems);
+        const isOfferActive =
+            offerResult.offerDiscount > 0 ||
+            offerResult.appliedOffer != null ||
+            offerResult.freeItems.length > 0;
 
         // Run coupon engine (it enforces mutual exclusion internally too)
         const couponResult = await applyCoupon(
@@ -211,7 +258,7 @@ export async function applyCouponToCart(req: Request, res: Response, next: NextF
                 dbPrice: i.dbPrice ?? 0,
                 quantity: i.quantity,
             })),
-            offerResult.offerDiscount,
+            isOfferActive,
             userId,
         );
 

@@ -224,28 +224,34 @@ export async function addToCart(
   quantity: number,
   variantId?: string,
 ): Promise<ApiResponse<Cart>> {
-  return apiCall<ApiResponse<Cart>>("/cart/items", {
+  const res = await apiCall<ApiResponse<Cart>>("/cart/items", {
     method: "POST",
     body: JSON.stringify({ productId, quantity, variantId }),
   });
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("cart-updated"));
+  return res;
 }
 
 export async function updateCartItem(
   itemId: string,
   quantity: number,
 ): Promise<ApiResponse<Cart>> {
-  return apiCall<ApiResponse<Cart>>(`/cart/items/${itemId}`, {
+  const res = await apiCall<ApiResponse<Cart>>(`/cart/items/${itemId}`, {
     method: "PUT",
     body: JSON.stringify({ quantity }),
   });
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("cart-updated"));
+  return res;
 }
 
 export async function removeFromCart(
   itemId: string,
 ): Promise<ApiResponse<Cart>> {
-  return apiCall<ApiResponse<Cart>>(`/cart/items/${itemId}`, {
+  const res = await apiCall<ApiResponse<Cart>>(`/cart/items/${itemId}`, {
     method: "DELETE",
   });
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("cart-updated"));
+  return res;
 }
 
 export async function getOrders(): Promise<ApiResponse<Order[]>> {

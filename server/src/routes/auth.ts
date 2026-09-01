@@ -448,7 +448,7 @@ router.post(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const db = getDB();
-      const { phone, otp } = req.body;
+      const { phone, otp, rememberMe = true } = req.body;
 
       if (!phone || !otp) {
         return res.status(400).json({ error: "Phone and OTP required" });
@@ -524,19 +524,29 @@ router.post(
       }
 
       // Create JWT token
-      const token = generateToken({
-        userId: user._id.toString(),
-        email: user.email,
-        role: user.role,
-      });
+      const isPersistent = rememberMe !== false;
+      const token = generateToken(
+        {
+          userId: user._id.toString(),
+          email: user.email,
+          role: user.role,
+        },
+        isPersistent
+      );
 
       // Set auth cookie
-      res.cookie("token", token, {
+      const cookieOptions: any = {
         httpOnly: true,
         sameSite: "lax",
         secure: env.NODE_ENV === "production",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      };
+      if (isPersistent) {
+        cookieOptions.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+      } else {
+        cookieOptions.maxAge = 24 * 60 * 60 * 1000; // 1 day
+      }
+
+      res.cookie("token", token, cookieOptions);
 
       return res.json({
         success: true,

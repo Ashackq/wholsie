@@ -197,22 +197,16 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     price: product.discountPrice || product.price,
                     image: product.image,
                 });
-                localStorage.setItem("postLoginRedirect", "/cart");
-                setCartMessage("✓ Saved to cart. Please login to continue.");
+                setCartMessage(`✓ Added ${quantity} ${product.name} to cart!`);
                 setTimeout(() => setCartMessage(""), 3000);
-                router.push("/login");
                 return;
             }
             await addToCart(product._id, quantity);
             setCartMessage(`✓ Added ${quantity} ${product.name} to cart!`);
             setTimeout(() => setCartMessage(""), 3000);
-        } catch (err) {
-            setCartMessage("✗ Failed to add to cart. Please login first.");
-            setTimeout(() => {
-                setCartMessage("")
-                router.push("/login");
-
-            }, 3000);
+        } catch (err: any) {
+            setCartMessage(`✗ ${err?.message || "Failed to add to cart."}`);
+            setTimeout(() => setCartMessage(""), 3000);
         }
     };
 
@@ -221,7 +215,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
         try {
             // Check user profile data before proceeding
-            const userString = localStorage.getItem("user");
+            const userString = typeof window !== "undefined" ? localStorage.getItem("user") : null;
             if (!userString) {
                 addToGuestCart({
                     productId: product._id,
@@ -230,13 +224,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     price: product.discountPrice || product.price,
                     image: product.image,
                 });
-                localStorage.setItem("postLoginRedirect", "/complete-profile");
-                setCartMessage("✗ Please login first.");
-                setTimeout(() => {
-                    setCartMessage("")
-                    router.push("/login");
-
-                }, 1000);
+                localStorage.setItem("postLoginRedirect", "/checkout");
+                router.push("/login");
                 return;
             }
 
@@ -265,8 +254,8 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             await addToCart(product._id, quantity);
             // Redirect to checkout immediately after cart is updated
             router.push("/checkout");
-        } catch (err) {
-            setCartMessage("✗ Failed to add to cart. Please login first.");
+        } catch (err: any) {
+            setCartMessage(`✗ ${err?.message || "Failed to process checkout."}`);
             setTimeout(() => setCartMessage(""), 3000);
         }
     };
@@ -533,103 +522,114 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                             </div>
                                         )}
 
-                                        {/* Quantity Selector */}
-                                        <div
-                                            className="d-flex flex-wrap align-items-center"
-                                            style={{ gap: '15px', marginBottom: '20px' }}
-                                        >
-                                            <div className="details_qty_input wg-quantity">
-                                                <button
-                                                    className="minus btn-quantity btn-decrease"
-                                                    onClick={() =>
-                                                        setQuantity(Math.max(product.minOrderQty, quantity - 1))
-                                                    }
-                                                    disabled={quantity <= product.minOrderQty}
-                                                    style={{
-                                                        padding: '8px 12px',
-                                                        border: '1px solid #ddd',
-                                                        backgroundColor: '#f8f8f8',
-                                                        cursor: quantity <= product.minOrderQty ? 'not-allowed' : 'pointer',
-                                                        borderRadius: '4px'
-                                                    }}
-                                                >
-                                                    <i className="fal fa-minus"></i>
-                                                </button>
-                                                <input
-                                                    type="text"
-                                                    className="quantity-product"
-                                                    value={quantity}
-                                                    onChange={(e) => {
-                                                        const val = parseInt(e.target.value) || product.minOrderQty;
-                                                        const max = product.maxOrderQty || product.stock;
-                                                        setQuantity(Math.max(product.minOrderQty, Math.min(max, val)));
-                                                    }}
-                                                    style={{
-                                                        width: '50px',
-                                                        textAlign: 'center',
-                                                        border: '1px solid #ddd',
-                                                        padding: '8px',
-                                                        borderRadius: '4px'
-                                                    }}
-                                                />
-                                                <button
-                                                    className="plus btn-quantity btn-increase"
-                                                    onClick={() => {
-                                                        const max = product.maxOrderQty || product.stock;
-                                                        setQuantity(Math.min(max, quantity + 1));
-                                                    }}
-                                                    disabled={quantity >= (product.maxOrderQty || product.stock)}
-                                                    style={{
-                                                        padding: '8px 12px',
-                                                        border: '1px solid #ddd',
-                                                        backgroundColor: '#f8f8f8',
-                                                        cursor: quantity >= (product.maxOrderQty || product.stock) ? 'not-allowed' : 'pointer',
-                                                        borderRadius: '4px'
-                                                    }}
-                                                >
-                                                    <i className="fal fa-plus"></i>
-                                                </button>
-                                            </div>
+                                        {/* Quantity Selector & Action Buttons */}
+                                        {(() => {
+                                            const minQty = Math.max(1, Number(product.minOrderQty) || 1);
+                                            const maxQty = Math.max(minQty, Number(product.maxOrderQty) || (typeof product.stock === 'number' && product.stock > 0 ? product.stock : 9999));
+                                            const currentQty = Number.isFinite(quantity) && quantity >= minQty ? quantity : minQty;
 
-                                            {/* Action Buttons */}
-                                            <div className="details_btn_area" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                                <button
-                                                    className="common_btn btn-buy-now"
-                                                    onClick={handleBuyNow}
-                                                    disabled={product.stock === 0}
-                                                    style={{
-                                                        opacity: product.stock === 0 ? 0.5 : 1,
-                                                        cursor: product.stock === 0 ? 'not-allowed' : 'pointer'
-                                                    }}
+                                            return (
+                                                <div
+                                                    className="d-flex flex-wrap align-items-center"
+                                                    style={{ gap: '15px', marginBottom: '20px' }}
                                                 >
-                                                    Buy Now <i className="fas fa-long-arrow-right"></i>
-                                                </button>
-                                                <button
-                                                    className="common_btn btn-add-to-cart"
-                                                    onClick={handleAddToCart}
-                                                    disabled={product.stock === 0}
-                                                    style={{
-                                                        opacity: product.stock === 0 ? 0.5 : 1,
-                                                        cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
-                                                        backgroundColor: '#6c757d'
-                                                    }}
-                                                >
-                                                    Add to cart <i className="fas fa-long-arrow-right"></i>
-                                                </button>
-                                                <button
-                                                    className="common_btn btn-continue-shopping"
-                                                    onClick={() => router.push('/products')}
-                                                    style={{
-                                                        backgroundColor: 'transparent',
-                                                        color: '#333',
-                                                        border: '2px solid #333',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    <i className="fas fa-long-arrow-left"></i> Continue Shopping
-                                                </button>
-                                            </div>
-                                        </div>
+                                                    <div className="details_qty_input wg-quantity">
+                                                        <button
+                                                            className="minus btn-quantity btn-decrease"
+                                                            onClick={() => setQuantity(Math.max(minQty, currentQty - 1))}
+                                                            disabled={currentQty <= minQty}
+                                                            style={{
+                                                                padding: '8px 12px',
+                                                                border: '1px solid #ddd',
+                                                                backgroundColor: '#f8f8f8',
+                                                                cursor: currentQty <= minQty ? 'not-allowed' : 'pointer',
+                                                                borderRadius: '4px'
+                                                            }}
+                                                        >
+                                                            <i className="fal fa-minus"></i>
+                                                        </button>
+                                                        <input
+                                                            type="text"
+                                                            className="quantity-product"
+                                                            value={currentQty}
+                                                            onChange={(e) => {
+                                                                const raw = e.target.value.trim();
+                                                                if (raw === "") {
+                                                                    setQuantity(minQty);
+                                                                    return;
+                                                                }
+                                                                const parsed = parseInt(raw, 10);
+                                                                if (isNaN(parsed)) {
+                                                                    setQuantity(minQty);
+                                                                    return;
+                                                                }
+                                                                setQuantity(Math.max(minQty, Math.min(maxQty, parsed)));
+                                                            }}
+                                                            style={{
+                                                                width: '50px',
+                                                                textAlign: 'center',
+                                                                border: '1px solid #ddd',
+                                                                padding: '8px',
+                                                                borderRadius: '4px'
+                                                            }}
+                                                        />
+                                                        <button
+                                                            className="plus btn-quantity btn-increase"
+                                                            onClick={() => setQuantity(Math.min(maxQty, currentQty + 1))}
+                                                            disabled={currentQty >= maxQty}
+                                                            style={{
+                                                                padding: '8px 12px',
+                                                                border: '1px solid #ddd',
+                                                                backgroundColor: '#f8f8f8',
+                                                                cursor: currentQty >= maxQty ? 'not-allowed' : 'pointer',
+                                                                borderRadius: '4px'
+                                                            }}
+                                                        >
+                                                            <i className="fal fa-plus"></i>
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Action Buttons */}
+                                                    <div className="details_btn_area" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                                        <button
+                                                            className="common_btn btn-buy-now"
+                                                            onClick={handleBuyNow}
+                                                            disabled={product.stock === 0}
+                                                            style={{
+                                                                opacity: product.stock === 0 ? 0.5 : 1,
+                                                                cursor: product.stock === 0 ? 'not-allowed' : 'pointer'
+                                                            }}
+                                                        >
+                                                            Buy Now <i className="fas fa-long-arrow-right"></i>
+                                                        </button>
+                                                        <button
+                                                            className="common_btn btn-add-to-cart"
+                                                            onClick={handleAddToCart}
+                                                            disabled={product.stock === 0}
+                                                            style={{
+                                                                opacity: product.stock === 0 ? 0.5 : 1,
+                                                                cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
+                                                                backgroundColor: '#6c757d'
+                                                            }}
+                                                        >
+                                                            Add to cart <i className="fas fa-long-arrow-right"></i>
+                                                        </button>
+                                                        <button
+                                                            className="common_btn btn-continue-shopping"
+                                                            onClick={() => router.push('/products')}
+                                                            style={{
+                                                                backgroundColor: 'transparent',
+                                                                color: '#333',
+                                                                border: '2px solid #333',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            <i className="fas fa-long-arrow-left"></i> Continue Shopping
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
 
                                         {/* Cart Message */}
                                         {cartMessage && (

@@ -14,7 +14,6 @@ import {
   removeCouponFromCart,
 } from "@/lib/api";
 import AddressModals from "@/components/AddressModals";
-import AuthModal from "@/components/AuthModal";
 
 declare global {
   interface Window {
@@ -87,7 +86,6 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showCreateAddressModal, setShowCreateAddressModal] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Order calculation states
   const [subtotal, setSubtotal] = useState(0);
@@ -115,10 +113,10 @@ export default function CheckoutPage() {
   useEffect(() => {
     const userString = localStorage.getItem("user");
     if (!userString) {
-      // Per implementation plan §14: show inline OTP modal instead of redirecting
-      setShowAuthModal(true);
+      localStorage.setItem("postLoginRedirect", "/checkout");
+      router.push("/login");
     }
-  }, []);
+  }, [router]);
 
   const resolvePrice = (item: any) => {
     const product = item?.product || item;
@@ -255,6 +253,15 @@ const getProductIdString = (raw: any): string => {
   }, []);
 
   const loadCheckoutData = async () => {
+    const userString =
+      typeof window !== "undefined" ? localStorage.getItem("user") : null;
+    if (!userString) {
+      localStorage.setItem("postLoginRedirect", "/checkout");
+      router.push("/login");
+      return;
+    }
+
+    setError("");
     try {
       const res = await getCart();
       const payload = (res as any)?.data || res;
@@ -828,20 +835,6 @@ const getProductIdString = (raw: any): string => {
 
   return (
     <main style={{ minHeight: "100vh" }}>
-      {/* Inline OTP auth modal (Phase 11) — shown when user not logged in */}
-      {showAuthModal && (
-        <AuthModal
-          onSuccess={() => {
-            setShowAuthModal(false);
-            // Reload checkout data now that the user is authenticated
-            loadCheckoutData();
-          }}
-          onClose={() => {
-            // If user dismisses without logging in, send them back to cart
-            router.push("/cart");
-          }}
-        />
-      )}
       <style>{`
                 .page_banner {
                     background: url('/assets/images/bannerOther.jpg') center/cover no-repeat;
