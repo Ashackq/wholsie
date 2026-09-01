@@ -77,7 +77,7 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
 
         // ── Run offer engine ───────────────────────────────────────────────────
         const isOfferAvailed = Boolean((cart as any).isOfferAvailed);
-        const offerResult = await evaluateOffers(enrichedItems, isOfferAvailed);
+        const offerResult = await evaluateOffers(enrichedItems, isOfferAvailed, userId);
         const offerDiscount = offerResult.offerDiscount;
         warnings.push(...offerResult.warnings);
 
@@ -248,7 +248,7 @@ export async function applyCouponToCart(req: Request, res: Response, next: NextF
         );
 
         const isOfferAvailed = Boolean((cart as any).isOfferAvailed);
-        const offerResult = await evaluateOffers(enrichedItems, isOfferAvailed);
+        const offerResult = await evaluateOffers(enrichedItems, isOfferAvailed, userId);
         const isOfferActive =
             offerResult.offerDiscount > 0 ||
             offerResult.appliedOffer != null ||
@@ -696,7 +696,8 @@ export async function calculateGuestCart(req: Request, res: Response, next: Next
         );
 
         // Run offer engine with isOfferAvailed
-        const offerResult = await evaluateOffers(enrichedItems, isOfferAvailed);
+        // Guest cart has no userId — per-user limits are not enforced for guests
+        const offerResult = await evaluateOffers(enrichedItems, isOfferAvailed, null);
         const offerDiscount = offerResult.offerDiscount;
 
         let shippingEstimate = 0;

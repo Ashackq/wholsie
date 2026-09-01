@@ -94,7 +94,10 @@ export async function applyCoupon(
         const userUsageCount = await Order.countDocuments({
             userId,
             "appliedCoupon.code": code,
-            paymentStatus: { $ne: "failed" },
+            // Only count COMPLETED payments — failed or pending/abandoned orders
+            // must NOT count against the user's limit to avoid locking them out
+            // after a failed payment attempt or an abandoned checkout.
+            paymentStatus: "completed",
         });
         if (userUsageCount >= coupon.usagePerUser) {
             return {

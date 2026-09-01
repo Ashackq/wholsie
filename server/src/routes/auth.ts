@@ -497,7 +497,14 @@ router.post(
       let user = await db.collection("users").findOne({ phone });
 
       if (!user) {
-        // Auto-register new user with provided name and email or fallback
+        // mode="signin" means the user expects an existing account — don't create a junk one
+        if (req.body.mode === "signin") {
+          return res.status(404).json({
+            error: "No account found with this mobile number. Please sign up first.",
+          });
+        }
+
+        // mode="signup" (or legacy callers without mode) — auto-register
         const formattedName = (name && typeof name === "string" && name.trim()) ? name.trim() : `User ${phone.slice(-4)}`;
         const formattedEmail = (email && typeof email === "string" && email.trim()) ? email.trim() : `${phone}@temp.com`;
 
@@ -520,7 +527,7 @@ router.post(
           return res.status(500).json({ error: "Failed to create user" });
         }
       } else {
-        // If user already exists, update name or email if placeholder was used
+        // If user already exists and they provided name/email, update placeholder values
         const updateFields: any = {};
         if (name && typeof name === "string" && name.trim() && (!user.name || user.name.startsWith("User "))) {
           updateFields.name = name.trim();

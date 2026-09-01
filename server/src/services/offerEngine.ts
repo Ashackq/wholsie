@@ -12,6 +12,7 @@
 import { Types } from "mongoose";
 import { Offer } from "../models/Offer.js";
 import { Product } from "../models/Product.js";
+import { Order } from "../models/Order.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -323,11 +324,14 @@ function evalFreeShipping(offer: any, eligible: CartItem[]): EvalResult {
  * `cartItems` must have `dbPrice`, `dbWeight`, `categoryId`, and `stock` pre-populated
  * from the database (call enrichCartItems() before this).
  *
+ * `userId` — when provided, maxUsagePerUser is enforced by querying past completed orders.
+ *
  * Returns the winning offer (single best) plus any free items.
  */
 export async function evaluateOffers(
     cartItems: CartItem[],
-    isOfferAvailed: boolean = false
+    isOfferAvailed: boolean = false,
+    userId?: Types.ObjectId | string | null
 ): Promise<OfferResult> {
     if (!cartItems.length) {
         return {
@@ -347,6 +351,35 @@ export async function evaluateOffers(
         0
     );
 
+    // ── Pre-compute per-user usage counts for offers with maxUsagePerUser ──────
+    // Only run DB queries when we have a userId and at least one offer has the limit set.
+    const offersWithPerUserLimit = userId
+        ? offers.filter((o) => o.maxUsagePerUser != null && o.maxUsagePerUser > 0)
+        : [];
+
+    const perUserUsageMap = new Map<string, number>(); // offerId → count for this user
+
+    if (offersWithPerUserLimit.length > 0 && userId) {
+        // Batch query: find all completed orders for this user that used any of these offers
+        const offerIds = offersWithPerUserLimit.map((o: any) => o._id);
+        const usedOrders = await Order.find({
+            userId,
+            "appliedOffers.offerId": { $in: offerIds },
+            paymentStatus: "completed",
+        })
+            .select("appliedOffers")
+            .lean();
+
+        for (const order of usedOrders) {
+            for (const ao of (order as any).appliedOffers ?? []) {
+                const key = ao.offerId?.toString();
+                if (key) {
+                    perUserUsageMap.set(key, (perUserUsageMap.get(key) ?? 0) + 1);
+                }
+            }
+        }
+    }
+
     interface Candidate {
         offer: any;
         result: EvalResult;
@@ -355,6 +388,15 @@ export async function evaluateOffers(
     const candidates: Candidate[] = [];
 
     for (const offer of offers) {
+        // ── Per-user limit check ───────────────────────────────────────────────
+        if (userId && offer.maxUsagePerUser != null && offer.maxUsagePerUser > 0) {
+            const usedCount = perUserUsageMap.get(offer._id.toString()) ?? 0;
+            if (usedCount >= offer.maxUsagePerUser) {
+                // This user has already exhausted their limit — skip as a candidate
+                continue;
+            }
+        }
+
         const eligible = eligibleItems(offer, cartItems);
         let result: EvalResult;
 

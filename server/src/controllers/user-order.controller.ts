@@ -206,7 +206,7 @@ export async function createOrder(
 
     // ── 8. OFFER ENGINE ───────────────────────────────────────────────────────
     const isOfferAvailed = Boolean((cart as any).isOfferAvailed);
-    const offerResult = await evaluateOffers(enrichedItems, isOfferAvailed);
+    const offerResult = await evaluateOffers(enrichedItems, isOfferAvailed, userId);
     const offerDiscount = offerResult.offerDiscount;
     const warnings: string[] = [...offerResult.warnings];
 
