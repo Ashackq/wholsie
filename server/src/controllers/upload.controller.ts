@@ -92,6 +92,14 @@ const fileFilter = (req: Request, file: Express.Multer.File | any, cb: any) => {
     }
 };
 
+const mediaFileFilter = (_req: Request, file: Express.Multer.File | any, cb: any) => {
+    if (MEDIA_TYPES.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error("Only Images (JPEG, PNG, GIF, WEBP, SVG), MP4, WebM, or QuickTime videos are allowed"), false);
+    }
+};
+
 const mediaStorage = multer.diskStorage({
     destination: (req, file, cb) => {
         const type = (req.query.type as string) || "media";
@@ -121,7 +129,7 @@ export const upload = multer({
 // Media/video upload (50 MB) — used for offer banners and homepage media
 export const uploadMedia = multer({
     storage: mediaStorage,
-    fileFilter,
+    fileFilter: mediaFileFilter,
     limits: { fileSize: 50 * 1024 * 1024 },
 });
 

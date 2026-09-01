@@ -104,6 +104,5 @@ const offerSchema = new Schema(
 // ── Compound index for engine queries ─────────────────────────────────────────
 // Fetches all active offers that haven't exceeded maxUsageTotal
 offerSchema.index({ isActive: 1, startDate: 1, endDate: 1 });
-offerSchema.index({ slug: 1 }, { unique: true });
 
 export const Offer = model("Offer", offerSchema);
