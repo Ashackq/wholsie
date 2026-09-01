@@ -122,7 +122,7 @@ export default function LoginPage() {
   };
 
   // ── Request OTP ───────────────────────────────────────────────────────────
-  const handleRequestOtp = async (phone: string, extra?: { name: string; email: string }) => {
+  const handleRequestOtp = async (phone: string, extra?: { name: string; email: string }, mode: "signin" | "signup" = "signup") => {
     if (!agree) {
       showToast("Please agree to the Terms of Service & Privacy Policy.", "warning");
       return;
@@ -145,7 +145,7 @@ export default function LoginPage() {
       const res = await fetch(`${API}/auth/request-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone, mode }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to send OTP");
@@ -220,12 +220,12 @@ export default function LoginPage() {
   // ── Form submit handlers ───────────────────────────────────────────────────
   const onSignInRequest = (e: FormEvent) => {
     e.preventDefault();
-    handleRequestOtp(siPhone);
+    handleRequestOtp(siPhone, undefined, "signin");
   };
 
   const onSignUpRequest = (e: FormEvent) => {
     e.preventDefault();
-    handleRequestOtp(suPhone, { name: suName, email: suEmail });
+    handleRequestOtp(suPhone, { name: suName, email: suEmail }, "signup");
   };
 
   const onSignInVerify = (e: FormEvent) => {
@@ -262,9 +262,13 @@ export default function LoginPage() {
   };
 
   const currentPhone = tab === "signin" ? siPhone : suPhone;
+
   const onResend = () => {
-    const extra = tab === "signup" ? { name: suName, email: suEmail } : undefined;
-    handleRequestOtp(currentPhone, extra);
+    if (tab === "signin") {
+      handleRequestOtp(siPhone, undefined, "signin");
+    } else {
+      handleRequestOtp(suPhone, { name: suName, email: suEmail }, "signup");
+    }
   };
 
   return (
@@ -375,39 +379,121 @@ export default function LoginPage() {
                         <label style={labelStyle} htmlFor="si-phone">
                           Mobile Number <span style={{ color: "#ef4444" }}>*</span>
                         </label>
-                        <div style={{ display: "flex" }}>
+                        <div style={{ display: "flex", gap: "8px" }}>
                           <span style={{
-                            display: "flex", alignItems: "center", padding: "0 12px",
-                            background: "#f9fafb", border: "1.5px solid #e5e7eb",
-                            borderRight: "none", borderRadius: "8px 0 0 8px",
-                            fontSize: "14px", color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap",
+                            padding: "10px 12px",
+                            background: "#f9fafb",
+                            border: "1.5px solid #e5e7eb",
+                            borderRadius: "8px",
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            color: "#4b5563",
+                            display: "flex",
+                            alignItems: "center",
+                            whiteSpace: "nowrap",
                           }}>+91</span>
                           <input
-                            id="si-phone" type="tel" maxLength={10}
+                            id="si-phone"
+                            type="tel"
+                            maxLength={10}
                             placeholder="10-digit mobile number"
                             value={siPhone}
                             onChange={(e) => { setSiPhone(e.target.value.replace(/[^0-9]/g, "")); setError(""); }}
-                            style={{ ...inputStyle, borderRadius: "0 8px 8px 0" }}
+                            style={{
+                              flex: 1,
+                              padding: "10px 14px",
+                              border: "1.5px solid #e5e7eb",
+                              borderRadius: "8px",
+                              fontSize: "14px",
+                              color: "#1f2937",
+                              outline: "none",
+                              letterSpacing: "1px",
+                              boxSizing: "border-box",
+                            }}
                           />
                         </div>
                       </div>
 
-                      {/* Agree & Remember */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "13px", color: "#6b7280", cursor: "pointer" }}>
-                          <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: "2px", accentColor: "var(--primary)", flexShrink: 0 }} />
-                          I agree to the{" "}
-                          <Link href="/terms-conditions" style={{ color: "var(--primary)" }}>Terms of Service</Link>
-                          {" & "}
-                          <Link href="/privacy-policy" style={{ color: "var(--primary)" }}>Privacy Policy</Link>
+                      {/* Agree checkbox */}
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-start", gap: "8px", textAlign: "left", width: "100%", marginTop: "2px" }}>
+                        <input
+                          id="si-agree-checkbox"
+                          type="checkbox"
+                          checked={agree}
+                          onChange={(e) => setAgree(e.target.checked)}
+                          style={{
+                            width: "16px",
+                            minWidth: "16px",
+                            maxWidth: "16px",
+                            height: "16px",
+                            marginTop: "2px",
+                            padding: "0px",
+                            margin: "0px",
+                            accentColor: "#F05F22",
+                            cursor: "pointer",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <label
+                          htmlFor="si-agree-checkbox"
+                          style={{
+                            display: "inline",
+                            fontSize: "12px",
+                            color: "#6b7280",
+                            cursor: "pointer",
+                            margin: 0,
+                            padding: 0,
+                            textAlign: "left",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          By continuing, you agree to our{" "}
+                          <Link href="/terms-conditions" target="_blank" style={{ color: "#F05F22", textDecoration: "underline" }}>
+                            Terms of Service
+                          </Link>{" "}
+                          &{" "}
+                          <Link href="/privacy-policy" target="_blank" style={{ color: "#F05F22", textDecoration: "underline" }}>
+                            Privacy Policy
+                          </Link>
                         </label>
-                        <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#6b7280", cursor: "pointer" }}>
-                          <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} style={{ accentColor: "var(--primary)" }} />
+                      </div>
+
+                      {/* Keep me logged in checkbox */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "8px", textAlign: "left", width: "100%" }}>
+                        <input
+                          id="si-keep-logged-in-checkbox"
+                          type="checkbox"
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          style={{
+                            width: "16px",
+                            minWidth: "16px",
+                            maxWidth: "16px",
+                            height: "16px",
+                            padding: "0px",
+                            margin: "0px",
+                            accentColor: "#F05F22",
+                            cursor: "pointer",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <label
+                          htmlFor="si-keep-logged-in-checkbox"
+                          style={{
+                            display: "inline",
+                            fontSize: "12px",
+                            color: "#6b7280",
+                            cursor: "pointer",
+                            margin: 0,
+                            padding: 0,
+                            textAlign: "left",
+                          }}
+                        >
                           Keep me logged in
                         </label>
                       </div>
 
-                      <button type="submit" className="common_btn" disabled={loading} style={{ width: "100%", textAlign: "center" }}>
+                      <button type="submit" className="common_btn" disabled={loading} style={{ width: "100%", textAlign: "center", marginTop: "4px" }}>
                         {loading ? "Sending OTP..." : "Send OTP"} <i className="fas fa-long-arrow-right" />
                       </button>
 
@@ -426,68 +512,204 @@ export default function LoginPage() {
                 ════════════════════════════════════════════════════════ */}
                 {tab === "signup" && step === "form" && (
                   <form onSubmit={onSignUpRequest}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                      {/* Name input */}
                       <div>
                         <label style={labelStyle} htmlFor="su-name">
                           Full Name <span style={{ color: "#ef4444" }}>*</span>
                         </label>
-                        <input
-                          id="su-name" type="text" placeholder="e.g. Rahul Sharma"
-                          value={suName}
-                          onChange={(e) => { setSuName(e.target.value); setError(""); }}
-                          style={inputStyle}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={labelStyle} htmlFor="su-email">
-                          Email Address <span style={{ color: "#ef4444" }}>*</span>
-                        </label>
-                        <input
-                          id="su-email" type="email" placeholder="e.g. rahul@example.com"
-                          value={suEmail}
-                          onChange={(e) => { setSuEmail(e.target.value); setError(""); }}
-                          style={inputStyle}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={labelStyle} htmlFor="su-phone">
-                          Mobile Number <span style={{ color: "#ef4444" }}>*</span>
-                        </label>
-                        <div style={{ display: "flex" }}>
-                          <span style={{
-                            display: "flex", alignItems: "center", padding: "0 12px",
-                            background: "#f9fafb", border: "1.5px solid #e5e7eb",
-                            borderRight: "none", borderRadius: "8px 0 0 8px",
-                            fontSize: "14px", color: "#6b7280", fontWeight: 600, whiteSpace: "nowrap",
-                          }}>+91</span>
+                        <div style={{ position: "relative" }}>
+                          <i
+                            className="fas fa-user"
+                            style={{
+                              position: "absolute",
+                              left: "14px",
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              color: "#9ca3af",
+                              fontSize: "13px",
+                            }}
+                          />
                           <input
-                            id="su-phone" type="tel" maxLength={10}
-                            placeholder="10-digit mobile number"
-                            value={suPhone}
-                            onChange={(e) => { setSuPhone(e.target.value.replace(/[^0-9]/g, "")); setError(""); }}
-                            style={{ ...inputStyle, borderRadius: "0 8px 8px 0" }}
+                            id="su-name"
+                            type="text"
+                            placeholder="e.g. Rahul Sharma"
+                            value={suName}
+                            onChange={(e) => { setSuName(e.target.value); setError(""); }}
+                            style={{
+                              width: "100%",
+                              padding: "10px 14px 10px 38px",
+                              border: "1.5px solid #e5e7eb",
+                              borderRadius: "8px",
+                              fontSize: "14px",
+                              color: "#1f2937",
+                              outline: "none",
+                              boxSizing: "border-box",
+                            }}
+                            required
                           />
                         </div>
                       </div>
 
-                      {/* Agree & Remember */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "13px", color: "#6b7280", cursor: "pointer" }}>
-                          <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ marginTop: "2px", accentColor: "var(--primary)", flexShrink: 0 }} />
-                          I agree to the{" "}
-                          <Link href="/terms-conditions" style={{ color: "var(--primary)" }}>Terms of Service</Link>
-                          {" & "}
-                          <Link href="/privacy-policy" style={{ color: "var(--primary)" }}>Privacy Policy</Link>
+                      {/* Email input */}
+                      <div>
+                        <label style={labelStyle} htmlFor="su-email">
+                          Email Address <span style={{ color: "#ef4444" }}>*</span>
                         </label>
-                        <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#6b7280", cursor: "pointer" }}>
-                          <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} style={{ accentColor: "var(--primary)" }} />
+                        <div style={{ position: "relative" }}>
+                          <i
+                            className="fas fa-envelope"
+                            style={{
+                              position: "absolute",
+                              left: "14px",
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              color: "#9ca3af",
+                              fontSize: "13px",
+                            }}
+                          />
+                          <input
+                            id="su-email"
+                            type="email"
+                            placeholder="e.g. rahul@example.com"
+                            value={suEmail}
+                            onChange={(e) => { setSuEmail(e.target.value); setError(""); }}
+                            style={{
+                              width: "100%",
+                              padding: "10px 14px 10px 38px",
+                              border: "1.5px solid #e5e7eb",
+                              borderRadius: "8px",
+                              fontSize: "14px",
+                              color: "#1f2937",
+                              outline: "none",
+                              boxSizing: "border-box",
+                            }}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {/* Mobile number input */}
+                      <div>
+                        <label style={labelStyle} htmlFor="su-phone">
+                          Mobile Number <span style={{ color: "#ef4444" }}>*</span>
+                        </label>
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <span style={{
+                            padding: "10px 12px",
+                            background: "#f9fafb",
+                            border: "1.5px solid #e5e7eb",
+                            borderRadius: "8px",
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            color: "#4b5563",
+                            display: "flex",
+                            alignItems: "center",
+                            whiteSpace: "nowrap",
+                          }}>+91</span>
+                          <input
+                            id="su-phone"
+                            type="tel"
+                            maxLength={10}
+                            placeholder="10-digit mobile number"
+                            value={suPhone}
+                            onChange={(e) => { setSuPhone(e.target.value.replace(/[^0-9]/g, "")); setError(""); }}
+                            style={{
+                              flex: 1,
+                              padding: "10px 14px",
+                              border: "1.5px solid #e5e7eb",
+                              borderRadius: "8px",
+                              fontSize: "14px",
+                              color: "#1f2937",
+                              outline: "none",
+                              letterSpacing: "1px",
+                              boxSizing: "border-box",
+                            }}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {/* Agree checkbox */}
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-start", gap: "8px", textAlign: "left", width: "100%", marginTop: "2px" }}>
+                        <input
+                          id="su-agree-checkbox"
+                          type="checkbox"
+                          checked={agree}
+                          onChange={(e) => setAgree(e.target.checked)}
+                          style={{
+                            width: "16px",
+                            minWidth: "16px",
+                            maxWidth: "16px",
+                            height: "16px",
+                            marginTop: "2px",
+                            padding: "0px",
+                            margin: "0px",
+                            accentColor: "#F05F22",
+                            cursor: "pointer",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <label
+                          htmlFor="su-agree-checkbox"
+                          style={{
+                            display: "inline",
+                            fontSize: "12px",
+                            color: "#6b7280",
+                            cursor: "pointer",
+                            margin: 0,
+                            padding: 0,
+                            textAlign: "left",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          I agree to the{" "}
+                          <Link href="/terms-conditions" target="_blank" style={{ color: "#F05F22", textDecoration: "underline" }}>
+                            Terms of Service
+                          </Link>{" "}
+                          &{" "}
+                          <Link href="/privacy-policy" target="_blank" style={{ color: "#F05F22", textDecoration: "underline" }}>
+                            Privacy Policy
+                          </Link>
+                        </label>
+                      </div>
+
+                      {/* Keep me logged in checkbox */}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "8px", textAlign: "left", width: "100%" }}>
+                        <input
+                          id="su-keep-logged-in-checkbox"
+                          type="checkbox"
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          style={{
+                            width: "16px",
+                            minWidth: "16px",
+                            maxWidth: "16px",
+                            height: "16px",
+                            padding: "0px",
+                            margin: "0px",
+                            accentColor: "#F05F22",
+                            cursor: "pointer",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <label
+                          htmlFor="su-keep-logged-in-checkbox"
+                          style={{
+                            display: "inline",
+                            fontSize: "12px",
+                            color: "#6b7280",
+                            cursor: "pointer",
+                            margin: 0,
+                            padding: 0,
+                            textAlign: "left",
+                          }}
+                        >
                           Keep me logged in
                         </label>
                       </div>
 
-                      <button type="submit" className="common_btn" disabled={loading} style={{ width: "100%", textAlign: "center" }}>
+                      <button type="submit" className="common_btn" disabled={loading} style={{ width: "100%", textAlign: "center", marginTop: "4px" }}>
                         {loading ? "Sending OTP..." : "Send OTP & Continue"} <i className="fas fa-long-arrow-right" />
                       </button>
 
@@ -515,10 +737,39 @@ export default function LoginPage() {
                       refs={otpRefs}
                     />
 
-                    <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#6b7280", cursor: "pointer", marginBottom: "16px" }}>
-                      <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} style={{ accentColor: "var(--primary)" }} />
-                      Keep me logged in
-                    </label>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "8px", textAlign: "left", width: "100%", marginBottom: "16px" }}>
+                      <input
+                        id="otp-keep-logged-in-checkbox"
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        style={{
+                          width: "16px",
+                          minWidth: "16px",
+                          maxWidth: "16px",
+                          height: "16px",
+                          padding: "0px",
+                          margin: "0px",
+                          accentColor: "#F05F22",
+                          cursor: "pointer",
+                          flexShrink: 0,
+                        }}
+                      />
+                      <label
+                        htmlFor="otp-keep-logged-in-checkbox"
+                        style={{
+                          display: "inline",
+                          fontSize: "12px",
+                          color: "#6b7280",
+                          cursor: "pointer",
+                          margin: 0,
+                          padding: 0,
+                          textAlign: "left",
+                        }}
+                      >
+                        Keep me logged in
+                      </label>
+                    </div>
 
                     <button type="submit" className="common_btn" disabled={loading} style={{ width: "100%", textAlign: "center", marginBottom: "12px" }}>
                       {loading ? "Verifying..." : "Verify & Login"} <i className="fas fa-long-arrow-right" />

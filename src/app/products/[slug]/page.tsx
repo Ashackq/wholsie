@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useRef, FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { addToCart } from "@/lib/api";
-import { addToGuestCart } from "@/lib/guest-cart";
+import { addToCart, getCurrentUser } from "@/lib/api";
+import { addToGuestCart, getGuestCart, clearGuestCart } from "@/lib/guest-cart";
 import { useRouter } from "next/navigation";
 import OfferBadge from "@/components/OfferBadge";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
 interface ProductImage {
     url: string;
@@ -81,6 +83,20 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     const [reviewSubmitting, setReviewSubmitting] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [productOffers, setProductOffers] = useState<Array<{ title: string; badgeText?: string }>>([]);
+
+    // ── Inline Auth Modal (Buy Now while logged out) ────────────────────────
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [authStep, setAuthStep] = useState<"details" | "otp">("details");
+    const [authName, setAuthName] = useState("");
+    const [authEmail, setAuthEmail] = useState("");
+    const [authPhone, setAuthPhone] = useState("");
+    const [authOtp, setAuthOtp] = useState<string[]>(["", "", "", "", "", ""]);
+    const [authAgree, setAuthAgree] = useState(false);
+    const [authLoading, setAuthLoading] = useState(false);
+    const [authError, setAuthError] = useState("");
+    const [authDevOtp, setAuthDevOtp] = useState("");
+    const authModalRef = useRef<HTMLDivElement | null>(null);
+    const authOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     useEffect(() => {
         // Check if user is logged in
@@ -213,51 +229,120 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     const handleBuyNow = async () => {
         if (!product) return;
 
-        try {
-            // Check user profile data before proceeding
-            const userString = typeof window !== "undefined" ? localStorage.getItem("user") : null;
-            if (!userString) {
-                addToGuestCart({
-                    productId: product._id,
-                    quantity,
-                    name: product.name,
-                    price: product.discountPrice || product.price,
-                    image: product.image,
-                });
-                localStorage.setItem("postLoginRedirect", "/checkout");
-                router.push("/login");
-                return;
-            }
+        // Check if logged in
+        const userString = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+        if (!userString) {
+            // Add to guest cart so it merges after login
+            addToGuestCart({
+                productId: product._id,
+                quantity,
+                name: product.name,
+                price: product.discountPrice || product.price,
+                image: product.image,
+            });
+            // Show inline auth modal instead of redirecting to /login
+            setShowAuthModal(true);
+            setAuthStep("details");
+            setAuthError("");
+            setTimeout(() => authModalRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+            return;
+        }
 
+        try {
             const user = JSON.parse(userString);
             const missingFields: string[] = [];
+            if (!user.name || user.name.trim() === "" || user.name === "N/A" || /^user\d*$/i.test(user.name.trim())) missingFields.push("name");
+            if (!user.email || user.email.trim() === "" || user.email === "N/A" || user.email.includes("phonenumber@")) missingFields.push("email");
 
-            // Check if name is valid (not default pattern like User1234)
-            if (!user.name || user.name.trim() === "" || user.name === "N/A" || /^user\d*$/i.test(user.name.trim())) {
-                missingFields.push("name");
-            }
-
-            // Check if email is valid (not default phonenumber@ pattern)
-            if (!user.email || user.email.trim() === "" || user.email === "N/A" || user.email.includes("phonenumber@")) {
-                missingFields.push("email");
-            }
-
-            // Redirect to profile if any required fields are missing
             if (missingFields.length > 0) {
-                // Store the redirect message in localStorage
                 localStorage.setItem("profileMessage", `Please complete your profile to proceed with checkout. Missing: ${missingFields.join(", ")}`);
                 router.push("/complete-profile");
                 return;
             }
 
-            // Add to cart and wait for it to complete
             await addToCart(product._id, quantity);
-            // Redirect to checkout immediately after cart is updated
             router.push("/checkout");
         } catch (err: any) {
             setCartMessage(`✗ ${err?.message || "Failed to process checkout."}`);
             setTimeout(() => setCartMessage(""), 3000);
         }
+    };
+
+    // ── Auth Modal Handlers ────────────────────────────────────────────────
+    const handleAuthOtpDigit = (i: number, v: string) => {
+        const c = v.replace(/[^0-9]/g, "").slice(-1);
+        const arr = [...authOtp]; arr[i] = c;
+        setAuthOtp(arr);
+        if (c && i < 5) setTimeout(() => authOtpRefs.current[i + 1]?.focus(), 0);
+    };
+    const handleAuthOtpKeyDown = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Backspace" && !authOtp[i] && i > 0) authOtpRefs.current[i - 1]?.focus();
+    };
+    const handleAuthOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const p = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 6);
+        if (p) { setAuthOtp(p.split("").concat(Array(6 - p.length).fill(""))); setTimeout(() => authOtpRefs.current[Math.min(p.length, 5)]?.focus(), 0); }
+    };
+
+    const handleAuthRequestOtp = async (e?: FormEvent) => {
+        if (e) e.preventDefault();
+        if (!authName.trim()) { setAuthError("Please enter your full name."); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authEmail.trim())) { setAuthError("Please enter a valid email address."); return; }
+        const phone = authPhone.replace(/[^0-9]/g, "");
+        if (!/^\d{10}$/.test(phone)) { setAuthError("Please enter a valid 10-digit mobile number."); return; }
+        if (!authAgree) { setAuthError("Please agree to the Terms of Service & Privacy Policy."); return; }
+
+        setAuthError(""); setAuthLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/auth/request-otp`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone, mode: "signup" }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to send OTP");
+            if (data.otp) setAuthDevOtp(data.otp);
+            setAuthOtp(["", "", "", "", "", ""]);
+            setAuthStep("otp");
+            setTimeout(() => authOtpRefs.current[0]?.focus(), 150);
+        } catch (err: any) {
+            setAuthError(err.message || "Failed to send OTP.");
+        } finally { setAuthLoading(false); }
+    };
+
+    const handleAuthVerifyOtp = async (e?: FormEvent) => {
+        if (e) e.preventDefault();
+        const fullOtp = authOtp.join("");
+        if (fullOtp.length !== 6) { setAuthError("Please enter the complete 6-digit OTP."); return; }
+        const phone = authPhone.replace(/[^0-9]/g, "");
+        setAuthError(""); setAuthLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/auth/verify-otp`, {
+                method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+                body: JSON.stringify({ phone, otp: fullOtp, name: authName.trim(), email: authEmail.trim(), rememberMe: true, mode: "signup" }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Invalid OTP");
+
+            localStorage.setItem("user", JSON.stringify(data.user));
+            if (data.token) localStorage.setItem("authToken", data.token);
+
+            // Merge guest cart
+            const guestCart = getGuestCart();
+            if (guestCart.items.length > 0) {
+                await Promise.all(guestCart.items.map((item) => addToCart(item.productId, item.quantity, item.variantId)));
+                clearGuestCart();
+            }
+            try {
+                const profile = await getCurrentUser();
+                const u = (profile as any)?.data || profile;
+                if (u) localStorage.setItem("user", JSON.stringify(u));
+            } catch { /* ignore */ }
+
+            window.dispatchEvent(new Event("cart-updated"));
+            router.push("/checkout");
+        } catch (err: any) {
+            setAuthError(err.message || "OTP verification failed.");
+        } finally { setAuthLoading(false); }
     };
 
     if (loading) {
@@ -645,6 +730,414 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                             >
                                                 {cartMessage}
                                             </p>
+                                        )}
+
+                                        {/* Inline Auth Modal — shown when Buy Now clicked while logged out */}
+                                        {showAuthModal && (
+                                            <div ref={authModalRef} style={{
+                                                maxWidth: '540px',
+                                                margin: '24px auto 8px',
+                                                background: '#ffffff',
+                                                borderRadius: '16px',
+                                                padding: '26px 22px',
+                                                boxShadow: '0 10px 25px rgba(240, 95, 34, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04)',
+                                                border: '1.5px solid #F05F22',
+                                            }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                                                    <div>
+                                                        <h4 style={{ margin: '0 0 4px', fontSize: '17px', fontWeight: 700, color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <span style={{ color: '#F05F22' }}><i className="fas fa-user-check" /></span>
+                                                            {authStep === 'details' ? 'Contact Details for Checkout' : 'Verify Mobile Number'}
+                                                        </h4>
+                                                        <p style={{ margin: 0, fontSize: '13px', color: '#6b7280' }}>
+                                                            {authStep === 'details'
+                                                                ? 'Please enter your details to create an account and checkout.'
+                                                                : `Enter the 6-digit verification code sent to +91 ${authPhone.replace(/[^0-9]/g, '')}`}
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setShowAuthModal(false);
+                                                            setAuthStep('details');
+                                                            setAuthError('');
+                                                        }}
+                                                        style={{
+                                                            background: '#f3f4f6',
+                                                            border: 'none',
+                                                            borderRadius: '50%',
+                                                            width: '28px',
+                                                            height: '28px',
+                                                            cursor: 'pointer',
+                                                            color: '#6b7280',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            fontSize: '13px',
+                                                        }}
+                                                        title="Close"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+
+                                                {authError && (
+                                                    <div style={{
+                                                        padding: '10px 14px',
+                                                        marginBottom: '14px',
+                                                        backgroundColor: '#fef2f2',
+                                                        border: '1px solid #fecaca',
+                                                        borderRadius: '8px',
+                                                        color: '#b91c1c',
+                                                        fontSize: '13px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                    }}>
+                                                        <i className="fas fa-exclamation-circle" />
+                                                        <span>{authError}</span>
+                                                    </div>
+                                                )}
+
+                                                {authDevOtp && authStep === 'otp' && (
+                                                    <div style={{
+                                                        padding: '8px 12px',
+                                                        marginBottom: '14px',
+                                                        backgroundColor: '#eff6ff',
+                                                        border: '1px solid #bfdbfe',
+                                                        borderRadius: '8px',
+                                                        color: '#1e40af',
+                                                        fontSize: '12px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px',
+                                                    }}>
+                                                        <i className="fas fa-info-circle" />
+                                                        <span>Dev OTP Code: <strong>{authDevOtp}</strong></span>
+                                                    </div>
+                                                )}
+
+                                                {authStep === 'details' ? (
+                                                    <form onSubmit={handleAuthRequestOtp}>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                                            {/* Name input with user icon */}
+                                                            <div>
+                                                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                                                                    Full Name <span style={{ color: '#ef4444' }}>*</span>
+                                                                </label>
+                                                                <div style={{ position: 'relative' }}>
+                                                                    <i
+                                                                        className="fas fa-user"
+                                                                        style={{
+                                                                            position: 'absolute',
+                                                                            left: '14px',
+                                                                            top: '50%',
+                                                                            transform: 'translateY(-50%)',
+                                                                            color: '#9ca3af',
+                                                                            fontSize: '13px',
+                                                                        }}
+                                                                    />
+                                                                    <input
+                                                                        type="text"
+                                                                        placeholder="e.g. Rahul Sharma"
+                                                                        value={authName}
+                                                                        onChange={(e) => {
+                                                                            setAuthName(e.target.value);
+                                                                            setAuthError('');
+                                                                        }}
+                                                                        style={{
+                                                                            width: '100%',
+                                                                            padding: '10px 14px 10px 38px',
+                                                                            border: '1.5px solid #e5e7eb',
+                                                                            borderRadius: '8px',
+                                                                            fontSize: '14px',
+                                                                            color: '#1f2937',
+                                                                            outline: 'none',
+                                                                            boxSizing: 'border-box',
+                                                                        }}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Email input with envelope icon */}
+                                                            <div>
+                                                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                                                                    Email Address <span style={{ color: '#ef4444' }}>*</span>
+                                                                </label>
+                                                                <div style={{ position: 'relative' }}>
+                                                                    <i
+                                                                        className="fas fa-envelope"
+                                                                        style={{
+                                                                            position: 'absolute',
+                                                                            left: '14px',
+                                                                            top: '50%',
+                                                                            transform: 'translateY(-50%)',
+                                                                            color: '#9ca3af',
+                                                                            fontSize: '13px',
+                                                                        }}
+                                                                    />
+                                                                    <input
+                                                                        type="email"
+                                                                        placeholder="e.g. rahul@example.com"
+                                                                        value={authEmail}
+                                                                        onChange={(e) => {
+                                                                            setAuthEmail(e.target.value);
+                                                                            setAuthError('');
+                                                                        }}
+                                                                        style={{
+                                                                            width: '100%',
+                                                                            padding: '10px 14px 10px 38px',
+                                                                            border: '1.5px solid #e5e7eb',
+                                                                            borderRadius: '8px',
+                                                                            fontSize: '14px',
+                                                                            color: '#1f2937',
+                                                                            outline: 'none',
+                                                                            boxSizing: 'border-box',
+                                                                        }}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Mobile number input with +91 badge */}
+                                                            <div>
+                                                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                                                                    Mobile Number <span style={{ color: '#ef4444' }}>*</span>
+                                                                </label>
+                                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                                    <span
+                                                                        style={{
+                                                                            padding: '10px 12px',
+                                                                            background: '#f9fafb',
+                                                                            border: '1.5px solid #e5e7eb',
+                                                                            borderRadius: '8px',
+                                                                            fontSize: '13px',
+                                                                            fontWeight: 600,
+                                                                            color: '#4b5563',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            whiteSpace: 'nowrap',
+                                                                        }}
+                                                                    >
+                                                                        +91
+                                                                    </span>
+                                                                    <input
+                                                                        type="tel"
+                                                                        maxLength={10}
+                                                                        placeholder="10-digit mobile number"
+                                                                        value={authPhone}
+                                                                        onChange={(e) => {
+                                                                            const val = e.target.value.replace(/[^0-9]/g, '');
+                                                                            setAuthPhone(val);
+                                                                            setAuthError('');
+                                                                        }}
+                                                                        style={{
+                                                                            flex: 1,
+                                                                            padding: '10px 14px',
+                                                                            border: '1.5px solid #e5e7eb',
+                                                                            borderRadius: '8px',
+                                                                            fontSize: '14px',
+                                                                            color: '#1f2937',
+                                                                            outline: 'none',
+                                                                            letterSpacing: '1px',
+                                                                            boxSizing: 'border-box',
+                                                                        }}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Terms checkbox */}
+                                                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: '8px', textAlign: 'left', width: '100%', marginTop: '2px' }}>
+                                                                <input
+                                                                    id="product-auth-terms-checkbox"
+                                                                    type="checkbox"
+                                                                    checked={authAgree}
+                                                                    onChange={(e) => setAuthAgree(e.target.checked)}
+                                                                    style={{
+                                                                        width: '16px',
+                                                                        minWidth: '16px',
+                                                                        maxWidth: '16px',
+                                                                        height: '16px',
+                                                                        marginTop: '2px',
+                                                                        marginRight: '0px',
+                                                                        marginLeft: '0px',
+                                                                        padding: '0px',
+                                                                        accentColor: '#F05F22',
+                                                                        cursor: 'pointer',
+                                                                        flexShrink: 0,
+                                                                    }}
+                                                                />
+                                                                <label
+                                                                    htmlFor="product-auth-terms-checkbox"
+                                                                    style={{
+                                                                        display: 'inline',
+                                                                        fontSize: '12px',
+                                                                        color: '#6b7280',
+                                                                        cursor: 'pointer',
+                                                                        margin: 0,
+                                                                        padding: 0,
+                                                                        textAlign: 'left',
+                                                                        lineHeight: 1.4,
+                                                                    }}
+                                                                >
+                                                                    I agree to the{' '}
+                                                                    <Link href="/terms-conditions" target="_blank" style={{ color: '#F05F22', textDecoration: 'underline' }}>
+                                                                        Terms of Service
+                                                                    </Link>{' '}
+                                                                    &{' '}
+                                                                    <Link href="/privacy-policy" target="_blank" style={{ color: '#F05F22', textDecoration: 'underline' }}>
+                                                                        Privacy Policy
+                                                                    </Link>
+                                                                </label>
+                                                            </div>
+
+                                                            <button
+                                                                type="submit"
+                                                                disabled={authLoading}
+                                                                className="common_btn"
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '12px 20px',
+                                                                    fontSize: '15px',
+                                                                    fontWeight: 700,
+                                                                    borderRadius: '8px',
+                                                                    border: 'none',
+                                                                    cursor: authLoading ? 'not-allowed' : 'pointer',
+                                                                    opacity: authLoading ? 0.7 : 1,
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    gap: '8px',
+                                                                    marginTop: '4px',
+                                                                }}
+                                                            >
+                                                                {authLoading ? (
+                                                                    <>
+                                                                        <i className="fas fa-spinner fa-spin" /> Sending OTP...
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        Send OTP & Continue <i className="fas fa-arrow-right" />
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                ) : (
+                                                    <form onSubmit={handleAuthVerifyOtp}>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+                                                            {/* OTP 6 boxes */}
+                                                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '6px 0' }}>
+                                                                {[0, 1, 2, 3, 4, 5].map((index) => (
+                                                                    <input
+                                                                        key={index}
+                                                                        ref={(el) => {
+                                                                            authOtpRefs.current[index] = el;
+                                                                        }}
+                                                                        type="text"
+                                                                        inputMode="numeric"
+                                                                        pattern="[0-9]*"
+                                                                        maxLength={1}
+                                                                        className="guest-otp-digit-input"
+                                                                        value={authOtp[index]}
+                                                                        onChange={(e) => handleAuthOtpDigit(index, e.target.value)}
+                                                                        onKeyDown={(e) => handleAuthOtpKeyDown(index, e)}
+                                                                        onPaste={handleAuthOtpPaste}
+                                                                        autoComplete="off"
+                                                                        style={{
+                                                                            width: '46px',
+                                                                            height: '52px',
+                                                                            padding: '0px',
+                                                                            margin: '0px',
+                                                                            boxSizing: 'border-box',
+                                                                            textAlign: 'center',
+                                                                            fontSize: '22px',
+                                                                            fontWeight: 700,
+                                                                            color: '#111827',
+                                                                            WebkitTextFillColor: '#111827',
+                                                                            lineHeight: '50px',
+                                                                            border: '2px solid #d1d5db',
+                                                                            borderRadius: '10px',
+                                                                            backgroundColor: '#ffffff',
+                                                                            outline: 'none',
+                                                                        }}
+                                                                    />
+                                                                ))}
+                                                            </div>
+
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '13px' }}>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setAuthStep('details');
+                                                                        setAuthError('');
+                                                                    }}
+                                                                    style={{
+                                                                        background: 'none',
+                                                                        border: 'none',
+                                                                        color: '#6b7280',
+                                                                        cursor: 'pointer',
+                                                                        padding: 0,
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        gap: '4px',
+                                                                    }}
+                                                                >
+                                                                    <i className="fas fa-edit" /> Edit details
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleAuthRequestOtp()}
+                                                                    disabled={authLoading}
+                                                                    style={{
+                                                                        background: 'none',
+                                                                        border: 'none',
+                                                                        color: '#F05F22',
+                                                                        fontWeight: 600,
+                                                                        cursor: 'pointer',
+                                                                        padding: 0,
+                                                                    }}
+                                                                >
+                                                                    Resend OTP
+                                                                </button>
+                                                            </div>
+
+                                                            <button
+                                                                type="submit"
+                                                                disabled={authLoading || authOtp.join('').length !== 6}
+                                                                className="common_btn"
+                                                                style={{
+                                                                    width: '100%',
+                                                                    padding: '12px 20px',
+                                                                    fontSize: '15px',
+                                                                    fontWeight: 700,
+                                                                    borderRadius: '8px',
+                                                                    border: 'none',
+                                                                    cursor: (authLoading || authOtp.join('').length !== 6) ? 'not-allowed' : 'pointer',
+                                                                    opacity: (authLoading || authOtp.join('').length !== 6) ? 0.6 : 1,
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    gap: '8px',
+                                                                }}
+                                                            >
+                                                                {authLoading ? (
+                                                                    <>
+                                                                        <i className="fas fa-spinner fa-spin" /> Verifying...
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        Verify & Proceed to Checkout <i className="fas fa-arrow-right" />
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
                                 </div>

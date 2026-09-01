@@ -2358,4 +2358,19 @@ input[inputmode="numeric"][maxlength="1"] {
   color: #111827 !important;
   -webkit-text-fill-color: #111827 !important;
   text-align: center !important;
+}
+
+/* Global Checkbox / Radio Reset against template input { width: 100% } */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 16px !important;
+  min-width: 16px !important;
+  max-width: 16px !important;
+  height: 16px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  accent-color: #F05F22 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  flex-shrink: 0 !important;
 }

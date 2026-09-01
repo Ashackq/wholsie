@@ -397,12 +397,24 @@ router.post(
   "/auth/request-otp",
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-      const { phone } = req.body;
+      const { phone, mode } = req.body;
 
       if (!phone || !/^\d{10}$/.test(phone)) {
         return res
           .status(400)
           .json({ error: "Valid 10-digit phone number required" });
+      }
+
+      // For Sign In mode: verify the account exists BEFORE sending the OTP.
+      // This gives immediate feedback at the phone-entry step, not after OTP entry.
+      if (mode === "signin") {
+        const db = getDB();
+        const existing = await db.collection("users").findOne({ phone });
+        if (!existing) {
+          return res.status(404).json({
+            error: "No account found with this mobile number. Please sign up first.",
+          });
+        }
       }
 
       // Generate 6-digit OTP (or use simulation code)
