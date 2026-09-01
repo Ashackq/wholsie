@@ -11,6 +11,8 @@ type GuestCart = {
   items: GuestCartItem[];
   /** ISO timestamp of when the cart was first created */
   createdAt?: string;
+  /** Whether the guest user opted to avail an eligible promotional offer */
+  isOfferAvailed?: boolean;
 };
 
 const GUEST_CART_KEY = "guestCart";
@@ -18,7 +20,7 @@ const GUEST_CART_KEY = "guestCart";
 const EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
 const safeParse = (value: string | null): GuestCart => {
-  if (!value) return { items: [] };
+  if (!value) return { items: [], isOfferAvailed: false };
   try {
     const parsed = JSON.parse(value);
     if (parsed && Array.isArray(parsed.items)) {
@@ -30,22 +32,33 @@ const safeParse = (value: string | null): GuestCart => {
           if (typeof window !== "undefined") {
             localStorage.removeItem(GUEST_CART_KEY);
           }
-          return { items: [] };
+          return { items: [], isOfferAvailed: false };
         }
       }
-      return { items: parsed.items, createdAt: parsed.createdAt } as GuestCart;
+      return {
+        items: parsed.items,
+        createdAt: parsed.createdAt,
+        isOfferAvailed: Boolean(parsed.isOfferAvailed),
+      } as GuestCart;
     }
   } catch {
     // ignore
   }
-  return { items: [] };
+  return { items: [], isOfferAvailed: false };
 };
 
 const canUseStorage = () => typeof window !== "undefined";
 
 export const getGuestCart = (): GuestCart => {
-  if (!canUseStorage()) return { items: [] };
+  if (!canUseStorage()) return { items: [], isOfferAvailed: false };
   return safeParse(localStorage.getItem(GUEST_CART_KEY));
+};
+
+export const setGuestCartOfferAvailed = (availed: boolean) => {
+  const cart = getGuestCart();
+  cart.isOfferAvailed = availed;
+  saveGuestCart(cart);
+  return cart;
 };
 
 const saveGuestCart = (cart: GuestCart) => {

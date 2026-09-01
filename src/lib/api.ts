@@ -617,6 +617,28 @@ export async function removeCouponFromCart(): Promise<any> {
   return apiCall<any>("/cart/coupon", { method: "DELETE" });
 }
 
+// ── Offer Opt-In / Removal API ─────────────────────────────────────────────
+
+/**
+ * POST /api/cart/offer/avail
+ * Sets user's cart to avail the eligible promotional offer.
+ */
+export async function availCartOffer(): Promise<any> {
+  const res = await apiCall<any>("/cart/offer/avail", { method: "POST" });
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("cart-updated"));
+  return res;
+}
+
+/**
+ * DELETE /api/cart/offer
+ * Removes / declines the promotional offer on user's cart.
+ */
+export async function removeCartOffer(): Promise<any> {
+  const res = await apiCall<any>("/cart/offer", { method: "DELETE" });
+  if (typeof window !== "undefined") window.dispatchEvent(new Event("cart-updated"));
+  return res;
+}
+
 export const api = {
   // Products
   getProducts,
@@ -630,6 +652,8 @@ export const api = {
   removeFromCart,
   applyCouponToCart,
   removeCouponFromCart,
+  availCartOffer,
+  removeCartOffer,
 
   // Orders
   getOrders,

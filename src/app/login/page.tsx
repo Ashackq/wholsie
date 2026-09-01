@@ -355,6 +355,11 @@ export default function LoginPage() {
                                   border: "2px solid #ddd",
                                   borderRadius: "8px",
                                   padding: "0px",
+                                  margin: "0px",
+                                  boxSizing: "border-box",
+                                  color: "#111827",
+                                  WebkitTextFillColor: "#111827",
+                                  lineHeight: "48px",
                                   transition: "all 0.2s",
                                 }}
                                 onFocus={(e) => {

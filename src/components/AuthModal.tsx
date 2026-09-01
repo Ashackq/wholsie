@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, FormEvent } from "react";
-import { addToCart, getCurrentUser } from "@/lib/api";
+import { addToCart, getCurrentUser, availCartOffer } from "@/lib/api";
 import { clearGuestCart, getGuestCart } from "@/lib/guest-cart";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
@@ -130,6 +130,13 @@ export default function AuthModal({ onSuccess, onClose }: AuthModalProps) {
             addToCart(item.productId, item.quantity, item.variantId)
           )
         );
+        if (guestCart.isOfferAvailed) {
+          try {
+            await availCartOffer();
+          } catch {
+            // non-fatal
+          }
+        }
         clearGuestCart();
       }
 
@@ -456,6 +463,9 @@ export default function AuthModal({ onSuccess, onClose }: AuthModalProps) {
                       style={{
                         width: "46px",
                         height: "52px",
+                        padding: "0px",
+                        margin: "0px",
+                        boxSizing: "border-box",
                         border: otp[idx]
                           ? "2px solid var(--primary)"
                           : "1.5px solid #e2e8f0",
@@ -463,6 +473,9 @@ export default function AuthModal({ onSuccess, onClose }: AuthModalProps) {
                         textAlign: "center",
                         fontSize: "20px",
                         fontWeight: 700,
+                        color: "#111827",
+                        WebkitTextFillColor: "#111827",
+                        lineHeight: "50px",
                         outline: "none",
                         transition: "border-color 0.15s",
                         background: otp[idx] ? "#fff8f5" : "#fff",

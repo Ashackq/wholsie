@@ -76,18 +76,19 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
         );
 
         // ── Run offer engine ───────────────────────────────────────────────────
-        const offerResult = await evaluateOffers(enrichedItems);
+        const isOfferAvailed = Boolean((cart as any).isOfferAvailed);
+        const offerResult = await evaluateOffers(enrichedItems, isOfferAvailed);
         const offerDiscount = offerResult.offerDiscount;
         warnings.push(...offerResult.warnings);
 
         // ── Shipping estimate (simple weight-based; exact cost computed at order) ──
-        // 0 if free_shipping offer won; else basic slab
+        // 0 if free_shipping offer won and is availed; else basic slab
         let shippingEstimate = 0;
         if (!offerResult.freeShipping) {
             shippingEstimate = subtotal >= 500 ? 0 : 50; // rough estimate only
         }
 
-        // ── Check if any promotional offer is currently active ───────────────
+        // ── Check if any promotional offer is currently availed & active ───────────────
         const isOfferActive =
             offerDiscount > 0 ||
             offerResult.appliedOffer != null ||
@@ -158,6 +159,7 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
         // We don't block the response on this — fire-and-forget is fine here
         // because the offer is always re-evaluated at order creation time.
         const cartUpdate: Record<string, any> = {
+            isOfferAvailed: offerResult.isOfferAvailed,
             offerDiscount,
             appliedOffers: offerResult.appliedOffer
                 ? [
@@ -184,6 +186,8 @@ export async function getCart(req: Request, res: Response, next: NextFunction) {
                     price: i.dbPrice ?? 0,
                 })),
                 subtotal,
+                availableOffer: offerResult.availableOffer,
+                isOfferAvailed: offerResult.isOfferAvailed,
                 offerDiscount,
                 couponDiscount,
                 adjustedSubtotal,
@@ -243,7 +247,8 @@ export async function applyCouponToCart(req: Request, res: Response, next: NextF
             })),
         );
 
-        const offerResult = await evaluateOffers(enrichedItems);
+        const isOfferAvailed = Boolean((cart as any).isOfferAvailed);
+        const offerResult = await evaluateOffers(enrichedItems, isOfferAvailed);
         const isOfferActive =
             offerResult.offerDiscount > 0 ||
             offerResult.appliedOffer != null ||
@@ -321,6 +326,167 @@ export async function removeCouponFromCart(req: Request, res: Response, next: Ne
         return res.json({
             success: true,
             message: 'Coupon removed.',
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * Avail promotional offer on cart
+ * POST /api/cart/offer/avail
+ */
+export async function availCartOffer(req: Request, res: Response, next: NextFunction) {
+    try {
+        const userId = req.userId!;
+        let cart = await Cart.findOne({ userId });
+        if (!cart || !cart.items.length) {
+            return res.status(400).json({ error: 'Your cart is empty.' });
+        }
+
+        const enrichedItems = await enrichCartItems(
+            cart.items.map((item: any) => ({
+                _id: item._id,
+                productId: item.productId,
+                variantId: item.variantId,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                image: item.image,
+            })),
+        );
+
+        const subtotal = enrichedItems.reduce(
+            (sum, i) => sum + (i.dbPrice ?? 0) * i.quantity,
+            0,
+        );
+
+        // Evaluate with isOfferAvailed = true
+        const offerResult = await evaluateOffers(enrichedItems, true);
+        if (!offerResult.availableOffer) {
+            return res.status(400).json({ error: 'No promotional offer is currently eligible for your cart.' });
+        }
+
+        (cart as any).isOfferAvailed = true;
+        cart.offerDiscount = offerResult.offerDiscount;
+        (cart as any).appliedOffers = offerResult.appliedOffer
+            ? [
+                {
+                    offerId: offerResult.appliedOffer.offerId,
+                    offerTitle: offerResult.appliedOffer.offerTitle,
+                    discountAmount: offerResult.appliedOffer.discountAmount,
+                },
+            ]
+            : [];
+
+        // Clear applied coupon due to mutual exclusion
+        let couponRemovedMessage: string | null = null;
+        if ((cart as any).appliedCoupon) {
+            couponRemovedMessage = `Coupon ${(cart as any).appliedCoupon.code || ''} removed because promotional offers cannot be combined with coupons.`;
+            (cart as any).appliedCoupon = undefined;
+            cart.couponDiscount = 0;
+            (cart as any).couponCode = '';
+            cart.discount = 0;
+        }
+
+        await cart.save();
+
+        const adjustedSubtotal = Math.max(0, subtotal - offerResult.offerDiscount);
+
+        return res.json({
+            success: true,
+            message: `Offer "${offerResult.availableOffer.offerTitle}" availed successfully!`,
+            warning: couponRemovedMessage,
+            data: {
+                _id: cart._id,
+                userId: cart.userId,
+                items: enrichedItems.map((i) => ({
+                    ...i,
+                    price: i.dbPrice ?? 0,
+                })),
+                subtotal,
+                availableOffer: offerResult.availableOffer,
+                isOfferAvailed: true,
+                offerDiscount: offerResult.offerDiscount,
+                couponDiscount: 0,
+                adjustedSubtotal,
+                appliedOffers: offerResult.appliedOffer
+                    ? [
+                        {
+                            offerId: offerResult.appliedOffer.offerId,
+                            offerTitle: offerResult.appliedOffer.offerTitle,
+                            offerSlug: offerResult.appliedOffer.offerSlug,
+                            discountAmount: offerResult.appliedOffer.discountAmount,
+                        },
+                    ]
+                    : [],
+                freeItems: offerResult.freeItems,
+                appliedCoupon: null,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * Remove/Decline promotional offer on cart
+ * DELETE /api/cart/offer
+ */
+export async function removeCartOffer(req: Request, res: Response, next: NextFunction) {
+    try {
+        const userId = req.userId!;
+        let cart = await Cart.findOne({ userId });
+        if (!cart) {
+            return res.status(404).json({ error: 'Cart not found.' });
+        }
+
+        (cart as any).isOfferAvailed = false;
+        cart.offerDiscount = 0;
+        (cart as any).appliedOffers = [];
+        await cart.save();
+
+        const enrichedItems = await enrichCartItems(
+            cart.items.map((item: any) => ({
+                _id: item._id,
+                productId: item.productId,
+                variantId: item.variantId,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                image: item.image,
+            })),
+        );
+
+        const subtotal = enrichedItems.reduce(
+            (sum, i) => sum + (i.dbPrice ?? 0) * i.quantity,
+            0,
+        );
+
+        // Re-evaluate without availing to get the available offer details
+        const offerResult = await evaluateOffers(enrichedItems, false);
+        const adjustedSubtotal = subtotal - (cart.couponDiscount || 0);
+
+        return res.json({
+            success: true,
+            message: 'Offer removed from cart.',
+            data: {
+                _id: cart._id,
+                userId: cart.userId,
+                items: enrichedItems.map((i) => ({
+                    ...i,
+                    price: i.dbPrice ?? 0,
+                })),
+                subtotal,
+                availableOffer: offerResult.availableOffer,
+                isOfferAvailed: false,
+                offerDiscount: 0,
+                couponDiscount: cart.couponDiscount || 0,
+                adjustedSubtotal,
+                appliedOffers: [],
+                freeItems: [],
+                appliedCoupon: cart.appliedCoupon || null,
+            },
         });
     } catch (error) {
         next(error);
@@ -490,6 +656,7 @@ export async function clearCart(req: Request, res: Response, next: NextFunction)
 export async function calculateGuestCart(req: Request, res: Response, next: NextFunction) {
     try {
         const rawItems = Array.isArray(req.body.items) ? req.body.items : [];
+        const isOfferAvailed = Boolean(req.body.isOfferAvailed);
 
         if (!rawItems.length) {
             return res.json({
@@ -497,6 +664,8 @@ export async function calculateGuestCart(req: Request, res: Response, next: Next
                 data: {
                     items: [],
                     subtotal: 0,
+                    availableOffer: null,
+                    isOfferAvailed: false,
                     offerDiscount: 0,
                     couponDiscount: 0,
                     adjustedSubtotal: 0,
@@ -526,8 +695,8 @@ export async function calculateGuestCart(req: Request, res: Response, next: Next
             0,
         );
 
-        // Run offer engine
-        const offerResult = await evaluateOffers(enrichedItems);
+        // Run offer engine with isOfferAvailed
+        const offerResult = await evaluateOffers(enrichedItems, isOfferAvailed);
         const offerDiscount = offerResult.offerDiscount;
 
         let shippingEstimate = 0;
@@ -545,6 +714,8 @@ export async function calculateGuestCart(req: Request, res: Response, next: Next
                     price: i.dbPrice ?? 0,
                 })),
                 subtotal,
+                availableOffer: offerResult.availableOffer,
+                isOfferAvailed: offerResult.isOfferAvailed,
                 offerDiscount,
                 couponDiscount: 0,
                 adjustedSubtotal,

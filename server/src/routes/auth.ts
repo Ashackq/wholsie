@@ -448,7 +448,7 @@ router.post(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const db = getDB();
-      const { phone, otp, rememberMe = true } = req.body;
+      const { phone, otp, rememberMe = true, name, email } = req.body;
 
       if (!phone || !otp) {
         return res.status(400).json({ error: "Phone and OTP required" });
@@ -497,11 +497,14 @@ router.post(
       let user = await db.collection("users").findOne({ phone });
 
       if (!user) {
-        // Auto-register new user
+        // Auto-register new user with provided name and email or fallback
+        const formattedName = (name && typeof name === "string" && name.trim()) ? name.trim() : `User ${phone.slice(-4)}`;
+        const formattedEmail = (email && typeof email === "string" && email.trim()) ? email.trim() : `${phone}@temp.com`;
+
         const result = await db.collection("users").insertOne({
-          name: `User ${phone.slice(-4)}`,
+          name: formattedName,
           phone,
-          email: `${phone}@temp.com`, // Temporary email
+          email: formattedEmail,
           password: "", // No password for OTP users
           role: "customer",
           status: "active",
@@ -516,6 +519,24 @@ router.post(
         if (!user) {
           return res.status(500).json({ error: "Failed to create user" });
         }
+      } else {
+        // If user already exists, update name or email if placeholder was used
+        const updateFields: any = {};
+        if (name && typeof name === "string" && name.trim() && (!user.name || user.name.startsWith("User "))) {
+          updateFields.name = name.trim();
+        }
+        if (email && typeof email === "string" && email.trim() && (!user.email || user.email.endsWith("@temp.com"))) {
+          updateFields.email = email.trim();
+        }
+        if (Object.keys(updateFields).length > 0) {
+          updateFields.updatedAt = new Date();
+          await db.collection("users").updateOne({ _id: user._id }, { $set: updateFields });
+          user = await db.collection("users").findOne({ _id: user._id });
+        }
+      }
+
+      if (!user) {
+        return res.status(500).json({ error: "User not found" });
       }
 
       // Check user status

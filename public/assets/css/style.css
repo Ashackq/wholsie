@@ -9968,24 +9968,11 @@ footer {
 
 .cart_page_summary {
     position: relative;
-    margin-top: 25px;
+    margin-top: 0;
 }
 
 .cart_page_summary input {
     border-color: #eee;
-}
-
-.cart_page_summary button {
-    position: absolute;
-    top: -12px;
-    right: 5px;
-    background: var(--colorGreen) !important;
-    padding: 9.5px 25px;
-    border-radius: 6px !important;
-    -webkit-border-radius: 6px !important;
-    -moz-border-radius: 6px !important;
-    -ms-border-radius: 6px !important;
-    -o-border-radius: 6px !important;
 }
 
 

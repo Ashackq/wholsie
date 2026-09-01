@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLayout } from "../context/LayoutContext";
 import { useRouter } from "next/navigation";
 import { getCart, logout } from "@/lib/api";
-import { getGuestCart, hasGuestCartItems } from "@/lib/guest-cart";
+import { clearGuestCart, getGuestCart, hasGuestCartItems } from "@/lib/guest-cart";
 
 export default function Header() {
     const { hideHeaderFooter } = useLayout();
@@ -25,26 +25,14 @@ export default function Header() {
                 const res = await getCart();
                 const payload = (res as any)?.data || res;
                 const items = payload?.items || [];
-                const totalQty = items.reduce(
-                    (sum: number, item: any) => sum + (Number(item.quantity) || 1),
-                    0
-                );
-                setCartCount(totalQty);
+                setCartCount(items.length);
             } catch {
                 const guest = getGuestCart();
-                const count = (guest.items || []).reduce(
-                    (sum, item) => sum + (Number(item.quantity) || 1),
-                    0
-                );
-                setCartCount(count);
+                setCartCount((guest.items || []).length);
             }
         } else {
             const guest = getGuestCart();
-            const count = (guest.items || []).reduce(
-                (sum, item) => sum + (Number(item.quantity) || 1),
-                0
-            );
-            setCartCount(count);
+            setCartCount((guest.items || []).length);
         }
     }, []);
 
@@ -70,8 +58,10 @@ export default function Header() {
             localStorage.removeItem("user");
             localStorage.removeItem("authToken");
             sessionStorage.clear();
+            clearGuestCart();
             setIsLoggedIn(false);
             setCartCount(0);
+            window.dispatchEvent(new Event("cart-updated"));
             router.push("/");
             setMobileOpen(false);
         } catch (e) {

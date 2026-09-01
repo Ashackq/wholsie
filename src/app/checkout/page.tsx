@@ -12,6 +12,8 @@ import {
   api,
   applyCouponToCart,
   removeCouponFromCart,
+  availCartOffer,
+  removeCartOffer,
 } from "@/lib/api";
 import AddressModals from "@/components/AddressModals";
 
@@ -59,6 +61,9 @@ export default function CheckoutPage() {
   const [orderNotes, setOrderNotes] = useState("");
   const [couponCode, setCouponCode] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [availableOffer, setAvailableOffer] = useState<any>(null);
+  const [isOfferAvailed, setIsOfferAvailed] = useState(false);
+  const [offerLoading, setOfferLoading] = useState(false);
   const [offerDiscount, setOfferDiscount] = useState(0);
   const [appliedOffers, setAppliedOffers] = useState<
     Array<{ offerTitle: string; discountAmount: number; offerSlug?: string }>
@@ -271,6 +276,8 @@ const getProductIdString = (raw: any): string => {
       setCart(normalized);
 
       // Populate enriched offer, coupon and free item state
+      setAvailableOffer(payload.availableOffer ?? null);
+      setIsOfferAvailed(payload.isOfferAvailed ?? false);
       setOfferDiscount(payload.offerDiscount ?? 0);
       setCouponDiscount(payload.couponDiscount ?? 0);
       setAppliedOffers(payload.appliedOffers ?? []);
@@ -578,6 +585,40 @@ const getProductIdString = (raw: any): string => {
       setError(err.message || "Failed to remove coupon");
     } finally {
       setCouponLoading(false);
+    }
+  };
+
+  const handleAvailOffer = async () => {
+    setOfferLoading(true);
+    setError("");
+    try {
+      const res = await availCartOffer();
+      if (res.success) {
+        await loadCheckoutData();
+      } else {
+        setError(res.error || "Failed to avail offer");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to avail offer");
+    } finally {
+      setOfferLoading(false);
+    }
+  };
+
+  const handleRemoveOffer = async () => {
+    setOfferLoading(true);
+    setError("");
+    try {
+      const res = await removeCartOffer();
+      if (res.success) {
+        await loadCheckoutData();
+      } else {
+        setError(res.error || "Failed to remove offer");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to remove offer");
+    } finally {
+      setOfferLoading(false);
     }
   };
 
@@ -1157,10 +1198,13 @@ const getProductIdString = (raw: any): string => {
                       onClick={async () => {
                         try {
                           const { logout } = await import("@/lib/api");
+                          const { clearGuestCart } = await import("@/lib/guest-cart");
                           await logout();
                           localStorage.removeItem("user");
                           localStorage.removeItem("authToken");
                           sessionStorage.clear();
+                          clearGuestCart();
+                          window.dispatchEvent(new Event("cart-updated"));
                           window.location.assign("/");
                         } catch (e) {
                           /* noop */
@@ -1378,7 +1422,7 @@ const getProductIdString = (raw: any): string => {
               <div className="checkout-summary">
                 <div
                   className="cart_page_summary"
-                  style={{ position: "sticky", top: "20px" }}
+                  style={{ position: "sticky", top: "20px", marginTop: 0 }}
                 >
                   <h3>Product summary</h3>
 
@@ -1504,8 +1548,8 @@ const getProductIdString = (raw: any): string => {
                         </li>
                       );
                     })}
-                    {/* Free Items from Active Offers */}
-                    {freeItems.map((fi, idx) => (
+                    {/* Free Items from Active Offers (shown only when offer is availed) */}
+                    {isOfferAvailed && freeItems.map((fi, idx) => (
                       <li
                         key={`free-${idx}`}
                         style={{
@@ -1583,36 +1627,114 @@ const getProductIdString = (raw: any): string => {
                     ))}
                   </ul>
 
-                  {/* Applied Offer Banner */}
-                  {appliedOffers.length > 0 && (
+                  {/* Available Offer Prompt (Eligible, but not yet availed) */}
+                  {availableOffer && !isOfferAvailed && (
+                    <div
+                      style={{
+                        background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
+                        border: "1.5px dashed #f97316",
+                        borderRadius: "10px",
+                        padding: "12px",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                        <span style={{ fontSize: "18px" }}>🎁</span>
+                        <div style={{ flex: 1 }}>
+                          <strong style={{ fontSize: "13px", color: "#9a3412", display: "block" }}>
+                            {availableOffer.offerTitle}
+                          </strong>
+                          <span style={{ fontSize: "12px", color: "#7c2d12" }}>
+                            {availableOffer.discountAmount > 0
+                              ? `Avail this offer to save ₹${availableOffer.discountAmount.toFixed(2)}!`
+                              : "Special promotional offer available!"}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }}>
+                        <button
+                          type="button"
+                          onClick={handleAvailOffer}
+                          disabled={offerLoading}
+                          style={{
+                            position: "relative",
+                            top: "auto",
+                            right: "auto",
+                            background: "linear-gradient(135deg, #F05F22 0%, #ea580c 100%)",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "6px",
+                            padding: "6px 14px",
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            cursor: offerLoading ? "not-allowed" : "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          {offerLoading ? "Applying..." : "Avail Offer"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Applied Offer Banner with Remove Button */}
+                  {isOfferAvailed && appliedOffers.length > 0 && (
                     <div
                       style={{
                         background: "#f0fdf4",
                         border: "1px solid #bbf7d0",
                         color: "#166534",
-                        padding: "10px 14px",
+                        padding: "10px 12px",
                         borderRadius: "8px",
                         marginBottom: "16px",
                         fontSize: "13px",
                         display: "flex",
                         alignItems: "center",
+                        justifyContent: "space-between",
                         gap: "8px",
                       }}
                     >
-                      <i className="fas fa-tag" style={{ color: "#16a34a" }} />
-                      <div>
-                        <strong>{appliedOffers[0].offerTitle}</strong> applied!
-                        {offerDiscount > 0
-                          ? ` You save ₹${offerDiscount.toFixed(2)}`
-                          : freeItems.length > 0
-                          ? " 🎁 Free gift included!"
-                          : ""}
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <i className="fas fa-tag" style={{ color: "#16a34a" }} />
+                        <div>
+                          <strong>{appliedOffers[0].offerTitle}</strong> applied!
+                          {offerDiscount > 0
+                            ? ` You save ₹${offerDiscount.toFixed(2)}`
+                            : freeItems.length > 0
+                            ? " 🎁 Free gift included!"
+                            : ""}
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveOffer}
+                        disabled={offerLoading}
+                        style={{
+                          position: "relative",
+                          top: "auto",
+                          right: "auto",
+                          background: "#fee2e2",
+                          color: "#b91c1c",
+                          border: "1px solid #fca5a5",
+                          borderRadius: "6px",
+                          padding: "4px 10px",
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          cursor: offerLoading ? "not-allowed" : "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {offerLoading ? "..." : "Remove"}
+                      </button>
                     </div>
                   )}
 
                   {/* Coupon Code */}
-                  {appliedOffers.length > 0 && (offerDiscount > 0 || freeItems.length > 0) ? (
+                  {isOfferAvailed && appliedOffers.length > 0 ? (
                     <div
                       style={{
                         background: "#f8fafc",
@@ -1622,14 +1744,31 @@ const getProductIdString = (raw: any): string => {
                         marginBottom: "16px",
                         fontSize: "12px",
                         color: "#64748b",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "8px",
                       }}
                     >
-                      <i
-                        className="fas fa-info-circle"
-                        style={{ marginRight: "6px", color: "#3b82f6" }}
-                      />
-                      Promotional offer is active. Coupon codes cannot be
-                      combined with active offers.
+                      <span>Promotional offer is active.</span>
+                      <button
+                        type="button"
+                        onClick={handleRemoveOffer}
+                        disabled={offerLoading}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#ea580c",
+                          fontSize: "12px",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          padding: 0,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Remove offer to use coupon
+                      </button>
                     </div>
                   ) : appliedCoupon ? (
                     <div
@@ -1681,20 +1820,62 @@ const getProductIdString = (raw: any): string => {
                       </button>
                     </div>
                   ) : (
-                    <div className="coupon-section">
+                    <div style={{ display: "flex", gap: 8, alignItems: "stretch", marginBottom: 16 }}>
                       <input
                         type="text"
-                        placeholder="Coupon Code"
+                        placeholder="COUPON CODE"
                         value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         disabled={couponLoading}
+                        style={{
+                          flex: 1,
+                          height: 44,
+                          background: "#ffffff",
+                          border: "1.5px solid #e2e8f0",
+                          borderRadius: 8,
+                          padding: "0 14px",
+                          fontSize: 13,
+                          fontFamily: "monospace",
+                          letterSpacing: "1px",
+                          textTransform: "uppercase",
+                          outline: "none",
+                          boxSizing: "border-box",
+                          color: "#1f2937",
+                        }}
                       />
                       <button
                         type="button"
                         onClick={applyCoupon}
-                        disabled={couponLoading}
+                        disabled={couponLoading || !couponCode.trim()}
+                        style={{
+                          position: "relative",
+                          top: "auto",
+                          right: "auto",
+                          height: 44,
+                          padding: "0 20px",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          borderRadius: 8,
+                          border: "none",
+                          background:
+                            couponLoading || !couponCode.trim()
+                              ? "#cbd5e1"
+                              : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                          color: "#ffffff",
+                          cursor:
+                            couponLoading || !couponCode.trim() ? "not-allowed" : "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxSizing: "border-box",
+                          boxShadow:
+                            couponLoading || !couponCode.trim()
+                              ? "none"
+                              : "0 2px 6px rgba(22, 163, 74, 0.25)",
+                          transition: "all 0.2s ease",
+                        }}
                       >
-                        {couponLoading ? "Applying..." : "Apply"}
+                        {couponLoading ? "…" : "Apply"}
                       </button>
                     </div>
                   )}

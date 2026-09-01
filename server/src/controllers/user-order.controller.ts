@@ -205,11 +205,12 @@ export async function createOrder(
     });
 
     // ── 8. OFFER ENGINE ───────────────────────────────────────────────────────
-    const offerResult = await evaluateOffers(enrichedItems);
+    const isOfferAvailed = Boolean((cart as any).isOfferAvailed);
+    const offerResult = await evaluateOffers(enrichedItems, isOfferAvailed);
     const offerDiscount = offerResult.offerDiscount;
     const warnings: string[] = [...offerResult.warnings];
 
-    // free_shipping offer or subtotal >= 500: override resolved shipping cost to 0
+    // free_shipping offer (if availed) or subtotal >= 500: override resolved shipping cost to 0
     if (offerResult.freeShipping || subtotal >= 500) {
       shippingCost = 0;
     }

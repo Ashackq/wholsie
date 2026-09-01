@@ -101,6 +101,10 @@ router.delete("/cart", requireAuth, checkActiveUser, cartController.clearCart);
 router.post("/cart/coupon", requireAuth, checkActiveUser, cartController.applyCouponToCart);
 router.delete("/cart/coupon", requireAuth, checkActiveUser, cartController.removeCouponFromCart);
 
+// Cart offer endpoints (User opt-in / opt-out)
+router.post("/cart/offer/avail", requireAuth, checkActiveUser, cartController.availCartOffer);
+router.delete("/cart/offer", requireAuth, checkActiveUser, cartController.removeCartOffer);
+
 // Orders
 router.post("/orders", requireAuth, checkActiveUser, userOrderController.createOrder);
 router.get("/orders", requireAuth, checkActiveUser, userOrderController.getUserOrders);

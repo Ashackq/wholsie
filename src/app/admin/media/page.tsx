@@ -217,7 +217,7 @@ export default function AdminMediaPage() {
       return (
         <video
           src={src}
-          style={{ width: 64, height: 44, objectFit: "cover", borderRadius: 4 }}
+          style={{ width: 44, height: 64, objectFit: "cover", borderRadius: 6 }}
           muted
         />
       );
@@ -227,7 +227,7 @@ export default function AdminMediaPage() {
         <img
           src={src}
           alt={item.title || "Media"}
-          style={{ width: 64, height: 44, objectFit: "cover", borderRadius: 4 }}
+          style={{ width: 44, height: 64, objectFit: "cover", borderRadius: 6 }}
           onError={(e) => {
             (e.target as HTMLElement).style.display = "none";
           }}
@@ -237,10 +237,10 @@ export default function AdminMediaPage() {
     return (
       <div
         style={{
-          width: 64,
-          height: 44,
+          width: 44,
+          height: 64,
           background: "#f1f5f9",
-          borderRadius: 4,
+          borderRadius: 6,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

@@ -2,21 +2,27 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   getCart,
   removeFromCart,
   updateCartItem,
+  addToCart,
+  getCurrentUser,
   getProduct as getProductDetail,
   applyCouponToCart,
   removeCouponFromCart,
+  availCartOffer,
+  removeCartOffer,
 } from "@/lib/api";
 import { resolveProductImage, resolveProductPrice } from "@/lib/product-utils";
 import {
+  clearGuestCart,
   getGuestCart,
   removeGuestCartItem,
   updateGuestCartItem,
+  setGuestCartOfferAvailed,
 } from "@/lib/guest-cart";
 
 type CartProduct = {
@@ -140,6 +146,19 @@ export default function CartPage() {
   // Enriched cart fields from server (Phase 11)
   const [offerDiscount, setOfferDiscount] = useState(0);
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [availableOffer, setAvailableOffer] = useState<{
+    offerId: string;
+    offerTitle: string;
+    offerSlug: string;
+    discountAmount: number;
+    description?: string;
+    badgeText?: string;
+    ruleType?: string;
+    freeItemsPreview?: Array<{ productName: string; productImage?: string; quantity: number }>;
+  } | null>(null);
+  const [isOfferAvailed, setIsOfferAvailed] = useState(false);
+  const [offerLoading, setOfferLoading] = useState(false);
+  const [offerSuccess, setOfferSuccess] = useState("");
   const [appliedOffers, setAppliedOffers] = useState<Array<{ offerTitle: string; discountAmount: number; offerSlug?: string }>>([]);
   const [freeItems, setFreeItems] = useState<Array<{ productName: string; productImage?: string; quantity: number; isOutOfStock: boolean; unitPrice: number }>>([]);
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
@@ -149,16 +168,206 @@ export default function CartPage() {
   const [couponError, setCouponError] = useState("");
   const [couponSuccess, setCouponSuccess] = useState("");
 
+  // Inline Guest Checkout Authentication State
+  const [showGuestAuth, setShowGuestAuth] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestOtp, setGuestOtp] = useState<string[]>(["", "", "", "", "", ""]);
+  const [guestOtpStep, setGuestOtpStep] = useState<"details" | "otp">("details");
+  const [guestAgree, setGuestAgree] = useState(true);
+  const [guestAuthLoading, setGuestAuthLoading] = useState(false);
+  const [guestAuthError, setGuestAuthError] = useState("");
+  const [guestDevOtp, setGuestDevOtp] = useState("");
+  const [resendTimer, setResendTimer] = useState(0);
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const guestAuthRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer((prev) => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
+
   const handleProceedToCheckout = () => {
     const isLoggedIn =
       typeof window !== "undefined" &&
       (!!localStorage.getItem("authToken") || !!localStorage.getItem("user"));
 
-    if (!isLoggedIn) {
-      localStorage.setItem("postLoginRedirect", "/checkout");
-      router.push("/login");
-    } else {
+    if (isLoggedIn) {
       router.push("/checkout");
+    } else {
+      setShowGuestAuth(true);
+      setGuestAuthError("");
+      setTimeout(() => {
+        guestAuthRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+    }
+  };
+
+  const handleRequestGuestOtp = async (e?: FormEvent) => {
+    if (e) e.preventDefault();
+    if (!guestName.trim()) {
+      setGuestAuthError("Please enter your full name.");
+      return;
+    }
+    if (!guestEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) {
+      setGuestAuthError("Please enter a valid email address.");
+      return;
+    }
+    const cleanPhone = guestPhone.replace(/[^0-9]/g, "");
+    if (!/^\d{10}$/.test(cleanPhone)) {
+      setGuestAuthError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (!guestAgree) {
+      setGuestAuthError("Please agree to the Terms of Service & Privacy Policy.");
+      return;
+    }
+
+    setGuestAuthError("");
+    setGuestAuthLoading(true);
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/request-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: cleanPhone }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send OTP");
+
+      if (data.otp) {
+        setGuestDevOtp(data.otp);
+      }
+      setGuestOtpStep("otp");
+      setGuestOtp(["", "", "", "", "", ""]);
+      setResendTimer(30);
+      setTimeout(() => {
+        otpInputRefs.current[0]?.focus();
+      }, 100);
+    } catch (err: any) {
+      setGuestAuthError(err.message || "Failed to send OTP. Please try again.");
+    } finally {
+      setGuestAuthLoading(false);
+    }
+  };
+
+  const handleVerifyGuestOtp = async (e?: FormEvent) => {
+    if (e) e.preventDefault();
+    const fullOtp = guestOtp.join("");
+    if (fullOtp.length !== 6 || !/^\d{6}$/.test(fullOtp)) {
+      setGuestAuthError("Please enter the complete 6-digit OTP.");
+      return;
+    }
+
+    const cleanPhone = guestPhone.replace(/[^0-9]/g, "");
+    setGuestAuthError("");
+    setGuestAuthLoading(true);
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/auth/verify-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            phone: cleanPhone,
+            otp: fullOtp,
+            name: guestName.trim(),
+            email: guestEmail.trim(),
+            rememberMe: true,
+          }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Invalid OTP");
+
+      // Persist auth
+      localStorage.setItem("user", JSON.stringify(data.user));
+      if (data.token) {
+        localStorage.setItem("authToken", data.token);
+      }
+
+      // Merge guest cart into server database cart
+      const guestCart = getGuestCart();
+      if (guestCart.items && guestCart.items.length > 0) {
+        await Promise.all(
+          guestCart.items.map((item) =>
+            addToCart(item.productId, item.quantity, item.variantId)
+          )
+        );
+        if (guestCart.isOfferAvailed) {
+          try {
+            await availCartOffer();
+          } catch {
+            // non-fatal
+          }
+        }
+        clearGuestCart();
+      }
+
+      // Refresh cached user profile
+      try {
+        const profile = await getCurrentUser();
+        const u = (profile as any)?.data || profile;
+        if (u) localStorage.setItem("user", JSON.stringify(u));
+      } catch {
+        // non-fatal
+      }
+
+      // Notify header and layout components
+      window.dispatchEvent(new Event("cart-updated"));
+
+      // Navigate directly to checkout
+      router.push("/checkout");
+    } catch (err: any) {
+      setGuestAuthError(err.message || "OTP verification failed. Please try again.");
+    } finally {
+      setGuestAuthLoading(false);
+    }
+  };
+
+  const handleOtpDigitChange = (index: number, value: string) => {
+    const cleaned = value.replace(/[^0-9]/g, "").slice(-1);
+    const newArr = [...guestOtp];
+    newArr[index] = cleaned;
+    setGuestOtp(newArr);
+    setGuestAuthError("");
+    if (cleaned && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace") {
+      if (!guestOtp[index] && index > 0) {
+        otpInputRefs.current[index - 1]?.focus();
+      } else {
+        const newArr = [...guestOtp];
+        newArr[index] = "";
+        setGuestOtp(newArr);
+      }
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 6);
+    if (pasted.length > 0) {
+      const newArr = ["", "", "", "", "", ""];
+      for (let i = 0; i < pasted.length; i++) {
+        newArr[i] = pasted[i];
+      }
+      setGuestOtp(newArr);
+      setTimeout(() => {
+        otpInputRefs.current[Math.min(pasted.length, 5)]?.focus();
+      }, 0);
     }
   };
 
@@ -253,16 +462,19 @@ export default function CartPage() {
 
           if (guestItems.length > 0) {
             try {
+              const isGuestOfferAvailed = Boolean(guestCart.isOfferAvailed);
               const calcRes = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/cart/calculate`,
                 {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ items: guestItems }),
+                  body: JSON.stringify({ items: guestItems, isOfferAvailed: isGuestOfferAvailed }),
                 }
               );
               const calcJson = await calcRes.json();
               if (mounted && calcJson.success && calcJson.data) {
+                setAvailableOffer(calcJson.data.availableOffer ?? null);
+                setIsOfferAvailed(calcJson.data.isOfferAvailed ?? false);
                 setOfferDiscount(calcJson.data.offerDiscount ?? 0);
                 setAppliedOffers(calcJson.data.appliedOffers ?? []);
                 setFreeItems(calcJson.data.freeItems ?? []);
@@ -273,6 +485,8 @@ export default function CartPage() {
             }
           } else {
             if (mounted) {
+              setAvailableOffer(null);
+              setIsOfferAvailed(false);
               setOfferDiscount(0);
               setAppliedOffers([]);
               setFreeItems([]);
@@ -301,7 +515,9 @@ export default function CartPage() {
         const normalized = attachProductDetails(payload);
         if (mounted) {
           setCart(normalized);
-          // Pull enriched fields from the server response (Phase 11)
+          // Pull enriched fields from the server response
+          setAvailableOffer(payload.availableOffer ?? null);
+          setIsOfferAvailed(payload.isOfferAvailed ?? false);
           setOfferDiscount(payload.offerDiscount ?? 0);
           setCouponDiscount(payload.couponDiscount ?? 0);
           setAppliedOffers(payload.appliedOffers ?? []);
@@ -348,6 +564,7 @@ export default function CartPage() {
     if (!isLoggedIn) {
       const guestCart = getGuestCart();
       const guestItems = guestCart.items || [];
+      const isGuestOfferAvailed = Boolean(guestCart.isOfferAvailed);
       const normalized = attachProductDetails({
         items: mapGuestItems(guestItems),
       });
@@ -360,11 +577,13 @@ export default function CartPage() {
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ items: guestItems }),
+              body: JSON.stringify({ items: guestItems, isOfferAvailed: isGuestOfferAvailed }),
             }
           );
           const calcJson = await calcRes.json();
           if (calcJson.success && calcJson.data) {
+            setAvailableOffer(calcJson.data.availableOffer ?? null);
+            setIsOfferAvailed(calcJson.data.isOfferAvailed ?? false);
             setOfferDiscount(calcJson.data.offerDiscount ?? 0);
             setAppliedOffers(calcJson.data.appliedOffers ?? []);
             setFreeItems(calcJson.data.freeItems ?? []);
@@ -374,6 +593,8 @@ export default function CartPage() {
           // ignore
         }
       } else {
+        setAvailableOffer(null);
+        setIsOfferAvailed(false);
         setOfferDiscount(0);
         setAppliedOffers([]);
         setFreeItems([]);
@@ -385,6 +606,8 @@ export default function CartPage() {
     const normalized = attachProductDetails(payload);
     setCart(normalized);
     // Refresh enriched fields too
+    setAvailableOffer(payload.availableOffer ?? null);
+    setIsOfferAvailed(payload.isOfferAvailed ?? false);
     setOfferDiscount(payload.offerDiscount ?? 0);
     setCouponDiscount(payload.couponDiscount ?? 0);
     setAppliedOffers(payload.appliedOffers ?? []);
@@ -532,6 +755,62 @@ export default function CartPage() {
       setCouponError(err.message || "Failed to remove coupon.");
     } finally {
       setCouponLoading(false);
+    }
+  };
+
+  const handleAvailOffer = async () => {
+    const isLoggedIn =
+      typeof window !== "undefined" &&
+      (!!localStorage.getItem("authToken") || !!localStorage.getItem("user"));
+    setOfferLoading(true);
+    setOfferSuccess("");
+    setCouponError("");
+    try {
+      if (!isLoggedIn) {
+        setGuestCartOfferAvailed(true);
+        setIsOfferAvailed(true);
+        await refreshCart();
+        setOfferSuccess("Offer applied to your cart!");
+      } else {
+        const res = await availCartOffer();
+        if (res.success) {
+          setOfferSuccess(res.message || "Offer applied!");
+          await refreshCart();
+        } else {
+          setError(res.error || "Failed to avail offer.");
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to avail offer.");
+    } finally {
+      setOfferLoading(false);
+      setTimeout(() => setOfferSuccess(""), 4000);
+    }
+  };
+
+  const handleRemoveOffer = async () => {
+    const isLoggedIn =
+      typeof window !== "undefined" &&
+      (!!localStorage.getItem("authToken") || !!localStorage.getItem("user"));
+    setOfferLoading(true);
+    setOfferSuccess("");
+    try {
+      if (!isLoggedIn) {
+        setGuestCartOfferAvailed(false);
+        setIsOfferAvailed(false);
+        await refreshCart();
+      } else {
+        const res = await removeCartOffer();
+        if (res.success) {
+          await refreshCart();
+        } else {
+          setError(res.error || "Failed to remove offer.");
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to remove offer.");
+    } finally {
+      setOfferLoading(false);
     }
   };
 
@@ -778,7 +1057,7 @@ export default function CartPage() {
                 </div>
 
                 <div className="col-lg-4">
-                  <div className="cart_page_summary">
+                  <div className="cart_page_summary" style={{ marginTop: 0 }}>
                     <h3>Order Summary</h3>
                     <ul>
                       {groups.map((group) => {
@@ -813,8 +1092,8 @@ export default function CartPage() {
                         );
                       })}
 
-                      {/* Free items from offer engine */}
-                      {freeItems.map((fi: any, idx) => (
+                      {/* Free items from offer engine (shown only when offer is availed) */}
+                      {isOfferAvailed && freeItems.map((fi: any, idx) => (
                         <li key={`free-${idx}`} style={{ opacity: fi.isOutOfStock ? 0.6 : 1 }}>
                           <div className="img" style={{ position: "relative", width: 60, height: 60, borderRadius: 8, overflow: "hidden", background: "#f0fdf4", flexShrink: 0 }}>
                             {fi.productImage ? (
@@ -844,21 +1123,159 @@ export default function CartPage() {
                       ))}
                     </ul>
 
-                    {/* Offer discount banner */}
-                    {appliedOffers.length > 0 && (
-                      <div style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)", border: "1px solid #bbf7d0", borderRadius: 10, padding: "10px 14px", marginBottom: 10, display: "flex", alignItems: "center", gap: 10 }}>
-                        <i className="fas fa-tag" style={{ color: "#16a34a", fontSize: 16 }} aria-hidden="true" />
-                        <div style={{ flex: 1 }}>
-                          <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: "#15803d" }}>
-                            {appliedOffers[0].offerTitle}
-                          </p>
-                          <p style={{ margin: 0, fontSize: 12, color: "#166534" }}>
-                            {appliedOffers[0].discountAmount > 0
-                              ? `You save ${formatCurrency(appliedOffers[0].discountAmount)}`
-                              : freeItems.length > 0
-                              ? "🎁 Free gift added to your cart!"
-                              : "Offer applied successfully"}
-                          </p>
+                    {/* Success notification when offer is availed */}
+                    {offerSuccess && (
+                      <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "8px 12px", marginBottom: 12, fontSize: 12, color: "#15803d", display: "flex", alignItems: "center", gap: 8 }}>
+                        <i className="fas fa-check-circle" aria-hidden="true" />
+                        <span>{offerSuccess}</span>
+                      </div>
+                    )}
+
+                    {/* Available Offer Prompt (Eligible, but not yet availed) */}
+                    {availableOffer && !isOfferAvailed && (
+                      <div
+                        style={{
+                          background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
+                          border: "1.5px dashed #f97316",
+                          borderRadius: 12,
+                          padding: "14px",
+                          marginBottom: 14,
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                          <span style={{ fontSize: 22, flexShrink: 0 }}>🎁</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 3 }}>
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  background: "#ea580c",
+                                  color: "#ffffff",
+                                  padding: "2px 8px",
+                                  borderRadius: 12,
+                                  letterSpacing: "0.5px",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                {availableOffer.badgeText || "Special Offer"}
+                              </span>
+                              <strong style={{ fontSize: 13, color: "#9a3412" }}>
+                                {availableOffer.offerTitle}
+                              </strong>
+                            </div>
+                            <p style={{ margin: 0, fontSize: 12, color: "#7c2d12", lineHeight: 1.4 }}>
+                              {availableOffer.discountAmount > 0
+                                ? `Avail this offer to save ${formatCurrency(availableOffer.discountAmount)} on your order!`
+                                : availableOffer.freeItemsPreview && availableOffer.freeItemsPreview.length > 0
+                                ? `Avail this offer to get a FREE gift (${availableOffer.freeItemsPreview.map((f: any) => f.productName).join(", ")})!`
+                                : availableOffer.description || "You qualify for a special promotional offer!"}
+                            </p>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+                          <button
+                            type="button"
+                            onClick={handleAvailOffer}
+                            disabled={offerLoading}
+                            style={{
+                              position: "relative",
+                              top: "auto",
+                              right: "auto",
+                              background: "linear-gradient(135deg, #F05F22 0%, #ea580c 100%)",
+                              color: "#ffffff",
+                              border: "none",
+                              borderRadius: 8,
+                              padding: "8px 18px",
+                              fontSize: 13,
+                              fontWeight: 700,
+                              cursor: offerLoading ? "not-allowed" : "pointer",
+                              opacity: offerLoading ? 0.7 : 1,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                              boxShadow: "0 2px 8px rgba(234, 88, 12, 0.25)",
+                              transition: "all 0.2s ease",
+                            }}
+                          >
+                            {offerLoading ? (
+                              <>
+                                <i className="fas fa-spinner fa-spin" /> Applying...
+                              </>
+                            ) : (
+                              <>
+                                <i className="fas fa-gift" /> Avail Offer
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Applied Offer Banner with Remove Option */}
+                    {isOfferAvailed && appliedOffers.length > 0 && (
+                      <div
+                        style={{
+                          background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+                          border: "1.5px solid #86efac",
+                          borderRadius: 12,
+                          padding: "12px 14px",
+                          marginBottom: 14,
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1 }}>
+                            <i className="fas fa-check-circle" style={{ color: "#16a34a", fontSize: 18, flexShrink: 0 }} aria-hidden="true" />
+                            <div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                                <strong style={{ fontSize: 13, color: "#15803d" }}>
+                                  {appliedOffers[0].offerTitle}
+                                </strong>
+                                <span style={{ fontSize: 10, fontWeight: 700, background: "#16a34a", color: "#fff", padding: "1px 6px", borderRadius: 6 }}>
+                                  Applied
+                                </span>
+                              </div>
+                              <p style={{ margin: "2px 0 0", fontSize: 12, color: "#166534" }}>
+                                {appliedOffers[0].discountAmount > 0
+                                  ? `You save ${formatCurrency(appliedOffers[0].discountAmount)} with this offer!`
+                                  : freeItems.length > 0
+                                  ? "🎁 Free gift included in your order!"
+                                  : "Offer applied successfully!"}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveOffer}
+                            disabled={offerLoading}
+                            style={{
+                              position: "relative",
+                              top: "auto",
+                              right: "auto",
+                              background: "#fee2e2",
+                              color: "#b91c1c",
+                              border: "1px solid #fca5a5",
+                              borderRadius: 8,
+                              padding: "6px 12px",
+                              fontSize: 12,
+                              fontWeight: 600,
+                              cursor: offerLoading ? "not-allowed" : "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              flexShrink: 0,
+                              transition: "all 0.15s ease",
+                            }}
+                            title="Remove this offer"
+                          >
+                            {offerLoading ? (
+                              <i className="fas fa-spinner fa-spin" />
+                            ) : (
+                              <>
+                                <i className="fas fa-times" /> Remove Offer
+                              </>
+                            )}
+                          </button>
                         </div>
                       </div>
                     )}
@@ -898,7 +1315,7 @@ export default function CartPage() {
                       Shipping charges calculated at checkout
                     </p>
 
-                    {/* Coupon input — only shown to logged-in users; hidden if offer active */}
+                    {/* Coupon input — only shown to logged-in users */}
                     {isLoggedInUser() && (
                       <div style={{ marginTop: 18, borderTop: "1px solid #eee", paddingTop: 16 }}>
                         <p style={{ margin: "0 0 10px", fontWeight: 600, fontSize: 13, color: "#374151" }}>
@@ -912,19 +1329,29 @@ export default function CartPage() {
                             <button
                               onClick={handleRemoveCoupon}
                               disabled={couponLoading}
-                              style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 13, fontWeight: 600 }}
+                              style={{ position: "relative", top: "auto", right: "auto", background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: 13, fontWeight: 600 }}
                               aria-label="Remove coupon"
                             >
                               Remove
                             </button>
                           </div>
-                        ) : appliedOffers.length > 0 ? (
-                          <p style={{ fontSize: 12, color: "#64748b", fontStyle: "italic", margin: 0 }}>
-                            Coupons cannot be combined with active offers.
-                          </p>
+                        ) : isOfferAvailed && appliedOffers.length > 0 ? (
+                          <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                            <span style={{ fontSize: 12, color: "#64748b" }}>
+                              Coupons cannot be combined with active promotional offers.
+                            </span>
+                            <button
+                              type="button"
+                              onClick={handleRemoveOffer}
+                              disabled={offerLoading}
+                              style={{ position: "relative", top: "auto", right: "auto", background: "none", border: "none", color: "#ea580c", fontSize: 12, fontWeight: 700, cursor: "pointer", textDecoration: "underline", padding: 0, whiteSpace: "nowrap" }}
+                            >
+                              Remove offer to use coupon
+                            </button>
+                          </div>
                         ) : (
                           <>
-                            <div style={{ display: "flex", gap: 6 }}>
+                            <div style={{ display: "flex", gap: 8, alignItems: "stretch", marginTop: 8 }}>
                               <input
                                 id="cart-coupon-input"
                                 type="text"
@@ -935,15 +1362,55 @@ export default function CartPage() {
                                   setCouponSuccess("");
                                 }}
                                 onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
-                                placeholder="Enter coupon code"
-                                style={{ flex: 1, border: "1.5px solid #e2e8f0", borderRadius: 8, padding: "8px 12px", fontSize: 13, fontFamily: "monospace", letterSpacing: 1, textTransform: "uppercase", outline: "none" }}
+                                placeholder="ENTER COUPON CODE"
+                                style={{
+                                  flex: 1,
+                                  height: 44,
+                                  background: "#ffffff",
+                                  border: "1.5px solid #e2e8f0",
+                                  borderRadius: 8,
+                                  padding: "0 14px",
+                                  fontSize: 13,
+                                  fontFamily: "monospace",
+                                  letterSpacing: "1px",
+                                  textTransform: "uppercase",
+                                  outline: "none",
+                                  boxSizing: "border-box",
+                                  color: "#1f2937",
+                                }}
                                 disabled={couponLoading}
                               />
                               <button
+                                type="button"
                                 onClick={handleApplyCoupon}
                                 disabled={couponLoading || !couponInput.trim()}
-                                className="common_btn"
-                                style={{ padding: "8px 14px", fontSize: 13, border: "none", cursor: couponLoading || !couponInput.trim() ? "not-allowed" : "pointer", opacity: couponLoading || !couponInput.trim() ? 0.6 : 1 }}
+                                style={{
+                                  position: "relative",
+                                  top: "auto",
+                                  right: "auto",
+                                  height: 44,
+                                  padding: "0 22px",
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  borderRadius: 8,
+                                  border: "none",
+                                  background:
+                                    couponLoading || !couponInput.trim()
+                                      ? "#cbd5e1"
+                                      : "linear-gradient(135deg, #16a34a 0%, #15803d 100%)",
+                                  color: "#ffffff",
+                                  cursor:
+                                    couponLoading || !couponInput.trim() ? "not-allowed" : "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  boxSizing: "border-box",
+                                  boxShadow:
+                                    couponLoading || !couponInput.trim()
+                                      ? "none"
+                                      : "0 2px 6px rgba(22, 163, 74, 0.25)",
+                                  transition: "all 0.2s ease",
+                                }}
                               >
                                 {couponLoading ? "…" : "Apply"}
                               </button>
@@ -968,10 +1435,11 @@ export default function CartPage() {
 
               <div
                 style={{
-                  marginTop: "50px",
-                  padding: "30px",
+                  marginTop: "40px",
+                  padding: "28px 20px",
                   background: "#f6f6f6",
-                  borderRadius: "12px",
+                  borderRadius: "16px",
+                  border: "1px solid #eee",
                 }}
               >
                 <div
@@ -1008,6 +1476,449 @@ export default function CartPage() {
                     Continue Shopping
                   </Link>
                 </div>
+
+                {/* Inline Guest Checkout Authentication Form */}
+                {showGuestAuth && (
+                  <div
+                    ref={guestAuthRef}
+                    style={{
+                      maxWidth: "540px",
+                      margin: "28px auto 8px",
+                      background: "#ffffff",
+                      borderRadius: "16px",
+                      padding: "26px 22px",
+                      boxShadow: "0 10px 25px rgba(240, 95, 34, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04)",
+                      border: "1.5px solid #F05F22",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+                      <div>
+                        <h4 style={{ margin: "0 0 4px", fontSize: "17px", fontWeight: 700, color: "#1f2937", display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span style={{ color: "#F05F22" }}><i className="fas fa-user-check" /></span>
+                          {guestOtpStep === "details" ? "Contact Details for Checkout" : "Verify Mobile Number"}
+                        </h4>
+                        <p style={{ margin: 0, fontSize: "13px", color: "#6b7280" }}>
+                          {guestOtpStep === "details"
+                            ? "Please enter your details to create an account and checkout."
+                            : `Enter the 6-digit verification code sent to +91 ${guestPhone}`}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowGuestAuth(false);
+                          setGuestOtpStep("details");
+                          setGuestAuthError("");
+                        }}
+                        style={{
+                          background: "#f3f4f6",
+                          border: "none",
+                          borderRadius: "50%",
+                          width: "28px",
+                          height: "28px",
+                          cursor: "pointer",
+                          color: "#6b7280",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "13px",
+                        }}
+                        title="Close"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    {guestAuthError && (
+                      <div
+                        style={{
+                          padding: "10px 14px",
+                          marginBottom: "14px",
+                          backgroundColor: "#fef2f2",
+                          border: "1px solid #fecaca",
+                          borderRadius: "8px",
+                          color: "#b91c1c",
+                          fontSize: "13px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <i className="fas fa-exclamation-circle" />
+                        <span>{guestAuthError}</span>
+                      </div>
+                    )}
+
+                    {guestDevOtp && guestOtpStep === "otp" && (
+                      <div
+                        style={{
+                          padding: "8px 12px",
+                          marginBottom: "14px",
+                          backgroundColor: "#eff6ff",
+                          border: "1px solid #bfdbfe",
+                          borderRadius: "8px",
+                          color: "#1e40af",
+                          fontSize: "12px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <i className="fas fa-info-circle" />
+                        <span>Dev OTP Code: <strong>{guestDevOtp}</strong></span>
+                      </div>
+                    )}
+
+                    {guestOtpStep === "details" ? (
+                      <form onSubmit={handleRequestGuestOtp}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                          {/* Name input */}
+                          <div>
+                            <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>
+                              Full Name <span style={{ color: "#ef4444" }}>*</span>
+                            </label>
+                            <div style={{ position: "relative" }}>
+                              <i
+                                className="fas fa-user"
+                                style={{
+                                  position: "absolute",
+                                  left: "14px",
+                                  top: "50%",
+                                  transform: "translateY(-50%)",
+                                  color: "#9ca3af",
+                                  fontSize: "13px",
+                                }}
+                              />
+                              <input
+                                type="text"
+                                placeholder="e.g. Rahul Sharma"
+                                value={guestName}
+                                onChange={(e) => {
+                                  setGuestName(e.target.value);
+                                  setGuestAuthError("");
+                                }}
+                                style={{
+                                  width: "100%",
+                                  padding: "10px 14px 10px 38px",
+                                  border: "1.5px solid #e5e7eb",
+                                  borderRadius: "8px",
+                                  fontSize: "14px",
+                                  color: "#1f2937",
+                                  outline: "none",
+                                  boxSizing: "border-box",
+                                }}
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          {/* Email input */}
+                          <div>
+                            <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>
+                              Email Address <span style={{ color: "#ef4444" }}>*</span>
+                            </label>
+                            <div style={{ position: "relative" }}>
+                              <i
+                                className="fas fa-envelope"
+                                style={{
+                                  position: "absolute",
+                                  left: "14px",
+                                  top: "50%",
+                                  transform: "translateY(-50%)",
+                                  color: "#9ca3af",
+                                  fontSize: "13px",
+                                }}
+                              />
+                              <input
+                                type="email"
+                                placeholder="e.g. rahul@example.com"
+                                value={guestEmail}
+                                onChange={(e) => {
+                                  setGuestEmail(e.target.value);
+                                  setGuestAuthError("");
+                                }}
+                                style={{
+                                  width: "100%",
+                                  padding: "10px 14px 10px 38px",
+                                  border: "1.5px solid #e5e7eb",
+                                  borderRadius: "8px",
+                                  fontSize: "14px",
+                                  color: "#1f2937",
+                                  outline: "none",
+                                  boxSizing: "border-box",
+                                }}
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          {/* Phone input */}
+                          <div>
+                            <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>
+                              Mobile Number <span style={{ color: "#ef4444" }}>*</span>
+                            </label>
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              <span
+                                style={{
+                                  padding: "10px 12px",
+                                  background: "#f9fafb",
+                                  border: "1.5px solid #e5e7eb",
+                                  borderRadius: "8px",
+                                  fontSize: "13px",
+                                  fontWeight: 600,
+                                  color: "#4b5563",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                +91
+                              </span>
+                              <input
+                                type="tel"
+                                maxLength={10}
+                                placeholder="10-digit mobile number"
+                                value={guestPhone}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/[^0-9]/g, "");
+                                  setGuestPhone(val);
+                                  setGuestAuthError("");
+                                }}
+                                style={{
+                                  flex: 1,
+                                  padding: "10px 14px",
+                                  border: "1.5px solid #e5e7eb",
+                                  borderRadius: "8px",
+                                  fontSize: "14px",
+                                  color: "#1f2937",
+                                  outline: "none",
+                                  letterSpacing: "1px",
+                                  boxSizing: "border-box",
+                                }}
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          {/* Terms checkbox */}
+                          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-start", gap: "8px", textAlign: "left", width: "100%", marginTop: "2px" }}>
+                            <input
+                              id="guest-terms-checkbox"
+                              type="checkbox"
+                              checked={guestAgree}
+                              onChange={(e) => setGuestAgree(e.target.checked)}
+                              style={{
+                                width: "16px",
+                                minWidth: "16px",
+                                maxWidth: "16px",
+                                height: "16px",
+                                marginTop: "2px",
+                                marginRight: "0px",
+                                marginLeft: "0px",
+                                accentColor: "#F05F22",
+                                cursor: "pointer",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <label
+                              htmlFor="guest-terms-checkbox"
+                              style={{
+                                display: "inline",
+                                fontSize: "12px",
+                                color: "#6b7280",
+                                cursor: "pointer",
+                                margin: 0,
+                                padding: 0,
+                                textAlign: "left",
+                                lineHeight: 1.4,
+                              }}
+                            >
+                              I agree to the{" "}
+                              <Link href="/terms-conditions" target="_blank" style={{ color: "#F05F22", textDecoration: "underline" }}>
+                                Terms of Service
+                              </Link>{" "}
+                              &{" "}
+                              <Link href="/privacy-policy" target="_blank" style={{ color: "#F05F22", textDecoration: "underline" }}>
+                                Privacy Policy
+                              </Link>
+                            </label>
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={guestAuthLoading}
+                            className="common_btn"
+                            style={{
+                              width: "100%",
+                              padding: "12px 20px",
+                              fontSize: "15px",
+                              fontWeight: 700,
+                              borderRadius: "8px",
+                              border: "none",
+                              cursor: guestAuthLoading ? "not-allowed" : "pointer",
+                              opacity: guestAuthLoading ? 0.7 : 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "8px",
+                              marginTop: "4px",
+                            }}
+                          >
+                            {guestAuthLoading ? (
+                              <>
+                                <i className="fas fa-spinner fa-spin" /> Sending OTP...
+                              </>
+                            ) : (
+                              <>
+                                Send OTP & Continue <i className="fas fa-arrow-right" />
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <form onSubmit={handleVerifyGuestOtp}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
+                          <style>{`
+                            .guest-otp-digit-input {
+                              color: #111827 !important;
+                              -webkit-text-fill-color: #111827 !important;
+                              font-size: 22px !important;
+                              font-weight: 700 !important;
+                              background-color: #ffffff !important;
+                              caret-color: #F05F22 !important;
+                              width: 46px !important;
+                              height: 52px !important;
+                              padding: 0 !important;
+                              margin: 0 !important;
+                              box-sizing: border-box !important;
+                              text-align: center !important;
+                              line-height: 50px !important;
+                              border: 2px solid #d1d5db !important;
+                              border-radius: 10px !important;
+                              outline: none !important;
+                              display: inline-block !important;
+                              vertical-align: middle !important;
+                              transition: all 0.2s ease !important;
+                            }
+                            .guest-otp-digit-input:focus {
+                              border-color: #F05F22 !important;
+                              box-shadow: 0 0 0 3px rgba(240, 95, 34, 0.15) !important;
+                              background-color: #fff8f5 !important;
+                            }
+                          `}</style>
+                          {/* OTP 6 boxes */}
+                          <div style={{ display: "flex", gap: "8px", justifyContent: "center", margin: "6px 0" }}>
+                            {[0, 1, 2, 3, 4, 5].map((index) => (
+                              <input
+                                key={index}
+                                ref={(el) => {
+                                  otpInputRefs.current[index] = el;
+                                }}
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={1}
+                                className="guest-otp-digit-input"
+                                value={guestOtp[index]}
+                                onChange={(e) => handleOtpDigitChange(index, e.target.value)}
+                                onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                                onPaste={handleOtpPaste}
+                                autoComplete="off"
+                                style={{
+                                  padding: "0px",
+                                  margin: "0px",
+                                  boxSizing: "border-box",
+                                  textAlign: "center",
+                                  fontSize: "22px",
+                                  fontWeight: 700,
+                                  color: "#111827",
+                                  WebkitTextFillColor: "#111827",
+                                  lineHeight: "50px",
+                                }}
+                              />
+                            ))}
+                          </div>
+
+                          <div style={{ display: "flex", justifyContent: "space-between", width: "100%", fontSize: "13px" }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setGuestOtpStep("details");
+                                setGuestAuthError("");
+                              }}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: "#6b7280",
+                                cursor: "pointer",
+                                padding: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              <i className="fas fa-edit" /> Edit details
+                            </button>
+
+                            {resendTimer > 0 ? (
+                              <span style={{ color: "#9ca3af" }}>
+                                Resend in <strong>{resendTimer}s</strong>
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleRequestGuestOtp()}
+                                disabled={guestAuthLoading}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  color: "#F05F22",
+                                  fontWeight: 600,
+                                  cursor: "pointer",
+                                  padding: 0,
+                                }}
+                              >
+                                Resend OTP
+                              </button>
+                            )}
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={guestAuthLoading || guestOtp.join("").length !== 6}
+                            className="common_btn"
+                            style={{
+                              width: "100%",
+                              padding: "12px 20px",
+                              fontSize: "15px",
+                              fontWeight: 700,
+                              borderRadius: "8px",
+                              border: "none",
+                              cursor: (guestAuthLoading || guestOtp.join("").length !== 6) ? "not-allowed" : "pointer",
+                              opacity: (guestAuthLoading || guestOtp.join("").length !== 6) ? 0.6 : 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "8px",
+                              marginTop: "4px",
+                            }}
+                          >
+                            {guestAuthLoading ? (
+                              <>
+                                <i className="fas fa-spinner fa-spin" /> Verifying...
+                              </>
+                            ) : (
+                              <>
+                                Verify & Proceed to Checkout <i className="fas fa-check" />
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}

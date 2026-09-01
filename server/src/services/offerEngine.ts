@@ -39,7 +39,21 @@ export interface FreeItem {
     isOutOfStock: boolean;
 }
 
+export interface AvailableOffer {
+    offerId: Types.ObjectId | string;
+    offerTitle: string;
+    offerSlug: string;
+    discountAmount: number;
+    description?: string;
+    badgeText?: string;
+    ruleType?: string;
+    freeItemsPreview?: FreeItem[];
+    freeShipping?: boolean;
+}
+
 export interface OfferResult {
+    availableOffer: AvailableOffer | null;
+    isOfferAvailed: boolean;
     appliedOffer: {
         offerId: Types.ObjectId | string;
         offerTitle: string;
@@ -49,7 +63,7 @@ export interface OfferResult {
     offerDiscount: number;
     freeItems: FreeItem[];
     warnings: string[];
-    /** true if free_shipping offer won — caller must set shippingCost = 0 */
+    /** true if free_shipping offer won and is availed — caller must set shippingCost = 0 */
     freeShipping: boolean;
 }
 
@@ -311,9 +325,14 @@ function evalFreeShipping(offer: any, eligible: CartItem[]): EvalResult {
  *
  * Returns the winning offer (single best) plus any free items.
  */
-export async function evaluateOffers(cartItems: CartItem[]): Promise<OfferResult> {
+export async function evaluateOffers(
+    cartItems: CartItem[],
+    isOfferAvailed: boolean = false
+): Promise<OfferResult> {
     if (!cartItems.length) {
         return {
+            availableOffer: null,
+            isOfferAvailed: false,
             appliedOffer: null,
             offerDiscount: 0,
             freeItems: [],
@@ -369,6 +388,8 @@ export async function evaluateOffers(cartItems: CartItem[]): Promise<OfferResult
 
     if (!candidates.length) {
         return {
+            availableOffer: null,
+            isOfferAvailed: false,
             appliedOffer: null,
             offerDiscount: 0,
             freeItems: [],
@@ -387,7 +408,33 @@ export async function evaluateOffers(cartItems: CartItem[]): Promise<OfferResult
 
     const winner = candidates[0];
 
+    const availableOffer: AvailableOffer = {
+        offerId: winner.offer._id,
+        offerTitle: winner.offer.title,
+        offerSlug: winner.offer.slug,
+        discountAmount: winner.result.discountAmount,
+        description: winner.offer.description || "",
+        badgeText: winner.offer.badgeText || "",
+        ruleType: winner.offer.rule?.type,
+        freeItemsPreview: winner.result.freeItems,
+        freeShipping: winner.result.freeShipping,
+    };
+
+    if (!isOfferAvailed) {
+        return {
+            availableOffer,
+            isOfferAvailed: false,
+            appliedOffer: null,
+            offerDiscount: 0,
+            freeItems: [],
+            warnings: [],
+            freeShipping: false,
+        };
+    }
+
     return {
+        availableOffer,
+        isOfferAvailed: true,
         appliedOffer: {
             offerId: winner.offer._id,
             offerTitle: winner.offer.title,

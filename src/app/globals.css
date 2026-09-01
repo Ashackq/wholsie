@@ -2347,3 +2347,15 @@ body.checkout-scroll {
     position: static !important;
   }
 }
+
+/* Global OTP Input Reset */
+.guest-otp-digit-input,
+.otp_input_group input,
+input[inputmode="numeric"][maxlength="1"] {
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+  text-align: center !important;
+}

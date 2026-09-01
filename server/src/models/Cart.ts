@@ -40,6 +40,7 @@ const cartSchema = new Schema(
         discount: { type: Number, default: 0 },
 
         // ── Offer engine output ───────────────────────────────────────────────
+        isOfferAvailed: { type: Boolean, default: false },
         appliedOffers: [appliedOfferSchema],   // always max 1 entry (best offer wins)
         offerDiscount: { type: Number, default: 0 },
 

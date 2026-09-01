@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { logout } from "@/lib/api";
+import { clearGuestCart } from "@/lib/guest-cart";
 
 interface User {
     name?: string;
@@ -21,6 +22,8 @@ export default function ProfileSidebar({ user }: { user: User | null }) {
             localStorage.removeItem("user");
             localStorage.removeItem("authToken");
             sessionStorage.clear();
+            clearGuestCart();
+            window.dispatchEvent(new Event("cart-updated"));
             router.push("/");
         } catch (err) {
             console.error("Logout failed:", err);

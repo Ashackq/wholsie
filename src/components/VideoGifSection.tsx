@@ -79,10 +79,8 @@ function toInstagramEmbed(url: string): string {
 
 function MediaCard({
   item,
-  fullWidth = false,
 }: {
   item: MediaItem;
-  fullWidth?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(item.muted !== false);
@@ -147,22 +145,25 @@ function MediaCard({
 
   const cardStyle: React.CSSProperties = {
     position: "relative",
-    borderRadius: fullWidth ? 0 : "16px",
+    borderRadius: "16px",
     overflow: "hidden",
     width: "100%",
+    height: "100%",
+    aspectRatio: "9 / 16",
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
+    transform: "translateZ(0)",
     background: "#0f172a",
-    aspectRatio: fullWidth ? "21/7" : "16/9",
   };
 
   const overlayStyle: React.CSSProperties = {
     position: "absolute",
     inset: 0,
     background:
-      "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 60%)",
+      "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 35%, transparent 65%)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "flex-end",
-    padding: fullWidth ? "32px 48px" : "20px 24px",
+    padding: "16px 14px",
     zIndex: 2,
     pointerEvents: "none",
   };
@@ -203,22 +204,23 @@ function MediaCard({
               onClick={toggleMute}
               style={{
                 position: "absolute",
-                top: 14,
-                right: 14,
+                top: 12,
+                right: 12,
                 zIndex: 4,
                 background: "rgba(0, 0, 0, 0.6)",
-                backdropFilter: "blur(4px)",
+                backdropFilter: "blur(6px)",
+                WebkitBackdropFilter: "blur(6px)",
                 color: "#fff",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
+                border: "1px solid rgba(255, 255, 255, 0.25)",
                 borderRadius: "50%",
-                width: 34,
-                height: 34,
+                width: 32,
+                height: 32,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                fontSize: 13,
-                transition: "all 0.2s",
+                fontSize: 12,
+                transition: "all 0.2s ease",
               }}
               title={isMuted ? "Unmute" : "Mute"}
               aria-label={isMuted ? "Unmute audio" : "Mute audio"}
@@ -273,19 +275,35 @@ function MediaCard({
         const instagramEmbed = toInstagramEmbed(item.embedUrl || "");
         if (!instagramEmbed) return null;
         return (
-          <iframe
-            src={instagramEmbed}
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-            scrolling="no"
+          <div
             style={{
+              position: "relative",
               width: "100%",
               height: "100%",
-              border: "none",
-              display: "block",
+              overflow: "hidden",
+              borderRadius: "16px",
+              background: "#000",
             }}
-            title={item.title || "Instagram Post"}
-          />
+          >
+            <iframe
+              src={instagramEmbed}
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              scrolling="no"
+              style={{
+                position: "absolute",
+                top: "-42px",
+                left: "-18%",
+                width: "136%",
+                height: "calc(100% + 220px)",
+                border: "none",
+                display: "block",
+                transform: "scale(1.2)",
+                transformOrigin: "center 26%",
+              }}
+              title={item.title || "Instagram Post"}
+            />
+          </div>
         );
       }
 
@@ -308,10 +326,10 @@ function MediaCard({
               <p
                 style={{
                   margin: "0 0 4px",
-                  fontSize: fullWidth ? "28px" : "17px",
+                  fontSize: "15px",
                   fontWeight: 700,
-                  lineHeight: 1.2,
-                  textShadow: "0 1px 4px rgba(0,0,0,0.4)",
+                  lineHeight: 1.25,
+                  textShadow: "0 2px 6px rgba(0,0,0,0.6)",
                 }}
               >
                 {item.title}
@@ -320,10 +338,11 @@ function MediaCard({
             {item.caption && (
               <p
                 style={{
-                  margin: "0 0 14px",
-                  fontSize: fullWidth ? "16px" : "13px",
-                  opacity: 0.85,
-                  lineHeight: 1.4,
+                  margin: "0 0 10px",
+                  fontSize: "12px",
+                  opacity: 0.9,
+                  lineHeight: 1.35,
+                  textShadow: "0 1px 4px rgba(0,0,0,0.5)",
                 }}
               >
                 {item.caption}
@@ -335,8 +354,9 @@ function MediaCard({
                 className="common_btn"
                 style={{
                   display: "inline-block",
-                  fontSize: "13px",
-                  padding: "9px 22px",
+                  fontSize: "12px",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
                 }}
               >
                 {item.ctaText}
@@ -352,18 +372,15 @@ function MediaCard({
 // ── VideoGifSection ───────────────────────────────────────────────────────────
 
 /**
- * Homepage Video/GIF section (Phase 10).
+ * Homepage Video/GIF section (Phase 10) in exact 9:16 portrait ratio.
  *
  * Placement: after hero slider, before category banners.
  *
- * Layout rules (from implementation plan §13):
+ * Layout rules:
  *  - No active media → renders nothing (returns null)
- *  - 1 item  → full-width
- *  - 2–4 items → responsive grid (1 col mobile / 2 col desktop)
- *  - 5+ items → Swiper carousel
- *
- * Videos play only when in viewport (IntersectionObserver inside MediaCard).
- * Fetches GET /api/media on mount; uses empty-array fallback gracefully.
+ *  - 1 item  → centered portrait card (9:16)
+ *  - 2–4 items → centered responsive portrait grid (9:16)
+ *  - 5+ items → portrait Swiper carousel (exact 9:16 per card)
  */
 export default function VideoGifSection() {
   const [items, setItems] = useState<MediaItem[]>([]);
@@ -388,29 +405,31 @@ export default function VideoGifSection() {
   // No active media → nothing shown (per spec)
   if (items.length === 0) return null;
 
-  // ── 1 item: full-width ──────────────────────────────────────────────────────
+  // ── 1 item: centered portrait card ───────────────────────────────────────────
   if (items.length === 1) {
     return (
       <section
         style={{
           width: "100%",
-          margin: "0 0 0",
+          padding: "20px 16px 28px",
           overflow: "hidden",
         }}
         aria-label="Featured media"
       >
-        <MediaCard item={items[0]} fullWidth />
+        <div style={{ maxWidth: "320px", width: "100%", aspectRatio: "9 / 16", margin: "0 auto" }}>
+          <MediaCard item={items[0]} />
+        </div>
       </section>
     );
   }
 
-  // ── 2–4 items: responsive grid ──────────────────────────────────────────────
+  // ── 2–4 items: responsive portrait grid (exact 9:16) ────────────────────────
   if (items.length >= 2 && items.length <= 4) {
     return (
       <section
         style={{
           width: "100%",
-          padding: "0 0 0",
+          padding: "20px 16px 28px",
           overflow: "hidden",
         }}
         aria-label="Featured media"
@@ -418,46 +437,118 @@ export default function VideoGifSection() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))",
-            gap: "14px",
-            padding: "16px",
+            gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, 200px), ${
+              items.length === 2 ? "300px" : items.length === 3 ? "280px" : "260px"
+            }))`,
+            gap: "16px",
+            justifyContent: "center",
+            maxWidth:
+              items.length === 2
+                ? "640px"
+                : items.length === 3
+                ? "920px"
+                : "1160px",
+            margin: "0 auto",
           }}
         >
           {items.map((item) => (
-            <MediaCard key={item._id} item={item} />
+            <div key={item._id} style={{ width: "100%", aspectRatio: "9 / 16" }}>
+              <MediaCard item={item} />
+            </div>
           ))}
         </div>
       </section>
     );
   }
 
-  // ── 5+ items: Swiper carousel ───────────────────────────────────────────────
+  // ── 5+ items: portrait Swiper carousel (exact 9:16) ─────────────────────────
   return (
     <section
+      className="media-portrait-section"
       style={{
         width: "100%",
-        padding: "16px 0",
+        padding: "20px 0 28px",
         overflow: "hidden",
         position: "relative",
       }}
       aria-label="Featured media"
     >
+      <style>{`
+        .media-portrait-section .swiper-wrapper {
+          align-items: stretch;
+        }
+        .media-portrait-section .swiper-slide {
+          height: auto !important;
+          aspect-ratio: 9 / 16 !important;
+          display: flex !important;
+        }
+        .media-portrait-section .swiper-slide > div {
+          width: 100% !important;
+          height: 100% !important;
+          aspect-ratio: 9 / 16 !important;
+        }
+        .media-portrait-section .swiper-button-prev,
+        .media-portrait-section .swiper-button-next {
+          color: #fff;
+          background: rgba(0, 0, 0, 0.45);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+          transition: all 0.2s ease;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .media-portrait-section .swiper-button-prev:after,
+        .media-portrait-section .swiper-button-next:after {
+          font-size: 14px;
+          font-weight: 700;
+        }
+        .media-portrait-section .swiper-button-prev:hover,
+        .media-portrait-section .swiper-button-next:hover {
+          background: rgba(0, 0, 0, 0.75);
+          transform: scale(1.08);
+        }
+        .media-portrait-section .swiper-pagination-bullet {
+          background: #64748b;
+          opacity: 0.5;
+        }
+        .media-portrait-section .swiper-pagination-bullet-active {
+          background: #ef4444;
+          opacity: 1;
+          width: 20px;
+          border-radius: 6px;
+          transition: all 0.3s ease;
+        }
+      `}</style>
       <Swiper
         modules={[Autoplay, Navigation, Pagination]}
-        spaceBetween={12}
-        slidesPerView={1}
-        autoplay={{ delay: 6000, disableOnInteraction: false }}
+        spaceBetween={14}
+        slidesPerView={1.3}
+        autoplay={{ delay: 6000, disableOnInteraction: false, pauseOnMouseEnter: true }}
         navigation
-        pagination={{ clickable: true }}
-        loop
+        pagination={{ clickable: true, dynamicBullets: true }}
+        loop={items.length > 5}
         breakpoints={{
-          640: { slidesPerView: 2 },
-          1024: { slidesPerView: 3 },
+          480: { slidesPerView: 2, spaceBetween: 14 },
+          640: { slidesPerView: 2.5, spaceBetween: 14 },
+          768: { slidesPerView: 3, spaceBetween: 16 },
+          1024: { slidesPerView: 4, spaceBetween: 16 },
+          1280: { slidesPerView: 4.5, spaceBetween: 18 },
+          1440: { slidesPerView: 5, spaceBetween: 18 },
         }}
-        style={{ padding: "0 16px 36px" }}
+        style={{ padding: "0 24px 38px" }}
       >
         {items.map((item) => (
-          <SwiperSlide key={item._id}>
+          <SwiperSlide
+            key={item._id}
+            style={{
+              aspectRatio: "9 / 16",
+              height: "auto",
+              display: "flex",
+            }}
+          >
             <MediaCard item={item} />
           </SwiperSlide>
         ))}
