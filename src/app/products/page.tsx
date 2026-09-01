@@ -117,6 +117,17 @@ function ProductsContent() {
         })
         .catch(console.error);
 
+      // Fetch offers count for Offers label
+      fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/offers/products`,
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          const items = data.data || [];
+          setOfferProductCount(items.length);
+        })
+        .catch(console.error);
+
       setInitialLoadDone(true);
     }
   }, [initialLoadDone]);
@@ -310,84 +321,80 @@ function ProductsContent() {
 
   // Filter sidebar content (reused in desktop and modal)
   const FilterContent = ({ isMobile = false }: { isMobile?: boolean }) => (
-    <>
-      {/* Offers virtual tab */}
-      <div className="sidebar_category" style={{ marginBottom: 0, paddingBottom: 0 }}>
-        <ul>
-          <li
-            className={
-              (!isMobile ? activeCategory === "offers" : tempCategory === "offers")
-                ? "current"
-                : ""
-            }
-            style={{
-              color: (!isMobile ? activeCategory === "offers" : tempCategory === "offers")
-                ? "var(--primary)"
-                : "inherit",
-            }}
-          >
-            {isMobile ? (
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setTempCategory("offers");
-                }}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  {tempCategory === "offers" && (
-                    <i
-                      className="fa-solid fa-check"
-                      style={{ color: "var(--primary)", fontSize: "12px" }}
-                    />
-                  )}
+    <div className="sidebar_category">
+      <h3>Categories</h3>
+      <ul>
+        {/* Offers virtual tab */}
+        <li
+          className={
+            (!isMobile ? activeCategory === "offers" : tempCategory === "offers")
+              ? "current"
+              : ""
+          }
+          style={{
+            color: (!isMobile ? activeCategory === "offers" : tempCategory === "offers")
+              ? "var(--primary)"
+              : "inherit",
+          }}
+        >
+          {isMobile ? (
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                setTempCategory("offers");
+              }}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {tempCategory === "offers" && (
                   <i
-                    className="fas fa-tag"
-                    style={{
-                      fontSize: "12px",
-                      color: "#ff6b35",
-                    }}
-                    aria-hidden="true"
+                    className="fa-solid fa-check"
+                    style={{ color: "var(--primary)", fontSize: "12px" }}
                   />
-                  Offers
-                </span>
-                {offerProductCount > 0 && <span>({offerProductCount})</span>}
-              </a>
-            ) : (
-              <Link href="/products?category=offers">
-                <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <i
-                    className="fas fa-tag"
-                    style={{ fontSize: "12px", color: "#ff6b35" }}
-                    aria-hidden="true"
-                  />
-                  Offers
-                </span>
-                {offerProductCount > 0 && <span>({offerProductCount})</span>}
-              </Link>
-            )}
-          </li>
-        </ul>
-        <hr style={{ margin: "8px 0 12px", border: "none", borderTop: "1px solid #eee" }} />
-      </div>
-      <div className="sidebar_category">
-        <h3>Categories</h3>
-        <ul>
-          <li
-            className={
-              (!isMobile ? !activeCategory : !tempCategory) ? "current" : ""
-            }
-            style={{
-              color: (!isMobile ? !activeCategory : !tempCategory)
-                ? "var(--primary)"
-                : "inherit",
-            }}
-          >
+                )}
+                <i
+                  className="fas fa-tag"
+                  style={{
+                    fontSize: "12px",
+                    color: "#ff6b35",
+                  }}
+                  aria-hidden="true"
+                />
+                Offers
+              </span>
+              <span>({offerProductCount})</span>
+            </a>
+          ) : (
+            <Link href="/products?category=offers">
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <i
+                  className="fas fa-tag"
+                  style={{ fontSize: "12px", color: "#ff6b35" }}
+                  aria-hidden="true"
+                />
+                Offers
+              </span>
+              <span>({offerProductCount})</span>
+            </Link>
+          )}
+        </li>
+
+        {/* All Products */}
+        <li
+          className={
+            (!isMobile ? !activeCategory : !tempCategory) ? "current" : ""
+          }
+          style={{
+            color: (!isMobile ? !activeCategory : !tempCategory)
+              ? "var(--primary)"
+              : "inherit",
+          }}
+        >
             {isMobile ? (
               <a
                 href="#"
@@ -668,7 +675,6 @@ function ProductsContent() {
           ))}
         </ul>
       </div>
-    </>
   );
 
   return (
@@ -1242,19 +1248,12 @@ function ProductsContent() {
                     </div>
                   )}
 
-                  {/* Offers tab footer CTA */}
+                  {/* Offers tab note */}
                   {isOffersTab && products.length > 0 && (
                     <div style={{ textAlign: "center", marginTop: "40px" }}>
-                      <p style={{ color: "#64748b", fontSize: "14px", marginBottom: "12px" }}>
-                        These products have active promotional offers
+                      <p style={{ color: "#64748b", fontSize: "14px" }}>
+                        Discounts and promotional deals are automatically applied at checkout for these products.
                       </p>
-                      <Link
-                        href="/offers"
-                        className="common_btn"
-                        style={{ display: "inline-block" }}
-                      >
-                        View All Offers
-                      </Link>
                     </div>
                   )}
                 </>

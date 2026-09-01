@@ -6,6 +6,7 @@ import Image from "next/image";
 import { addToCart } from "@/lib/api";
 import { addToGuestCart } from "@/lib/guest-cart";
 import { useRouter } from "next/navigation";
+import OfferBadge from "@/components/OfferBadge";
 
 interface ProductImage {
     url: string;
@@ -79,6 +80,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     });
     const [reviewSubmitting, setReviewSubmitting] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [productOffers, setProductOffers] = useState<Array<{ title: string; badgeText?: string }>>([]);
 
     useEffect(() => {
         // Check if user is logged in
@@ -115,6 +117,22 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                 })
                 .catch(err => console.error('Error fetching reviews:', err))
                 .finally(() => setReviewsLoading(false));
+        }
+    }, [product?._id]);
+
+    // Fetch active offers for this product
+    useEffect(() => {
+        if (product?._id) {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api"}/offers/products`)
+                .then(res => res.json())
+                .then(data => {
+                    const items = data.data || [];
+                    const matched = items.find((item: any) => item._id === product._id);
+                    if (matched && matched.offers) {
+                        setProductOffers(matched.offers);
+                    }
+                })
+                .catch(() => {});
         }
     }, [product?._id]);
 
@@ -452,6 +470,12 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                                                 </>
                                             )}
                                         </h3>
+
+                                        {productOffers.length > 0 && (
+                                            <div style={{ marginBottom: '14px' }}>
+                                                <OfferBadge offers={productOffers} maxBadges={4} />
+                                            </div>
+                                        )}
 
                                         {product.weight !== undefined && product.weight !== null && (
                                             <p style={{ marginBottom: '12px', fontWeight: 600, color: '#111' }}>

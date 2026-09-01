@@ -90,7 +90,6 @@ export async function getOfferProducts(req: Request, res: Response, next: NextFu
 
         const activeOffers = await Offer.find({
             isActive: true,
-            displayOnProductsPage: true,
             $or: [{ startDate: null }, { startDate: { $lte: now } }],
             $and: [
                 { $or: [{ endDate: null }, { endDate: { $gte: now } }] },

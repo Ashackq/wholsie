@@ -269,7 +269,7 @@ export default function AdminCategoriesPage() {
                       marginTop: 10,
                     }}
                   >
-                    Add New Product
+                    Add New Category
                   </button>
                 </div>
                 

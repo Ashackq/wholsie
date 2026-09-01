@@ -12,7 +12,8 @@
         "test:sms": "node scripts/test-sms.js",
         "test:razorpay": "node scripts/test-razorpay.js",
         "test:delhivery": "node scripts/test-delhivery.js",
-        "test:aisensy": "node scripts/test-aisensy.js"
+        "test:aisensy": "node scripts/test-aisensy.js",
+        "db:clone": "node scripts/clone-db.js"
     },
     "dependencies": {
         "@types/multer": "^2.0.0",
